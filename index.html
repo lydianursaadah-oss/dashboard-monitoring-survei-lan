@@ -1,0 +1,1394 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Monitoring Publikasi Survei LAN RI</title>
+  <!-- Favicon: LAN RI analytics icon -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232563eb'/%3E%3Crect x='5' y='18' width='4' height='9' rx='1' fill='%23fff' opacity='.6'/%3E%3Crect x='11' y='12' width='4' height='15' rx='1' fill='%23fff' opacity='.8'/%3E%3Crect x='17' y='7' width='4' height='20' rx='1' fill='%23fff'/%3E%3Crect x='23' y='14' width='4' height='13' rx='1' fill='%2393c5fd'/%3E%3Ccircle cx='7' cy='17' r='1.5' fill='%2322c55e'/%3E%3Ccircle cx='13' cy='11' r='1.5' fill='%2322c55e'/%3E%3Ccircle cx='19' cy='6' r='1.5' fill='%2322c55e'/%3E%3Ccircle cx='25' cy='13' r='1.5' fill='%2322c55e'/%3E%3C/svg%3E" />
+  <link rel="shortcut icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232563eb'/%3E%3Crect x='5' y='18' width='4' height='9' rx='1' fill='%23fff' opacity='.6'/%3E%3Crect x='11' y='12' width='4' height='15' rx='1' fill='%23fff' opacity='.8'/%3E%3Crect x='17' y='7' width='4' height='20' rx='1' fill='%23fff'/%3E%3Crect x='23' y='14' width='4' height='13' rx='1' fill='%2393c5fd'/%3E%3Ccircle cx='7' cy='17' r='1.5' fill='%2322c55e'/%3E%3Ccircle cx='13' cy='11' r='1.5' fill='%2322c55e'/%3E%3Ccircle cx='19' cy='6' r='1.5' fill='%2322c55e'/%3E%3Ccircle cx='25' cy='13' r='1.5' fill='%2322c55e'/%3E%3C/svg%3E" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
+  <style>
+    /* ═══════════════════ RESET & BASE ═══════════════════ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      /* Light Palette */
+      --bg:        #f0f4f8;
+      --bg2:       #ffffff;
+      --bg3:       #f7f9fb;
+      --border:    #e4e9ef;
+      --border2:   #d0d7e0;
+      --text1:     #1a2232;
+      --text2:     #5a6678;
+      --text3:     #94a3b8;
+
+      /* Accent (muted, professional) */
+      --accent:    #2563eb;
+      --accent-bg: #eff6ff;
+      --success:   #16a34a;
+      --success-bg:#f0fdf4;
+      --warn:      #d97706;
+      --warn-bg:   #fffbeb;
+      --danger:    #dc2626;
+      --danger-bg: #fef2f2;
+      --purple:    #7c3aed;
+      --purple-bg: #f5f3ff;
+
+      --card-radius: 14px;
+      --shadow-sm: 0 1px 3px rgba(15,23,42,.07), 0 1px 2px rgba(15,23,42,.05);
+      --shadow:    0 4px 16px rgba(15,23,42,.08), 0 2px 6px rgba(15,23,42,.05);
+      --shadow-lg: 0 10px 40px rgba(15,23,42,.12);
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text1);
+      min-height: 100vh;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    /* ═══════════════════ SCROLLBAR ═══════════════════ */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text3); }
+
+    /* ═══════════════════ HEADER ═══════════════════ */
+    header {
+      background: #ffffff;
+      border-bottom: 1px solid var(--border);
+      padding: 0 28px;
+      position: sticky; top: 0; z-index: 100;
+      box-shadow: 0 1px 4px rgba(15,23,42,.06);
+    }
+    .header-inner {
+      display: flex; align-items: center; justify-content: space-between;
+      max-width: 1600px; margin: 0 auto; height: 64px;
+    }
+    .logo-group { display: flex; align-items: center; gap: 14px; }
+    .logo-badge {
+      height: 48px;
+      width: auto;
+      object-fit: contain;
+      flex-shrink: 0;
+      display: block;
+    }
+    .logo-title { font-size: 15px; font-weight: 700; color: var(--text1); }
+    .logo-sub { font-size: 11px; color: var(--text3); }
+    .header-right { display: flex; align-items: center; gap: 16px; }
+    .live-badge {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 11px; color: var(--success); font-weight: 600;
+      background: var(--success-bg); border: 1px solid #bbf7d0;
+      padding: 4px 10px; border-radius: 20px;
+    }
+    .live-dot {
+      width: 7px; height: 7px; border-radius: 50%; background: var(--success);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%,100% { opacity:1; box-shadow:0 0 0 0 rgba(22,163,74,.35); }
+      50%      { opacity:.8; box-shadow:0 0 0 5px rgba(22,163,74,0); }
+    }
+    .header-date { font-size: 12px; color: var(--text3); }
+
+    /* ═══════════════════ NAV TABS ═══════════════════ */
+    .nav-tabs {
+      background: #fff;
+      border-bottom: 1px solid var(--border);
+      padding: 0 28px;
+    }
+    .nav-tabs-inner {
+      display: flex; max-width: 1600px; margin: 0 auto;
+    }
+    .nav-tab {
+      padding: 13px 18px; font-size: 13px; font-weight: 500; color: var(--text2);
+      border-bottom: 2px solid transparent; cursor: pointer; white-space: nowrap;
+      transition: all .18s; display: flex; align-items: center; gap: 7px;
+      user-select: none;
+    }
+    .nav-tab:hover { color: var(--text1); }
+    .nav-tab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+    .nav-tab i { font-size: 12px; }
+
+    /* ═══════════════════ MAIN ═══════════════════ */
+    .main { max-width: 1600px; margin: 0 auto; padding: 24px 28px; }
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* ═══════════════════ FILTER BAR ═══════════════════ */
+    .filter-bar {
+      display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+      background: #fff; border: 1px solid var(--border);
+      border-radius: var(--card-radius); padding: 13px 18px;
+      margin-bottom: 20px; box-shadow: var(--shadow-sm);
+    }
+    .filter-bar label { font-size: 12px; color: var(--text2); font-weight: 600; }
+    .filter-bar select, .filter-bar input {
+      background: var(--bg3); border: 1px solid var(--border);
+      color: var(--text1); border-radius: 8px; padding: 6px 11px;
+      font-size: 12px; font-family: inherit; cursor: pointer; outline: none;
+      transition: border-color .18s, box-shadow .18s;
+    }
+    .filter-bar select:focus, .filter-bar input:focus {
+      border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37,99,235,.1);
+    }
+    .filter-divider { width: 1px; height: 20px; background: var(--border); margin: 0 2px; }
+    .filter-reset {
+      margin-left: auto; padding: 6px 14px; border-radius: 8px;
+      background: var(--bg3); border: 1px solid var(--border); color: var(--text2);
+      font-size: 12px; cursor: pointer; transition: all .18s; font-family: inherit;
+    }
+    .filter-reset:hover { color: var(--text1); border-color: var(--accent); background: var(--accent-bg); }
+
+    /* ═══════════════════ KPI CARDS ═══════════════════ */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+      gap: 14px; margin-bottom: 20px;
+    }
+    .kpi-card {
+      background: #fff; border: 1px solid var(--border);
+      border-radius: var(--card-radius); padding: 20px 18px;
+      position: relative; overflow: hidden;
+      transition: transform .2s, box-shadow .2s;
+      cursor: default; box-shadow: var(--shadow-sm);
+    }
+    .kpi-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+    .kpi-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: var(--accent-color, var(--accent));
+      border-radius: 14px 14px 0 0;
+    }
+    .kpi-icon {
+      width: 38px; height: 38px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; margin-bottom: 14px;
+      background: var(--icon-bg, var(--accent-bg));
+      color: var(--accent-color, var(--accent));
+    }
+    .kpi-value { font-size: 30px; font-weight: 800; line-height: 1; margin-bottom: 4px; }
+    .kpi-label { font-size: 11px; color: var(--text2); font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
+    .kpi-sub { font-size: 11px; color: var(--text3); margin-top: 6px; }
+    .kpi-delta {
+      position: absolute; top: 16px; right: 16px;
+      font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 20px;
+    }
+    .delta-good { background: var(--success-bg); color: var(--success); }
+    .delta-warn { background: var(--warn-bg); color: var(--warn); }
+    .delta-bad  { background: var(--danger-bg); color: var(--danger); }
+
+    /* ═══════════════════ CARD / PANEL ═══════════════════ */
+    .card {
+      background: #fff; border: 1px solid var(--border);
+      border-radius: var(--card-radius); overflow: hidden;
+      box-shadow: var(--shadow-sm);
+    }
+    .card-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 18px; border-bottom: 1px solid var(--border);
+      background: #fff;
+    }
+    .card-title {
+      font-size: 13px; font-weight: 600; color: var(--text1);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .card-title i { color: var(--accent); font-size: 12px; }
+    .card-badge {
+      font-size: 11px; background: var(--bg3); border: 1px solid var(--border);
+      border-radius: 20px; padding: 2px 9px; color: var(--text2); font-weight: 500;
+    }
+    .card-body { padding: 16px 18px; }
+    .chart-wrap { position: relative; width: 100%; }
+
+    /* ═══════════════════ GRID LAYOUTS ═══════════════════ */
+    .grid-2   { display: grid; grid-template-columns: 1fr 1fr;         gap: 16px; margin-bottom: 16px; }
+    .grid-3   { display: grid; grid-template-columns: 1fr 1fr 1fr;     gap: 16px; margin-bottom: 16px; }
+    .grid-3-1 { display: grid; grid-template-columns: 2fr 1fr;         gap: 16px; margin-bottom: 16px; }
+    .grid-1-2 { display: grid; grid-template-columns: 1fr 2fr;         gap: 16px; margin-bottom: 16px; }
+    @media (max-width: 1100px) {
+      .grid-2, .grid-3, .grid-3-1, .grid-1-2 { grid-template-columns: 1fr; }
+    }
+
+    /* ═══════════════════ PROGRESS BAR ═══════════════════ */
+    .progress-item { margin-bottom: 14px; }
+    .progress-row { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 12px; }
+    .progress-label { color: var(--text1); font-weight: 500; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .progress-count { color: var(--text3); margin-left: 8px; font-size: 11px; }
+    .progress-bar-bg { height: 6px; background: var(--bg); border-radius: 3px; overflow: hidden; }
+    .progress-bar-fill { height: 100%; border-radius: 3px; transition: width .6s ease; }
+
+    /* ═══════════════════ TABLE ═══════════════════ */
+    .table-wrap { overflow-x: auto; overflow-y: auto; max-height: 520px; }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    thead { position: sticky; top: 0; z-index: 2; }
+    thead th {
+      background: var(--bg3); padding: 10px 13px; text-align: left;
+      font-weight: 600; color: var(--text2); font-size: 11px;
+      text-transform: uppercase; letter-spacing: .45px; white-space: nowrap;
+      border-bottom: 1px solid var(--border); cursor: pointer;
+      user-select: none; transition: color .18s;
+    }
+    thead th:hover { color: var(--text1); }
+    thead th.sorted { color: var(--accent); }
+    thead th .sort-icon { margin-left: 3px; opacity: .3; }
+    thead th.sorted .sort-icon { opacity: 1; }
+    tbody tr { border-bottom: 1px solid var(--border); transition: background .12s; }
+    tbody tr:hover { background: var(--bg3); }
+    tbody td { padding: 10px 13px; vertical-align: middle; color: var(--text1); }
+    td.title-cell { max-width: 280px; }
+    td.title-cell span { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+    /* ═══════════════════ BADGE / TAG ═══════════════════ */
+    .badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 9px; border-radius: 20px; font-size: 10px; font-weight: 600;
+      white-space: nowrap;
+    }
+    .badge-green  { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+    .badge-red    { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+    .badge-yellow { background: #fef9c3; color: #a16207; border: 1px solid #fde047; }
+    .badge-blue   { background: #dbeafe; color: #1d4ed8; border: 1px solid #bfdbfe; }
+    .badge-purple { background: #ede9fe; color: #6d28d9; border: 1px solid #ddd6fe; }
+    .badge-gray   { background: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; }
+    .badge-teal   { background: #ccfbf1; color: #0f766e; border: 1px solid #99f6e4; }
+
+    /* ═══════════════════ CHANNEL CARDS (Professional) ═══════════════════ */
+    .channel-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+    }
+    .channel-card {
+      display: flex; align-items: center; gap: 12px;
+      background: var(--bg3); border: 1px solid var(--border);
+      border-radius: 12px; padding: 13px 14px;
+      transition: box-shadow .18s, transform .18s, border-color .18s;
+      cursor: default;
+    }
+    .channel-card:hover { box-shadow: var(--shadow); transform: translateY(-1px); border-color: var(--border2); }
+    .channel-icon-wrap {
+      width: 42px; height: 42px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .channel-icon-wrap svg { width: 22px; height: 22px; }
+    .channel-info { flex: 1; min-width: 0; }
+    .channel-name { font-size: 11px; font-weight: 600; color: var(--text1); }
+    .channel-count-badge { font-size: 20px; font-weight: 800; line-height: 1.1; margin-top: 1px; }
+    .channel-pct { font-size: 10px; color: var(--text3); margin-top: 1px; }
+    .channel-bar-mini { height: 3px; background: var(--border); border-radius: 2px; margin-top: 5px; overflow: hidden; }
+    .channel-bar-fill { height: 100%; border-radius: 2px; transition: width .6s ease; }
+
+    /* ═══════════════════ ALERT FLAGS ═══════════════════ */
+    .alert-list { display: flex; flex-direction: column; gap: 8px; }
+    .alert-item {
+      display: flex; align-items: flex-start; gap: 11px;
+      background: var(--bg3); border-radius: 10px; padding: 12px 14px;
+      border-left: 3px solid transparent; border: 1px solid var(--border);
+      border-left: 3px solid transparent;
+    }
+    .alert-item.warn   { border-left-color: var(--warn);    background: #fffbeb; border-color: #fde68a; }
+    .alert-item.danger { border-left-color: var(--danger);  background: #fff5f5; border-color: #fecaca; }
+    .alert-item.info   { border-left-color: var(--accent);  background: #eff6ff; border-color: #bfdbfe; }
+    .alert-icon { font-size: 13px; margin-top: 1px; flex-shrink: 0; }
+    .alert-item.warn   .alert-icon { color: var(--warn); }
+    .alert-item.danger .alert-icon { color: var(--danger); }
+    .alert-item.info   .alert-icon { color: var(--accent); }
+    .alert-text { flex: 1; }
+    .alert-title { font-size: 12px; font-weight: 600; margin-bottom: 2px; color: var(--text1); }
+    .alert-desc  { font-size: 11px; color: var(--text2); }
+
+    /* ═══════════════════ TIMELINE ═══════════════════ */
+    .timeline-month { margin-bottom: 20px; }
+    .timeline-month-header {
+      font-size: 11px; font-weight: 700; color: var(--accent);
+      text-transform: uppercase; letter-spacing: .7px;
+      margin-bottom: 8px; padding-bottom: 7px;
+      border-bottom: 2px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .timeline-month-count {
+      font-size: 10px; background: var(--accent-bg); border: 1px solid #bfdbfe;
+      border-radius: 20px; padding: 1px 8px; color: var(--accent); font-weight: 600;
+    }
+    .timeline-items { display: flex; flex-direction: column; gap: 6px; }
+    .timeline-item {
+      display: flex; align-items: center; gap: 10px;
+      background: var(--bg3); border-radius: 8px; padding: 9px 13px;
+      border-left: 3px solid var(--border); transition: border-color .18s, box-shadow .18s;
+      cursor: pointer;
+    }
+    .timeline-item:hover { border-left-color: var(--accent); box-shadow: var(--shadow-sm); }
+    .timeline-week {
+      font-size: 10px; color: var(--text3); font-weight: 700;
+      white-space: nowrap; min-width: 46px;
+    }
+    .timeline-unit {
+      font-size: 10px; padding: 2px 7px; border-radius: 5px;
+      background: var(--accent-bg); color: var(--accent); font-weight: 600;
+      white-space: nowrap;
+    }
+    .timeline-title { font-size: 11px; color: var(--text1); flex: 1; min-width: 0; }
+
+    /* ═══════════════════ DONUT LEGEND ═══════════════════ */
+    .donut-legend { display: flex; flex-direction: column; gap: 9px; }
+    .donut-legend-item { display: flex; align-items: center; gap: 9px; font-size: 11px; }
+    .donut-legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .donut-legend-label { flex: 1; color: var(--text1); }
+    .donut-legend-value { color: var(--text1); font-weight: 700; }
+    .donut-legend-pct { color: var(--text3); font-size: 10px; margin-left: 2px; }
+
+    /* ═══════════════════ HEATMAP ═══════════════════ */
+    .heatmap-cell {
+      border-radius: 4px; cursor: pointer; transition: opacity .18s;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 9px; font-weight: 700;
+    }
+    .heatmap-cell:hover { opacity: .7; }
+    .heatmap-legend { display: flex; align-items: center; gap: 6px; margin-top: 10px; font-size: 10px; color: var(--text3); }
+    .heatmap-legend-cell { width: 12px; height: 12px; border-radius: 2px; }
+
+    /* ═══════════════════ MODAL ═══════════════════ */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0; z-index: 200;
+      background: rgba(15,23,42,.45); backdrop-filter: blur(6px);
+      align-items: center; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: #fff; border: 1px solid var(--border);
+      border-radius: 18px; max-width: 680px; width: 90%; max-height: 82vh;
+      overflow-y: auto; padding: 28px; box-shadow: var(--shadow-lg);
+      position: relative;
+    }
+    .modal-close {
+      position: absolute; top: 16px; right: 16px;
+      background: var(--bg3); border: 1px solid var(--border);
+      color: var(--text2); border-radius: 8px; width: 30px; height: 30px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; font-size: 14px; transition: all .18s;
+    }
+    .modal-close:hover { color: var(--danger); border-color: var(--danger); background: var(--danger-bg); }
+    .modal h2 { font-size: 16px; font-weight: 700; margin-bottom: 8px; padding-right: 42px; color: var(--text1); }
+    .modal-meta { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 18px; }
+    .modal-section { margin-bottom: 18px; }
+    .modal-section h4 {
+      font-size: 11px; font-weight: 600; color: var(--text3);
+      text-transform: uppercase; letter-spacing: .5px; margin-bottom: 9px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .channel-row { display: flex; flex-wrap: wrap; gap: 6px; }
+    .modal-keterangan {
+      background: var(--bg3); border: 1px solid var(--border); border-radius: 10px;
+      padding: 13px 14px; font-size: 12px; color: var(--text2); line-height: 1.7;
+      white-space: pre-wrap;
+    }
+
+    /* ═══════════════════ MISC ═══════════════════ */
+    .section-sep { margin: 20px 0; border: none; border-top: 1px solid var(--border); }
+    .text-muted { color: var(--text2); }
+    .text-center { text-align: center; }
+    .empty-state { padding: 40px; text-align: center; color: var(--text3); font-size: 13px; }
+    .empty-state i { font-size: 30px; margin-bottom: 10px; display: block; color: var(--border2); }
+    .full-width { grid-column: 1 / -1; }
+    .unit-color { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 4px; }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════ HEADER ══════════════════════════ -->
+<header>
+  <div class="header-inner">
+    <div class="logo-group">
+      <img src="logo-lan.png" alt="Logo LAN RI" class="logo-badge" />
+      <div>
+        <div class="logo-title">Monitoring Publikasi Survei LAN RI</div>
+        <div class="logo-sub">Lembaga Administrasi Negara · Sistem Monitoring Publikasi</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="live-badge"><div class="live-dot"></div> Live</div>
+      <div class="header-date" id="header-date"></div>
+    </div>
+  </div>
+</header>
+
+<script>
+/* ── Secret admin access: click logo 5× within 3 s ── */
+(function(){
+  let clicks=0, timer=null;
+  const logo = document.querySelector('.logo-badge');
+  if(!logo) return;
+  logo.style.cursor='default';
+  logo.addEventListener('click',()=>{
+    clicks++;
+    clearTimeout(timer);
+    if(clicks>=5){ window.location.href='admin.html'; clicks=0; return; }
+    timer = setTimeout(()=>{ clicks=0; }, 3000);
+  });
+})();
+</script>
+
+<!-- ══════════════════════════ NAV TABS ══════════════════════════ -->
+<nav class="nav-tabs">
+  <div class="nav-tabs-inner">
+    <div class="nav-tab active" data-tab="overview"><i class="fa-solid fa-chart-pie"></i> Overview</div>
+    <div class="nav-tab" data-tab="timeline"><i class="fa-solid fa-calendar-days"></i> Timeline & Jadwal</div>
+    <div class="nav-tab" data-tab="units"><i class="fa-solid fa-sitemap"></i> Unit & Cluster</div>
+    <div class="nav-tab" data-tab="channels"><i class="fa-solid fa-satellite-dish"></i> Channel Publikasi</div>
+    <div class="nav-tab" data-tab="alerts"><i class="fa-solid fa-triangle-exclamation"></i> Risiko & Flags</div>
+    <div class="nav-tab" data-tab="records"><i class="fa-solid fa-table"></i> Data Records</div>
+  </div>
+</nav>
+
+<!-- ══════════════════════════ MAIN ══════════════════════════ -->
+<div class="main">
+
+  <!-- ═══════════════════ PAGE: OVERVIEW ═══════════════════ -->
+  <div class="page active" id="page-overview">
+
+    <div class="filter-bar">
+      <label><i class="fa-solid fa-sliders" style="margin-right:5px;color:var(--accent)"></i>Filter:</label>
+      <select id="f-year" onchange="applyFilters()">
+        <option value="">Semua Tahun</option>
+        <option value="2025">2025</option>
+        <option value="2026">2026</option>
+      </select>
+      <div class="filter-divider"></div>
+      <select id="f-unit" onchange="applyFilters()"><option value="">Semua Unit</option></select>
+      <div class="filter-divider"></div>
+      <select id="f-cluster" onchange="applyFilters()"><option value="">Semua Cluster</option></select>
+      <div class="filter-divider"></div>
+      <select id="f-status" onchange="applyFilters()">
+        <option value="">Semua Status</option>
+        <option value="selesai">Selesai</option>
+        <option value="belum">Belum Selesai</option>
+        <option value="planned">Dalam Perencanaan</option>
+      </select>
+      <button class="filter-reset" onclick="resetFilters()"><i class="fa-solid fa-rotate-left"></i> Reset</button>
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="kpi-grid" id="kpi-grid"></div>
+
+    <!-- Row 1 -->
+    <div class="grid-3">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title"><i class="fa-solid fa-circle-half-stroke"></i> Status Publikasi</span>
+        </div>
+        <div class="card-body">
+          <div class="chart-wrap" style="height:150px"><canvas id="chart-status-donut"></canvas></div>
+          <div class="donut-legend" id="donut-legend" style="margin-top:14px"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title"><i class="fa-solid fa-chart-bar"></i> Publikasi per Bulan (2026)</span>
+        </div>
+        <div class="card-body">
+          <div class="chart-wrap" style="height:220px"><canvas id="chart-monthly"></canvas></div>
+        </div>
+      </div>
+      <!-- CHANNEL CARD – uses new professional layout -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title"><i class="fa-solid fa-bullhorn"></i> Jangkauan Channel</span>
+        </div>
+        <div class="card-body">
+          <div class="channel-grid" id="channel-summary-grid"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Row 2 -->
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title"><i class="fa-solid fa-building"></i> Publikasi per Unit</span>
+          <span class="card-badge" id="unit-badge">—</span>
+        </div>
+        <div class="card-body">
+          <div class="chart-wrap" style="height:280px"><canvas id="chart-unit-bar"></canvas></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title"><i class="fa-solid fa-tags"></i> Publikasi per Cluster Kebijakan</span>
+        </div>
+        <div class="card-body">
+          <div class="chart-wrap" style="height:280px"><canvas id="chart-cluster-bar"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Row 3 -->
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title"><i class="fa-solid fa-layer-group"></i> Jenis Publikasi</span>
+        </div>
+        <div class="card-body">
+          <div class="chart-wrap" style="height:220px"><canvas id="chart-type"></canvas></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title"><i class="fa-solid fa-grip"></i> Distribusi Jadwal per Minggu</span>
+        </div>
+        <div class="card-body" id="heatmap-container"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════ PAGE: TIMELINE ═══════════════════ -->
+  <div class="page" id="page-timeline">
+    <div class="grid-1-2">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title"><i class="fa-solid fa-chart-gantt"></i> Ringkasan Mingguan</span>
+        </div>
+        <div class="card-body">
+          <div class="chart-wrap" style="height:380px"><canvas id="chart-weekly"></canvas></div>
+        </div>
+      </div>
+      <div class="card" style="overflow:auto;max-height:500px">
+        <div class="card-header">
+          <span class="card-title"><i class="fa-solid fa-calendar-check"></i> Timeline Jadwal Publikasi</span>
+          <span class="card-badge" id="timeline-count">—</span>
+        </div>
+        <div class="card-body" id="timeline-list"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title"><i class="fa-solid fa-chart-line"></i> Tren Kumulatif Selesai vs Belum Selesai per Bulan</span>
+      </div>
+      <div class="card-body">
+        <div class="chart-wrap" style="height:240px"><canvas id="chart-cumulative"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════ PAGE: UNITS ═══════════════════ -->
+  <div class="page" id="page-units">
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-header"><span class="card-title"><i class="fa-solid fa-building"></i> Ringkasan per Unit Kerja</span></div>
+      <div class="card-body" id="unit-cards-container" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px"></div>
+    </div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title"><i class="fa-solid fa-chart-pie"></i> Distribusi Cluster per Unit</span>
+        </div>
+        <div class="card-body">
+          <div class="chart-wrap" style="height:320px"><canvas id="chart-unit-cluster-stacked"></canvas></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title"><i class="fa-solid fa-percent"></i> Tingkat Penyelesaian per Unit</span>
+        </div>
+        <div class="card-body" id="unit-completion-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════ PAGE: CHANNELS ═══════════════════ -->
+  <div class="page" id="page-channels">
+    <div class="kpi-grid" id="channel-kpi-grid"></div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title"><i class="fa-solid fa-chart-bar"></i> Penggunaan Channel per Publikasi</span>
+        </div>
+        <div class="card-body">
+          <div class="chart-wrap" style="height:280px"><canvas id="chart-channel-bar"></canvas></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title"><i class="fa-solid fa-network-wired"></i> Cakupan Channel per Unit (Top 4)</span>
+        </div>
+        <div class="card-body">
+          <div class="chart-wrap" style="height:280px"><canvas id="chart-channel-unit-heatmap"></canvas></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title"><i class="fa-solid fa-share-nodes"></i> Multi-Channel Coverage Matrix</span>
+      </div>
+      <div class="card-body">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Unit</th><th>Jurnal</th><th>Media Online</th><th>Website LAN</th><th>Website Unit</th><th>Instagram LAN</th><th>Instagram Unit</th><th>Youtube LAN</th><th>Youtube Unit</th><th>Total Channel</th>
+              </tr>
+            </thead>
+            <tbody id="channel-matrix-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════ PAGE: ALERTS ═══════════════════ -->
+  <div class="page" id="page-alerts">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title"><i class="fa-solid fa-triangle-exclamation" style="color:var(--danger)"></i> Risiko & Perhatian Segera</span>
+        </div>
+        <div class="card-body">
+          <div class="alert-list" id="alert-list-critical"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title"><i class="fa-solid fa-circle-info" style="color:var(--accent)"></i> Catatan & Tindak Lanjut</span>
+        </div>
+        <div class="card-body">
+          <div class="alert-list" id="alert-list-info"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title"><i class="fa-solid fa-link-slash"></i> Publikasi Tanpa Channel Terdeteksi</span>
+        <span class="card-badge" id="no-channel-count">—</span>
+      </div>
+      <div class="card-body">
+        <div class="table-wrap" style="max-height:340px">
+          <table>
+            <thead>
+              <tr><th>No</th><th>Unit</th><th>Judul</th><th>Jadwal</th><th>Status</th><th>Keterangan</th></tr>
+            </thead>
+            <tbody id="no-channel-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════ PAGE: RECORDS ═══════════════════ -->
+  <div class="page" id="page-records">
+    <div class="filter-bar">
+      <label>Cari:</label>
+      <input type="text" id="r-search" placeholder="Judul, unit, cluster…" oninput="renderTable()" style="width:220px" />
+      <div class="filter-divider"></div>
+      <select id="r-unit" onchange="renderTable()"><option value="">Semua Unit</option></select>
+      <select id="r-cluster" onchange="renderTable()"><option value="">Semua Cluster</option></select>
+      <select id="r-status" onchange="renderTable()">
+        <option value="">Semua Status</option>
+        <option value="selesai">Selesai</option>
+        <option value="belum">Belum Selesai</option>
+        <option value="planned">Dalam Perencanaan</option>
+      </select>
+      <select id="r-year" onchange="renderTable()">
+        <option value="">Semua Tahun</option>
+        <option value="2025">2025</option>
+        <option value="2026">2026</option>
+      </select>
+      <button class="filter-reset" onclick="resetTableFilters()"><i class="fa-solid fa-rotate-left"></i> Reset</button>
+      <span style="margin-left:auto;font-size:11px;color:var(--text3)" id="table-count-label">— records</span>
+    </div>
+    <div class="card">
+      <div class="table-wrap">
+        <table id="main-table">
+          <thead>
+            <tr>
+              <th onclick="sortTable('no')" data-sort="no">No <span class="sort-icon">↕</span></th>
+              <th onclick="sortTable('unit')" data-sort="unit">Unit <span class="sort-icon">↕</span></th>
+              <th onclick="sortTable('judul')" data-sort="judul">Judul <span class="sort-icon">↕</span></th>
+              <th onclick="sortTable('jenis')" data-sort="jenis">Jenis <span class="sort-icon">↕</span></th>
+              <th onclick="sortTable('jadwal')" data-sort="jadwal">Jadwal <span class="sort-icon">↕</span></th>
+              <th onclick="sortTable('tahun')" data-sort="tahun">Tahun <span class="sort-icon">↕</span></th>
+              <th onclick="sortTable('cluster')" data-sort="cluster">Cluster <span class="sort-icon">↕</span></th>
+              <th>Channel</th>
+              <th onclick="sortTable('status')" data-sort="status">Status <span class="sort-icon">↕</span></th>
+              <th>Detail</th>
+            </tr>
+          </thead>
+          <tbody id="main-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div><!-- .main -->
+
+<!-- ═══════════════════ MODAL ═══════════════════ -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+  <div class="modal" id="modal-content">
+    <div class="modal-close" onclick="closeModal()"><i class="fa-solid fa-xmark"></i></div>
+    <h2 id="modal-title"></h2>
+    <div class="modal-meta" id="modal-meta"></div>
+    <div class="modal-section">
+      <h4><i class="fa-solid fa-satellite-dish"></i> Channel Publikasi</h4>
+      <div class="channel-row" id="modal-channels"></div>
+    </div>
+    <div class="modal-section" id="modal-ket-section" style="display:none">
+      <h4><i class="fa-solid fa-file-lines"></i> Keterangan</h4>
+      <div class="modal-keterangan" id="modal-ket"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     INLINE SVG ICON DEFINITIONS (used by channel cards)
+     ══════════════════════════════════════════════════════════ -->
+<svg style="display:none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Jurnal / Book -->
+    <symbol id="icon-jurnal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/>
+    </symbol>
+    <!-- Media Online / Newspaper -->
+    <symbol id="icon-media" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4 22h16a2 2 0 002-2V4a2 2 0 00-2-2H8a2 2 0 00-2 2v16a2 2 0 01-2 2zm0 0a2 2 0 01-2-2v-9c0-1.1.9-2 2-2h2"/>
+      <path d="M18 14H12M18 18H12M18 10h-2M9 9h1"/>
+    </symbol>
+    <!-- Website / Globe -->
+    <symbol id="icon-globe" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/>
+    </symbol>
+    <!-- Website Unit / Building -->
+    <symbol id="icon-building" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h1M9 12h1M9 15h1M14 9h1M14 12h1M14 15h1M9 21V3"/>
+    </symbol>
+    <!-- Instagram -->
+    <symbol id="icon-instagram" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+      <path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/>
+      <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
+    </symbol>
+    <!-- YouTube -->
+    <symbol id="icon-youtube" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M22.54 6.42a2.78 2.78 0 00-1.95-1.95C18.88 4 12 4 12 4s-6.88 0-8.59.47A2.78 2.78 0 001.46 6.42 29 29 0 001 12a29 29 0 00.46 5.58 2.78 2.78 0 001.95 1.95C5.12 20 12 20 12 20s6.88 0 8.59-.47a2.78 2.78 0 001.95-1.95A29 29 0 0023 12a29 29 0 00-.46-5.58z"/>
+      <polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02"/>
+    </symbol>
+    <!-- Camera / IG Unit alt -->
+    <symbol id="icon-camera" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/>
+      <circle cx="12" cy="13" r="4"/>
+    </symbol>
+    <!-- Play / YT Unit alt -->
+    <symbol id="icon-play" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10"/>
+      <polygon points="10 8 16 12 10 16 10 8"/>
+    </symbol>
+  </defs>
+</svg>
+
+<script>
+/* ══════════════════════════════════════════════════════════
+   DATASET
+   ══════════════════════════════════════════════════════════ */
+const RAW = [
+  {no:1,  unit:"SKPP",                        judul:"Survei Optimalisasi Akses Layanan Kesehatan",                                                               jenis:"",                            jadwal:"",             tahun:"2025",cluster:"Prioritas Presiden",          jurnal:"",   media:"Link",webLAN:"Link",   webUnit:"Link 1|Link 2",igLAN:"",     igUnit:"Link 1|Link 2",ytLAN:"",   ytUnit:"",ket:""},
+  {no:2,  unit:"DAPKK",                       judul:"Survei Disrupsi Pekerjaan dan Keterampilan Strategis (Top Skills ASN)",                                     jenis:"",                            jadwal:"",             tahun:"2025",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",   media:"Link",webLAN:"Link",   webUnit:"Link",          igLAN:"",     igUnit:"Link",        ytLAN:"",   ytUnit:"",ket:""},
+  {no:3,  unit:"SKMP",                        judul:"Survei Indeks Kesehatan Organisasi (OHI)",                                                                  jenis:"",                            jadwal:"",             tahun:"2025",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",   media:"Link",webLAN:"Link",   webUnit:"",              igLAN:"Link", igUnit:"",            ytLAN:"Link",ytUnit:"",ket:""},
+  {no:4,  unit:"SKPP",                        judul:"Kemudahan Penanaman Modal di Daerah",                                                                       jenis:"",                            jadwal:"",             tahun:"2025",cluster:"Prioritas Presiden",          jurnal:"",   media:"Link",webLAN:"Link 1|Link 2",webUnit:"",    igLAN:"",     igUnit:"",            ytLAN:"",   ytUnit:"",ket:""},
+  {no:5,  unit:"SKTAN",                       judul:"Implementasi Penerapan Manajemen Talenta di Lingkungan Pemerintah Daerah",                                  jenis:"",                            jadwal:"",             tahun:"2025",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",   media:"Link",webLAN:"Link 1|Link 2|Link 3|Link 4|Link 5|Link 6|Link 7",webUnit:"",igLAN:"",igUnit:"Link 1|Link 2",ytLAN:"Link",ytUnit:"",ket:""},
+  {no:6,  unit:"STIA JKT|STIA MKS|STIA BDG", judul:"Survei Birokrasi Melayani Outlook",                                                                        jenis:"",                            jadwal:"",             tahun:"2025",cluster:"Pelayanan Publik",            jurnal:"",   media:"",   webLAN:"Link",   webUnit:"",              igLAN:"",     igUnit:"",            ytLAN:"",   ytUnit:"",ket:""},
+  {no:7,  unit:"DAPKK",                       judul:"Survei Future Jobs and Skills Sektor Ketahanan Pangan",                                                     jenis:"",                            jadwal:"",             tahun:"2025",cluster:"Prioritas Presiden",          jurnal:"",   media:"Link",webLAN:"",       webUnit:"",              igLAN:"",     igUnit:"",            ytLAN:"",   ytUnit:"",ket:""},
+  {no:8,  unit:"SKMK",                        judul:"Survei Efektivitas Kinerja Jabatan Fungsional",                                                             jenis:"",                            jadwal:"",             tahun:"2025",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",   media:"Link",webLAN:"Link 1|Link 2",webUnit:"",    igLAN:"",     igUnit:"Link",        ytLAN:"",   ytUnit:"",ket:""},
+  {no:9,  unit:"SKPP",                        judul:"Customer Journey Pelayanan Publik Instansi Pemerintah",                                                     jenis:"",                            jadwal:"",             tahun:"2025",cluster:"Pelayanan Publik",            jurnal:"",   media:"Link",webLAN:"Link 1|Link 2",webUnit:"",    igLAN:"",     igUnit:"",            ytLAN:"",   ytUnit:"",ket:""},
+  {no:10, unit:"SKTAN",                       judul:"Persepsi Masyarakat dan Birokrasi terhadap kompetensi dan nilai ASN",                                       jenis:"",                            jadwal:"",             tahun:"2025",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",   media:"",   webLAN:"Link 1|Link 2|Link 3|Link 4",webUnit:"",igLAN:"",igUnit:"",ytLAN:"",ytUnit:"",ket:""},
+  {no:11, unit:"DAPKK",                       judul:"Survei Produktivitas Sektor Publik Pertanian dengan Pendekatan APO",                                        jenis:"",                            jadwal:"",             tahun:"2025",cluster:"Prioritas Presiden",          jurnal:"",   media:"Link",webLAN:"",       webUnit:"",              igLAN:"",     igUnit:"",            ytLAN:"",   ytUnit:"",ket:""},
+  {no:12, unit:"SKMP",                        judul:"Survei Strategi Peningkatan Tata Kelola BUMDes",                                                            jenis:"",                            jadwal:"",             tahun:"2025",cluster:"Prioritas Presiden",          jurnal:"",   media:"Link",webLAN:"Link",   webUnit:"",              igLAN:"Link", igUnit:"",            ytLAN:"Link",ytUnit:"",ket:""},
+  {no:13, unit:"SKMK",                        judul:"Survei Strategi Peningkatan Kinerja ASN di Era Efisiensi Anggaran",                                         jenis:"",                            jadwal:"",             tahun:"2025",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",   media:"Link",webLAN:"Link 1|Link 2|Link 3",webUnit:"",igLAN:"",igUnit:"",ytLAN:"",ytUnit:"",ket:""},
+  {no:14, unit:"STIA JKT",                    judul:"Flexible Working Arrangement untuk Pegawai Perempuan ASN dan Swasta",                                       jenis:"Jurnal/Penelitian Kolaborasi",jadwal:"",             tahun:"2025",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",   media:"",   webLAN:"",       webUnit:"",              igLAN:"",     igUnit:"",            ytLAN:"",   ytUnit:"",ket:"Materi sudah dipaparkan di depan DFT Australia. Sudah coba dikirim ke jurnal tapi belum diterima"},
+  {no:15, unit:"DAPKK",                       judul:"Ekosistem Inovasi",                                                                                         jenis:"Buku",                        jadwal:"",             tahun:"2025",cluster:"Digitalisasi",               jurnal:"",   media:"Link",webLAN:"",       webUnit:"",              igLAN:"",     igUnit:"",            ytLAN:"",   ytUnit:"",ket:""},
+  {no:16, unit:"SKTAN",                       judul:"Survei persepsi alumni terkait dampak pelatihan kepemimpinan terhadap manajemen karir",                     jenis:"Jurnal/Penelitian",           jadwal:"Januari (1)",  tahun:"2026",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",   media:"",   webLAN:"Link",   webUnit:"",              igLAN:"",     igUnit:"link",        ytLAN:"link",ytUnit:"",ket:"Selesai\ndengan publikasi di Prosiding dan youtube"},
+  {no:17, unit:"STIA BDG",                    judul:"Survey Budaya Kerja ASN",                                                                                   jenis:"",                            jadwal:"Januari (4)",  tahun:"2026",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",   media:"Link",webLAN:"",       webUnit:"",              igLAN:"",     igUnit:"",            ytLAN:"",   ytUnit:"Link",ket:"Selesai\ndengan publikasi di website lan dan podcast di youtube Poltek"},
+  {no:18, unit:"STIA MKS",                    judul:"Survei Kesiapan Pemerintah Desa/Kelurahan dalam Mengelola Koperasi Merah Putih",                            jenis:"Policy Paper",                jadwal:"Februari (3)", tahun:"2026",cluster:"Prioritas Presiden",          jurnal:"",   media:"",   webLAN:"Link",   webUnit:"",              igLAN:"",     igUnit:"Link 1|Link 2",ytLAN:"Link 1|Link 2",ytUnit:"",ket:"Selesai\ndengan publikasi di website Poltek dan Podcast di LAN dan Poltek"},
+  {no:19, unit:"DSPK2AN",                     judul:"Survei Indonesia Leadership Outlook 2026",                                                                   jenis:"Laporan",                     jadwal:"Februari (4)", tahun:"2026",cluster:"Digitalisasi",               jurnal:"",   media:"Link",webLAN:"Link",   webUnit:"Link 1|Link 2", igLAN:"Link 1|Link 2",igUnit:"Link 1|Link 2|Link 3",ytLAN:"Link 1|Link 2|Link 3",ytUnit:"",ket:"Selesai\ndengan publikasi di Website LAN, Instagram LAN & D1 (Infografis & Podcast), dan Youtube LAN (Podcast)"},
+  {no:20, unit:"STIA BDG",                    judul:"Difusi Inovasi",                                                                                             jenis:"",                            jadwal:"Maret (1)",    tahun:"2026",cluster:"Digitalisasi",               jurnal:"",   media:"Link",webLAN:"",       webUnit:"",              igLAN:"",     igUnit:"",            ytLAN:"Link",ytUnit:"Link",ket:"Selesai\ndengan publikasi di Website LAN dan Youtube LAN & Poltek (Podcast)"},
+  {no:21, unit:"DAPKK",                       judul:"Desain kelembagaan pengentasan kemiskinan",                                                                 jenis:"",                            jadwal:"Maret (4)",    tahun:"2026",cluster:"Prioritas Presiden",          jurnal:"",   media:"Link",webLAN:"Link",   webUnit:"Link 1|Link 2", igLAN:"Link 1|Link 2",igUnit:"Link 1|Link 2",ytLAN:"Link 1|Link 2",ytUnit:"",ket:"Selesai\ndengan publikasi di Website LAN, Instagram LAN & D1 (Podcast), dan Youtube LAN (Podcast)"},
+  {no:22, unit:"SKMP",                        judul:"Kesiapan dan kebutuhan kompetensi ASN muda dalam mendukung komponen cadangan pertahanan negara",            jenis:"",                            jadwal:"April (1)",    tahun:"2026",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",   media:"",   webLAN:"Link",   webUnit:"",              igLAN:"",     igUnit:"Link",        ytLAN:"Link",ytUnit:"",ket:"Selesai\ndengan publikasi di Website (Media Berita Online) dan Youtube LAN dan Pusjar (Podcast)"},
+  {no:23, unit:"SKPP",                        judul:"Efektifitas layanan call center di daerah",                                                                 jenis:"",                            jadwal:"April (3)",    tahun:"2026",cluster:"Pelayanan Publik",            jurnal:"",   media:"Link",webLAN:"Link 1|Link 2",webUnit:"",    igLAN:"",     igUnit:"Link",        ytLAN:"Link",ytUnit:"Link",ket:"Selesai\ndengan publikasi di Website Pusjar & Online (Media Indonesia), Instagram Pusjar (Podcast), dan Youtube LAN & Pusjar (Podcast)"},
+  {no:24, unit:"STIA JKT|STIA MKS|STIA BDG", judul:"Birokrasi melayani outlook",                                                                                jenis:"",                            jadwal:"Mei (1)",      tahun:"2026",cluster:"Pelayanan Publik",            jurnal:"",   media:"",   webLAN:"",       webUnit:"",              igLAN:"",     igUnit:"",            ytLAN:"",   ytUnit:"",ket:"Belum Selesai\nBelum dilanjutkan berhubung banyak kegiatan relatif bertumpuk"},
+  {no:25, unit:"SKMK",                        judul:"Survei Resiliensi ASN dalam situasi Krisis Bencana",                                                        jenis:"",                            jadwal:"Mei (2)",      tahun:"2026",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",   media:"",   webLAN:"",       webUnit:"",              igLAN:"",     igUnit:"",            ytLAN:"",   ytUnit:"",ket:"Belum Selesai\nSudah disusun policy brief dan akan dilakukan webinar tgl 14 Oktober 2026"},
+  {no:26, unit:"DAPKK",                       judul:"Monitoring dan Evaluasi Sekolah Rakyat",                                                                    jenis:"",                            jadwal:"Mei (4)",      tahun:"2026",cluster:"Prioritas Presiden",          jurnal:"",   media:"Link",webLAN:"Link",   webUnit:"",              igLAN:"",     igUnit:"Link",        ytLAN:"Link",ytUnit:"",ket:"Selesai\ndengan publikasi di Website LAN dan Youtube LAN (Podcast)"},
+  {no:27, unit:"SKMP",                        judul:"Strategi adaptasi fiskal Pemda terhadap pemangkasan dana transfer ke daerah dalam APBN 2026",               jenis:"",                            jadwal:"Juni (1)",     tahun:"2026",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",   media:"",   webLAN:"",       webUnit:"",              igLAN:"",     igUnit:"",            ytLAN:"",   ytUnit:"",ket:"Belum Selesai\nSudah dilakukan pengumpulan data namun belum ada penambahan jumlah responden (masih 28)"},
+  {no:28, unit:"STIA JKT",                    judul:"Survey Kualitatif Sistem Penilaian Integritas: Integritas Masih Sebatas Jargon?",                           jenis:"Policy Brief",                jadwal:"Juni (2)",     tahun:"2026",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",   media:"Link",webLAN:"",       webUnit:"Link",          igLAN:"Link", igUnit:"Link",        ytLAN:"",   ytUnit:"",ket:"Selesai\ndengan publikasi di Website LAN, Instagram LAN (Podcast), Instagram Unit & D1 (Podcast), dan Youtube LAN (Podcast)"},
+  {no:29, unit:"STIA MKS",                    judul:"Preferensi pilihan karier Gen Z untuk menjadi ASN",                                                         jenis:"",                            jadwal:"Juni (3)",     tahun:"2026",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",   media:"",   webLAN:"",       webUnit:"",              igLAN:"",     igUnit:"",            ytLAN:"",   ytUnit:"",ket:"Belum Selesai\nSedang dilakukan penyebaran instrumen survei."},
+  {no:30, unit:"SKTAN",                       judul:"Preferensi pilihan karier ASN Gen Z",                                                                       jenis:"Policy Brief",                jadwal:"Juli (1)",     tahun:"2026",cluster:"Tata Kelola & Manajemen ASN",jurnal:"Opini di Ayobandung Link 2",media:"",webLAN:"link",webUnit:"",igLAN:"Instagram",igUnit:"Link",ytLAN:"Link",ytUnit:"",ket:"Belum Selesai (Policy Paper & Publikasi).\nPublikasi baru di Instagram Pusjar & D1 (Infografis)"},
+  {no:31, unit:"SKMK",                        judul:"Survei Nasional Kesiapan ASN sebagai Policy Entrepreneur dalam Mendukung Program Prioritas Nasional 2026",  jenis:"",                            jadwal:"Juli (2)",     tahun:"2026",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",   media:"",   webLAN:"",       webUnit:"",              igLAN:"",     igUnit:"",            ytLAN:"",   ytUnit:"",ket:"Belum Selesai\nSedang dilakukan penyempurnaan instrumen"},
+  {no:32, unit:"SKPP",                        judul:"Penguatan layanan tanggap bencana di daerah",                                                               jenis:"",                            jadwal:"Juli (3)",     tahun:"2026",cluster:"Pelayanan Publik",            jurnal:"",   media:"Link",webLAN:"Link",   webUnit:"",              igLAN:"",     igUnit:"Link",        ytLAN:"",   ytUnit:"Link",ket:"Selesai dengan publikasi di Website Pusjar, Instagram Pusjar (Dokumentasi Webinar), dan Youtube Pusjar (Webinar)."},
+  {no:33, unit:"STIA JKT|STIA MKS|STIA BDG", judul:"Organizational Trend in Indonesia's Public Sector",                                                        jenis:"",                            jadwal:"Agustus (1)",  tahun:"2026",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",   media:"",   webLAN:"",       webUnit:"",              igLAN:"",     igUnit:"",            ytLAN:"",   ytUnit:"",ket:"Belum Selesai\nSedang dilakukan penyusunan instrumen survei."},
+  {no:34, unit:"SKPP",                        judul:"Pelayanan Publik Outlook",                                                                                  jenis:"",                            jadwal:"Agustus (2)",  tahun:"2026",cluster:"Pelayanan Publik",            jurnal:"",   media:"Link",webLAN:"",       webUnit:"",              igLAN:"Link", igUnit:"",            ytLAN:"",   ytUnit:"",ket:"Selesai dengan publikasi di instagram"},
+  {no:35, unit:"SKTAN",                       judul:"Survei Kesiapan Operasional Koperasi Desa Merah Putih di Desa",                                             jenis:"",                            jadwal:"Agustus (3)",  tahun:"2026",cluster:"Prioritas Presiden",          jurnal:"",   media:"",   webLAN:"",       webUnit:"",              igLAN:"",     igUnit:"Link",        ytLAN:"",   ytUnit:"",ket:"Belum Selesai\nSedang dilakukan review policy brief oleh Deputi"},
+  {no:36, unit:"SKMK",                        judul:"Menyusun proses bisnis continuity dan disaster recovery serta SOP darurat",                                 jenis:"",                            jadwal:"Agustus (4)",  tahun:"2026",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",   media:"",   webLAN:"",       webUnit:"",              igLAN:"",     igUnit:"",            ytLAN:"",   ytUnit:"",ket:"Belum Selesai\nSedang dalam tahap penyempurnaan Policy Brief"},
+  {no:37, unit:"STIA MKS",                    judul:"Pemberantasan kemiskinan",                                                                                  jenis:"",                            jadwal:"September (1)",tahun:"2026",cluster:"Prioritas Presiden",          jurnal:"",   media:"",   webLAN:"",       webUnit:"",              igLAN:"",     igUnit:"",            ytLAN:"",   ytUnit:"",ket:"Belum Selesai\nSedang dilakukan penyebaran instrumen survei."},
+  {no:38, unit:"DAPKK",                       judul:"Workplace trend",                                                                                           jenis:"",                            jadwal:"September (2)",tahun:"2026",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",   media:"",   webLAN:"",       webUnit:"",              igLAN:"Link", igUnit:"",            ytLAN:"",   ytUnit:"",ket:"Belum Selesai\nSedang dilakukan pengolahan data"},
+  {no:39, unit:"SKTAN",                       judul:"Pelestarian lingkungan hidup / Transformasi Kebijakan Lingkungan",                                          jenis:"Policy Brief",                jadwal:"September (3)",tahun:"2026",cluster:"Prioritas Presiden",          jurnal:"",   media:"",   webLAN:"",       webUnit:"",              igLAN:"",     igUnit:"link",        ytLAN:"",   ytUnit:"",ket:"Belum Selesai\nSedang dilakukan review policy brief oleh deputi"},
+  {no:40, unit:"DSPK2AN",                     judul:"Reformasi Tata Kelola Makan Bergizi Gratis (MBG)",                                                         jenis:"Policy Paper",                jadwal:"September (4)",tahun:"2026",cluster:"Prioritas Presiden",          jurnal:"",   media:"",   webLAN:"Link",   webUnit:"",              igLAN:"",     igUnit:"",            ytLAN:"",   ytUnit:"",ket:"Belum Selesai\nSudah ada Policy Paper"},
+  {no:41, unit:"SKPP",                        judul:"Fenomena Polyworking di kalangan ASN",                                                                      jenis:"",                            jadwal:"September (4)",tahun:"2026",cluster:"Tata Kelola & Manajemen ASN",jurnal:"link",media:"Link",webLAN:"link", webUnit:"",              igLAN:"Link", igUnit:"-",           ytLAN:"Link",ytUnit:"",ket:"Selesai\ndengan publikasi di Website Pusjar, Instagram Pusjar (Dokumentasi Webinar), dan Youtube Pusjar (Webinar)"},
+  {no:42, unit:"STIA JKT|STIA MKS|STIA BDG", judul:"Regenerative Leadership",                                                                                  jenis:"",                            jadwal:"Oktober (1)",  tahun:"2026",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",   media:"",   webLAN:"",       webUnit:"",              igLAN:"",     igUnit:"",            ytLAN:"",   ytUnit:"",ket:"Belum Selesai\nSedang dalam tahap persiapan"},
+  {no:43, unit:"SKMK",                        judul:"Evaluasi Kebijakan Makan Bergizi Gratis",                                                                   jenis:"",                            jadwal:"Oktober (1)",  tahun:"2026",cluster:"Prioritas Presiden",          jurnal:"",   media:"",   webLAN:"",       webUnit:"",              igLAN:"",     igUnit:"",            ytLAN:"",   ytUnit:"",ket:"Belum Selesai\nSedang dilakukan penyusunan Policy Brief"},
+  {no:44, unit:"DSPK2AN",                     judul:"Penguatan Kebijakan Kedaulatan Pangan Nasional",                                                            jenis:"Policy Brief",                jadwal:"Oktober (2)",  tahun:"2026",cluster:"Prioritas Presiden",          jurnal:"",   media:"",   webLAN:"Link",   webUnit:"",              igLAN:"Link", igUnit:"",            ytLAN:"",   ytUnit:"",ket:"Belum Selesai\nSedang disusun Policy Brief\nPublikasi baru informasi kegiatan"},
+  {no:45, unit:"SKMP",                        judul:"Persepsi ASN mengenai Upaya Penguatan/Pembentukan Lembaga Pengawas sistem merit",                           jenis:"",                            jadwal:"Oktober (2)",  tahun:"2026",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",   media:"",   webLAN:"",       webUnit:"",              igLAN:"",     igUnit:"",            ytLAN:"",   ytUnit:"",ket:""},
+  {no:46, unit:"DAPKK",                       judul:"Survei Perilaku Kepemimpinan Adaptif Berdasarkan Persepsi Aparatur Sipil Negara",                           jenis:"",                            jadwal:"Oktober (3)",  tahun:"2026",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",   media:"",   webLAN:"",       webUnit:"",              igLAN:"",     igUnit:"",            ytLAN:"",   ytUnit:"",ket:""},
+  {no:47, unit:"SKTAN",                       judul:"Ketahanan pangan sebagai fondasi kemandirian bangsa",                                                       jenis:"",                            jadwal:"Oktober (4)",  tahun:"2026",cluster:"Prioritas Presiden",          jurnal:"",   media:"",   webLAN:"",       webUnit:"",              igLAN:"",     igUnit:"",            ytLAN:"",   ytUnit:"",ket:"Sedang dilakukan penyusunan instrumen"},
+  {no:48, unit:"STIA JKT",                    judul:"Pendidikan bermutu untuk SDM berdaya saing global",                                                         jenis:"",                            jadwal:"November (1)", tahun:"2026",cluster:"Prioritas Presiden",          jurnal:"",   media:"",   webLAN:"",       webUnit:"",              igLAN:"",     igUnit:"",            ytLAN:"",   ytUnit:"",ket:""},
+  {no:49, unit:"STIA BDG",                    judul:"Program Pemberdayaan dan Kesiapan Masa Depan Siswa Sekolah Rakyat",                                         jenis:"",                            jadwal:"November (2)", tahun:"2026",cluster:"Prioritas Presiden",          jurnal:"",   media:"",   webLAN:"",       webUnit:"",              igLAN:"",     igUnit:"",            ytLAN:"",   ytUnit:"",ket:""},
+  {no:50, unit:"SKMP",                        judul:"Persepsi masyarakat terhadap peran opini publik/agenda kebijakan pemerintah",                               jenis:"",                            jadwal:"November (3)", tahun:"2026",cluster:"Prioritas Presiden",          jurnal:"",   media:"",   webLAN:"",       webUnit:"",              igLAN:"",     igUnit:"",            ytLAN:"",   ytUnit:"",ket:""},
+  {no:51, unit:"SKPP",                        judul:"Penguatan kebijakan ekonomi hijau dalam mendukung hilirisasi berkelanjutan",                                 jenis:"",                            jadwal:"November (4)", tahun:"2026",cluster:"Prioritas Presiden",          jurnal:"link",media:"",  webLAN:"",       webUnit:"",              igLAN:"",     igUnit:"Link",        ytLAN:"",   ytUnit:"",ket:"Sudah dilakukan ekspose kegiatan dan saat ini sedang disusun PB"},
+  {no:52, unit:"SKTAN",                       judul:"Learning agility ASN dalam mendukung Pendidikan vokasi dan peningkatan kualitas guru",                      jenis:"",                            jadwal:"Desember (1)", tahun:"2026",cluster:"Prioritas Presiden",          jurnal:"",   media:"",   webLAN:"",       webUnit:"",              igLAN:"",     igUnit:"",            ytLAN:"",   ytUnit:"",ket:"Sedang dilakukan penyusunan instrumen"},
+  {no:53, unit:"SKPP",                        judul:"Survei Tata Kelola dan Kualitas Pelayanan Program Bantuan Sosial",                                          jenis:"",                            jadwal:"Desember (1)", tahun:"",    cluster:"",                           jurnal:"",   media:"",   webLAN:"",       webUnit:"",              igLAN:"",     igUnit:"",            ytLAN:"",   ytUnit:"",ket:""},
+  {no:54, unit:"DSPK2AN",                     judul:"Analisis Pemantauan dan Solusi atas Program Prioritas Nasional",                                            jenis:"",                            jadwal:"Desember (2)", tahun:"2026",cluster:"Prioritas Presiden",          jurnal:"",   media:"",   webLAN:"",       webUnit:"",              igLAN:"",     igUnit:"",            ytLAN:"",   ytUnit:"",ket:""},
+  {no:55, unit:"SKPP",                        judul:"Survei Integrasi Pelayanan Publik",                                                                         jenis:"",                            jadwal:"Desember (2)", tahun:"",    cluster:"",                           jurnal:"",   media:"",   webLAN:"",       webUnit:"",              igLAN:"",     igUnit:"",            ytLAN:"",   ytUnit:"",ket:""},
+  {no:56, unit:"DSPK2AN",                     judul:"Survei Indonesia Leadership Outlook 2027",                                                                  jenis:"Laporan",                     jadwal:"Desember (3)", tahun:"2026",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",   media:"",   webLAN:"",       webUnit:"",              igLAN:"",     igUnit:"",            ytLAN:"",   ytUnit:"",ket:""},
+];
+
+/* ══════════════════════════════════════════════════════════
+   CONSTANTS & HELPERS
+   ══════════════════════════════════════════════════════════ */
+const MONTH_ORDER = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
+
+const UNIT_COLORS = {
+  "SKPP":    {bg:"#dbeafe", text:"#1d4ed8", bar:"#3b82f6"},
+  "DAPKK":  {bg:"#dcfce7", text:"#15803d", bar:"#22c55e"},
+  "SKMP":   {bg:"#fef9c3", text:"#a16207", bar:"#eab308"},
+  "SKTAN":  {bg:"#ede9fe", text:"#6d28d9", bar:"#8b5cf6"},
+  "SKMK":   {bg:"#fee2e2", text:"#b91c1c", bar:"#ef4444"},
+  "STIA JKT":{bg:"#ccfbf1",text:"#0f766e", bar:"#14b8a6"},
+  "STIA MKS":{bg:"#fce7f3",text:"#9d174d", bar:"#ec4899"},
+  "STIA BDG":{bg:"#fff7ed",text:"#c2410c", bar:"#f97316"},
+  "DSPK2AN":{bg:"#e0f2fe", text:"#075985", bar:"#0ea5e9"},
+  "MULTI":  {bg:"#f1f5f9", text:"#475569", bar:"#94a3b8"},
+};
+const CLUSTER_COLORS = {
+  "Prioritas Presiden":          {bg:"#fee2e2", text:"#b91c1c", bar:"#ef4444"},
+  "Tata Kelola & Manajemen ASN": {bg:"#dbeafe", text:"#1d4ed8", bar:"#3b82f6"},
+  "Pelayanan Publik":            {bg:"#dcfce7", text:"#15803d", bar:"#22c55e"},
+  "Digitalisasi":                {bg:"#ede9fe", text:"#6d28d9", bar:"#8b5cf6"},
+};
+
+const CHANNEL_DEFS = [
+  {label:"Jurnal",        sublabel:"Artikel Ilmiah",   field:"jurnal",  iconId:"icon-jurnal",    color:"#d97706", bg:"#fffbeb", border:"#fde68a"},
+  {label:"Media Online",  sublabel:"Berita Daring",    field:"media",   iconId:"icon-media",     color:"#2563eb", bg:"#eff6ff", border:"#bfdbfe"},
+  {label:"Website LAN",   sublabel:"Portal Resmi LAN", field:"webLAN",  iconId:"icon-globe",     color:"#059669", bg:"#ecfdf5", border:"#a7f3d0"},
+  {label:"Website Unit",  sublabel:"Portal Unit Kerja",field:"webUnit", iconId:"icon-building",  color:"#ea580c", bg:"#fff7ed", border:"#fed7aa"},
+  {label:"Instagram LAN", sublabel:"Akun Resmi LAN",   field:"igLAN",   iconId:"icon-instagram", color:"#7c3aed", bg:"#f5f3ff", border:"#ddd6fe"},
+  {label:"Instagram Unit",sublabel:"Akun Unit Kerja",  field:"igUnit",  iconId:"icon-camera",    color:"#db2777", bg:"#fdf2f8", border:"#fbcfe8"},
+  {label:"YouTube LAN",   sublabel:"Kanal Resmi LAN",  field:"ytLAN",   iconId:"icon-youtube",   color:"#dc2626", bg:"#fef2f2", border:"#fecaca"},
+  {label:"YouTube Unit",  sublabel:"Kanal Unit Kerja", field:"ytUnit",  iconId:"icon-play",      color:"#0891b2", bg:"#ecfeff", border:"#a5f3fc"},
+];
+
+function hasLink(val){ return val && val.trim() !== "" && val.trim() !== "-"; }
+function countLinks(val){ if(!hasLink(val)) return 0; return val.split("|").filter(v=>hasLink(v)).length; }
+
+function getStatus(d){
+  const k = (d.ket||"").toLowerCase().trim();
+  if(k.startsWith("selesai")) return "selesai";
+  if(k.includes("belum selesai") || k.startsWith("belum")) return "belum";
+  return "planned";
+}
+
+function getMonthNum(j){ if(!j) return 13; for(let i=0;i<MONTH_ORDER.length;i++){ if(j.toLowerCase().includes(MONTH_ORDER[i].toLowerCase())) return i; } return 13; }
+function getWeekNum(j){ if(!j) return 0; const m=j.match(/\((\d)\)/); return m?parseInt(m[1]):0; }
+function getPrimaryUnit(u){ if(!u) return "Unknown"; const p=u.split("|"); return p.length>1?"MULTI":p[0].trim(); }
+function getAllUnits(u){ if(!u) return []; return u.split("|").map(x=>x.trim()); }
+function getChannelCount(d){ return CHANNEL_DEFS.filter(c=>hasLink(d[c.field])).length; }
+
+function statusBadge(st){
+  if(st==="selesai") return `<span class="badge badge-green"><i class="fa-solid fa-check" style="font-size:9px"></i> Selesai</span>`;
+  if(st==="belum")   return `<span class="badge badge-red"><i class="fa-solid fa-clock" style="font-size:9px"></i> Belum Selesai</span>`;
+  return `<span class="badge badge-gray"><i class="fa-solid fa-hourglass" style="font-size:9px"></i> Perencanaan</span>`;
+}
+
+function svgIcon(id){ return `<svg><use href="#${id}"/></svg>`; }
+
+/* ══════════════════════════════════════════════════════════
+   FILTER STATE
+   ══════════════════════════════════════════════════════════ */
+let filteredData = [...RAW];
+let sortState = {key:'no', dir:1};
+
+function applyFilters(){
+  const year=document.getElementById('f-year').value, unit=document.getElementById('f-unit').value,
+        cluster=document.getElementById('f-cluster').value, status=document.getElementById('f-status').value;
+  filteredData = RAW.filter(d=>{
+    if(year    && d.tahun!==year) return false;
+    if(unit    && !d.unit.includes(unit)) return false;
+    if(cluster && d.cluster!==cluster) return false;
+    if(status  && getStatus(d)!==status) return false;
+    return true;
+  });
+  renderKPIs(); renderCharts();
+}
+function resetFilters(){
+  ['f-year','f-unit','f-cluster','f-status'].forEach(id=>document.getElementById(id).value='');
+  filteredData=[...RAW]; renderKPIs(); renderCharts();
+}
+
+/* ══════════════════════════════════════════════════════════
+   DROPDOWNS
+   ══════════════════════════════════════════════════════════ */
+function populateDropdowns(){
+  const units=[...new Set(RAW.flatMap(d=>getAllUnits(d.unit)))].sort();
+  const clusters=[...new Set(RAW.map(d=>d.cluster).filter(Boolean))].sort();
+  ['f-unit','r-unit'].forEach(id=>{ const el=document.getElementById(id); if(!el) return; units.forEach(u=>{ const o=document.createElement('option'); o.value=u; o.textContent=u; el.appendChild(o); }); });
+  ['f-cluster','r-cluster'].forEach(id=>{ const el=document.getElementById(id); if(!el) return; clusters.forEach(c=>{ const o=document.createElement('option'); o.value=c; o.textContent=c; el.appendChild(o); }); });
+}
+
+/* ══════════════════════════════════════════════════════════
+   KPI CARDS
+   ══════════════════════════════════════════════════════════ */
+function renderKPIs(){
+  const data=filteredData, total=data.length;
+  const selesai=data.filter(d=>getStatus(d)==='selesai').length;
+  const belum=data.filter(d=>getStatus(d)==='belum').length;
+  const planned=data.filter(d=>getStatus(d)==='planned').length;
+  const noChannel=data.filter(d=>getChannelCount(d)===0).length;
+  const pct=total?Math.round(selesai/total*100):0;
+  const units2026=[...new Set(data.filter(d=>d.tahun==='2026').map(d=>getPrimaryUnit(d.unit)))].length;
+  const kpis=[
+    {icon:'fa-file-lines', value:total,    label:'Total Publikasi',     sub:'Semua tahun & unit',        color:'#2563eb', ibg:'#eff6ff', delta:null},
+    {icon:'fa-circle-check',value:selesai, label:'Selesai',             sub:`${pct}% completion rate`,   color:'#16a34a', ibg:'#f0fdf4', delta:{cls:'delta-good',text:`${pct}%`}},
+    {icon:'fa-hourglass-half',value:belum, label:'Belum Selesai',       sub:'Memerlukan tindak lanjut',  color:'#dc2626', ibg:'#fef2f2', delta:{cls:'delta-bad',text:`${total?Math.round(belum/total*100):0}%`}},
+    {icon:'fa-calendar',   value:planned,  label:'Dalam Perencanaan',   sub:'Tanpa jadwal/keterangan',   color:'#64748b', ibg:'#f1f5f9', delta:null},
+    {icon:'fa-link-slash', value:noChannel,label:'Tanpa Channel',       sub:'Belum ada link publikasi',  color:'#d97706', ibg:'#fffbeb', delta:{cls:'delta-warn',text:`${total?Math.round(noChannel/total*100):0}%`}},
+    {icon:'fa-building',   value:units2026,label:'Unit Aktif 2026',     sub:'Unit dengan publikasi 2026',color:'#7c3aed', ibg:'#f5f3ff', delta:null},
+  ];
+  document.getElementById('kpi-grid').innerHTML=kpis.map(k=>`
+    <div class="kpi-card" style="--accent-color:${k.color}">
+      ${k.delta?`<div class="kpi-delta ${k.delta.cls}">${k.delta.text}</div>`:''}
+      <div class="kpi-icon" style="background:${k.ibg};color:${k.color}"><i class="fa-solid ${k.icon}"></i></div>
+      <div class="kpi-value" style="color:${k.color}">${k.value}</div>
+      <div class="kpi-label">${k.label}</div>
+      <div class="kpi-sub">${k.sub}</div>
+    </div>`).join('');
+}
+
+/* ══════════════════════════════════════════════════════════
+   CHART CONFIG HELPERS
+   ══════════════════════════════════════════════════════════ */
+let charts={};
+function destroyChart(key){ if(charts[key]){ charts[key].destroy(); delete charts[key]; } }
+
+const CHART_TOOLTIP = {
+  backgroundColor:'#1e293b', borderColor:'#334155', borderWidth:1,
+  titleColor:'#f1f5f9', bodyColor:'#94a3b8', cornerRadius:8, padding:10,
+  titleFont:{family:'Inter',weight:'600',size:12}, bodyFont:{family:'Inter',size:11},
+};
+const CHART_GRID = 'rgba(226,232,240,.7)';
+const TICK_COLOR = '#94a3b8';
+const TICK_FONT = {family:'Inter',size:10};
+const LEGEND_LABEL = {color:'#475569', font:{family:'Inter',size:11}, boxWidth:10, padding:12};
+
+function baseOpts(extra={}){
+  return {
+    maintainAspectRatio:false,
+    plugins:{ legend:{display:false}, datalabels:{display:false}, tooltip:CHART_TOOLTIP },
+    scales:{
+      x:{ticks:{color:TICK_COLOR,font:TICK_FONT}, grid:{color:CHART_GRID}},
+      y:{ticks:{color:TICK_COLOR,font:TICK_FONT}, grid:{color:CHART_GRID}},
+    },
+    ...extra
+  };
+}
+
+/* ══════════════════════════════════════════════════════════
+   RENDER ALL CHARTS
+   ══════════════════════════════════════════════════════════ */
+function renderCharts(){
+  const data=filteredData;
+
+  /* ─── Status Donut ─── */
+  destroyChart('status');
+  const selesai=data.filter(d=>getStatus(d)==='selesai').length;
+  const belum=data.filter(d=>getStatus(d)==='belum').length;
+  const planned=data.filter(d=>getStatus(d)==='planned').length;
+  const statusColors=['#22c55e','#ef4444','#cbd5e1'];
+  charts['status']=new Chart(document.getElementById('chart-status-donut'),{
+    type:'doughnut',
+    data:{labels:['Selesai','Belum Selesai','Perencanaan'],datasets:[{data:[selesai,belum,planned],backgroundColor:statusColors,borderWidth:2,borderColor:'#fff',hoverOffset:5}]},
+    options:{cutout:'72%',maintainAspectRatio:false,plugins:{legend:{display:false},datalabels:{display:false},tooltip:CHART_TOOLTIP}}
+  });
+  document.getElementById('donut-legend').innerHTML=[['Selesai',selesai,'#22c55e'],['Belum Selesai',belum,'#ef4444'],['Perencanaan',planned,'#cbd5e1']].map(([l,v,c])=>
+    `<div class="donut-legend-item"><div class="donut-legend-dot" style="background:${c}"></div><div class="donut-legend-label">${l}</div><div class="donut-legend-value">${v}</div><div class="donut-legend-pct">${data.length?Math.round(v/data.length*100):0}%</div></div>`
+  ).join('');
+
+  /* ─── Monthly Bar ─── */
+  destroyChart('monthly');
+  const data2026=data.filter(d=>d.tahun==='2026'&&d.jadwal);
+  const monthCounts={};
+  MONTH_ORDER.forEach(m=>monthCounts[m]={selesai:0,belum:0,planned:0});
+  data2026.forEach(d=>{ const m=MONTH_ORDER.find(mo=>d.jadwal.toLowerCase().includes(mo.toLowerCase())); if(m) monthCounts[m][getStatus(d)]++; });
+  charts['monthly']=new Chart(document.getElementById('chart-monthly'),{
+    type:'bar',
+    data:{
+      labels:MONTH_ORDER.map(m=>m.slice(0,3)),
+      datasets:[
+        {label:'Selesai',  data:MONTH_ORDER.map(m=>monthCounts[m].selesai), backgroundColor:'rgba(34,197,94,.75)', borderRadius:3,borderSkipped:false},
+        {label:'Belum',    data:MONTH_ORDER.map(m=>monthCounts[m].belum),   backgroundColor:'rgba(239,68,68,.75)', borderRadius:3,borderSkipped:false},
+        {label:'Rencana',  data:MONTH_ORDER.map(m=>monthCounts[m].planned), backgroundColor:'rgba(148,163,184,.5)', borderRadius:3,borderSkipped:false},
+      ]
+    },
+    options:{...baseOpts(),scales:{x:{stacked:true,ticks:{color:TICK_COLOR,font:TICK_FONT},grid:{color:CHART_GRID}},y:{stacked:true,beginAtZero:true,ticks:{color:TICK_COLOR,font:TICK_FONT,stepSize:1},grid:{color:CHART_GRID}}},plugins:{legend:{display:true,position:'top',labels:LEGEND_LABEL},datalabels:{display:false},tooltip:CHART_TOOLTIP}}
+  });
+
+  /* ─── Channel Summary (Professional Cards) ─── */
+  const maxCh=Math.max(...CHANNEL_DEFS.map(cd=>data.filter(d=>hasLink(d[cd.field])).length),1);
+  document.getElementById('channel-summary-grid').innerHTML=CHANNEL_DEFS.map(cd=>{
+    const cnt=data.filter(d=>hasLink(d[cd.field])).length;
+    const pct=data.length?Math.round(cnt/data.length*100):0;
+    const barPct=Math.round(cnt/maxCh*100);
+    return `<div class="channel-card">
+      <div class="channel-icon-wrap" style="background:${cd.bg};border:1.5px solid ${cd.border}">
+        <svg width="22" height="22" style="color:${cd.color}"><use href="#${cd.iconId}"/></svg>
+      </div>
+      <div class="channel-info">
+        <div class="channel-name">${cd.label}</div>
+        <div class="channel-count-badge" style="color:${cd.color}">${cnt}</div>
+        <div class="channel-pct">${pct}% publikasi · ${cd.sublabel}</div>
+        <div class="channel-bar-mini"><div class="channel-bar-fill" style="width:${barPct}%;background:${cd.color}"></div></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  /* ─── Unit Bar ─── */
+  destroyChart('unit-bar');
+  const unitCounts={};
+  data.forEach(d=>getAllUnits(d.unit).forEach(u=>{ unitCounts[u]=(unitCounts[u]||0)+1; }));
+  const unitKeys=Object.keys(unitCounts).sort((a,b)=>unitCounts[b]-unitCounts[a]);
+  document.getElementById('unit-badge').textContent=`${unitKeys.length} unit`;
+  charts['unit-bar']=new Chart(document.getElementById('chart-unit-bar'),{
+    type:'bar',
+    data:{labels:unitKeys,datasets:[{label:'Publikasi',data:unitKeys.map(u=>unitCounts[u]),backgroundColor:unitKeys.map(u=>(UNIT_COLORS[u]||UNIT_COLORS['MULTI']).bar+'cc'),borderRadius:5,borderSkipped:false}]},
+    options:{...baseOpts({indexAxis:'y'}),plugins:{legend:{display:false},datalabels:{display:true,color:'#fff',font:{size:10,weight:'700'},anchor:'end',align:'end',formatter:v=>v>0?v:''},tooltip:CHART_TOOLTIP},scales:{x:{beginAtZero:true,ticks:{color:TICK_COLOR,font:TICK_FONT,stepSize:1},grid:{color:CHART_GRID}},y:{ticks:{color:TICK_COLOR,font:TICK_FONT},grid:{display:false}}}}
+  });
+
+  /* ─── Cluster Bar ─── */
+  destroyChart('cluster-bar');
+  const clusterCounts={};
+  data.forEach(d=>{ if(d.cluster) clusterCounts[d.cluster]=(clusterCounts[d.cluster]||0)+1; });
+  const ck=Object.keys(clusterCounts).sort((a,b)=>clusterCounts[b]-clusterCounts[a]);
+  charts['cluster-bar']=new Chart(document.getElementById('chart-cluster-bar'),{
+    type:'bar',
+    data:{labels:ck.map(c=>c.length>26?c.slice(0,25)+'…':c),datasets:[{label:'Publikasi',data:ck.map(c=>clusterCounts[c]),backgroundColor:ck.map(c=>(CLUSTER_COLORS[c]||{bar:'#94a3b8'}).bar+'cc'),borderRadius:5,borderSkipped:false}]},
+    options:{...baseOpts({indexAxis:'y'}),plugins:{legend:{display:false},datalabels:{display:true,color:'#fff',font:{size:10,weight:'700'},anchor:'end',align:'end'},tooltip:CHART_TOOLTIP},scales:{x:{beginAtZero:true,ticks:{color:TICK_COLOR,font:TICK_FONT,stepSize:1},grid:{color:CHART_GRID}},y:{ticks:{color:TICK_COLOR,font:TICK_FONT},grid:{display:false}}}}
+  });
+
+  /* ─── Type Chart ─── */
+  destroyChart('type');
+  const typeCounts={};
+  data.forEach(d=>{ const t=d.jenis||'Survei/Laporan'; typeCounts[t]=(typeCounts[t]||0)+1; });
+  const tk=Object.keys(typeCounts).sort((a,b)=>typeCounts[b]-typeCounts[a]);
+  const typePalette=['#3b82f6','#22c55e','#8b5cf6','#f97316','#eab308','#ec4899','#14b8a6'];
+  charts['type']=new Chart(document.getElementById('chart-type'),{
+    type:'doughnut',
+    data:{labels:tk,datasets:[{data:tk.map(t=>typeCounts[t]),backgroundColor:tk.map((t,i)=>typePalette[i%typePalette.length]+'cc'),borderWidth:2,borderColor:'#fff',hoverOffset:5}]},
+    options:{cutout:'55%',maintainAspectRatio:false,plugins:{legend:{display:true,position:'right',labels:{...LEGEND_LABEL,padding:8}},datalabels:{display:false},tooltip:CHART_TOOLTIP}}
+  });
+
+  /* ─── Heatmap ─── */
+  renderHeatmap(data);
+  /* ─── Timeline ─── */
+  renderTimeline(data);
+  /* ─── Weekly ─── */
+  renderWeeklyChart(data);
+  /* ─── Cumulative ─── */
+  renderCumulativeChart(data);
+  /* ─── Units Page ─── */
+  renderUnitsPage(data);
+  /* ─── Channels Page ─── */
+  renderChannelsPage(data);
+  /* ─── Alerts Page ─── */
+  renderAlertsPage(data);
+}
+
+/* ══════════════════════════════════════════════════════════
+   HEATMAP
+   ══════════════════════════════════════════════════════════ */
+function renderHeatmap(data){
+  const matrix={};
+  data.filter(d=>d.jadwal).forEach(d=>{
+    const mi=MONTH_ORDER.findIndex(mo=>d.jadwal.toLowerCase().includes(mo.toLowerCase()));
+    const w=getWeekNum(d.jadwal);
+    if(mi>=0&&w>0) { const k=`${mi}-${w}`; matrix[k]=(matrix[k]||0)+1; }
+  });
+  const max=Math.max(...Object.values(matrix),1);
+  const heatColor=v=>{ if(!v) return '#f1f5f9'; const i=v/max; if(i<0.25) return '#bfdbfe'; if(i<0.5) return '#60a5fa'; if(i<0.75) return '#3b82f6'; return '#1d4ed8'; };
+  const textColor=v=>{ if(!v) return '#94a3b8'; const i=v/max; return i>0.4?'#fff':'#1d4ed8'; };
+  document.getElementById('heatmap-container').innerHTML=`
+    <div style="display:grid;grid-template-columns:auto repeat(12,1fr);gap:3px;font-size:9px;color:#94a3b8;font-family:Inter">
+      <div></div>
+      ${MONTH_ORDER.map(m=>`<div style="text-align:center;padding-bottom:5px;font-weight:600;color:#64748b">${m.slice(0,3)}</div>`).join('')}
+      ${[1,2,3,4].map(w=>`
+        <div style="display:flex;align-items:center;font-weight:700;padding-right:7px;color:#64748b">W${w}</div>
+        ${MONTH_ORDER.map((m,mi)=>{ const v=matrix[`${mi}-${w}`]||0; return `<div class="heatmap-cell" style="background:${heatColor(v)};color:${textColor(v)};height:30px;border-radius:5px" title="${m} Minggu ${w}: ${v} publikasi">${v||''}</div>`; }).join('')}
+      `).join('')}
+    </div>
+    <div class="heatmap-legend">
+      <span>Sedikit</span>
+      ${[0,0.25,0.5,0.75,1].map(i=>`<div class="heatmap-legend-cell" style="background:${heatColor(i*max)}"></div>`).join('')}
+      <span>Banyak</span>
+    </div>`;
+}
+
+/* ══════════════════════════════════════════════════════════
+   TIMELINE
+   ══════════════════════════════════════════════════════════ */
+function renderTimeline(data){
+  const scheduled=data.filter(d=>d.jadwal).sort((a,b)=>{ const ma=getMonthNum(a.jadwal),mb=getMonthNum(b.jadwal); return ma!==mb?ma-mb:getWeekNum(a.jadwal)-getWeekNum(b.jadwal); });
+  document.getElementById('timeline-count').textContent=`${scheduled.length} item`;
+  const byMonth={};
+  scheduled.forEach(d=>{ const m=MONTH_ORDER.find(mo=>d.jadwal.toLowerCase().includes(mo.toLowerCase()))||'Lainnya'; if(!byMonth[m]) byMonth[m]=[]; byMonth[m].push(d); });
+  document.getElementById('timeline-list').innerHTML=Object.entries(byMonth).map(([month,items])=>`
+    <div class="timeline-month">
+      <div class="timeline-month-header">${month}<span class="timeline-month-count">${items.length}</span></div>
+      <div class="timeline-items">
+        ${items.map(d=>{ const st=getStatus(d); const lc=st==='selesai'?'#22c55e':st==='belum'?'#ef4444':'#cbd5e1';
+          return `<div class="timeline-item" style="border-left-color:${lc}" onclick="openModal(${d.no-1})">
+            <div class="timeline-week">Mgg ${getWeekNum(d.jadwal)}</div>
+            <div class="timeline-unit">${getPrimaryUnit(d.unit)}</div>
+            <div class="timeline-title">${d.judul}</div>
+            ${statusBadge(st)}
+          </div>`; }).join('')}
+      </div>
+    </div>`).join('')||'<div class="empty-state"><i class="fa-solid fa-calendar-xmark"></i>Tidak ada jadwal</div>';
+}
+
+/* ══════════════════════════════════════════════════════════
+   WEEKLY & CUMULATIVE CHARTS
+   ══════════════════════════════════════════════════════════ */
+function renderWeeklyChart(data){
+  destroyChart('weekly');
+  const labels=[],counts=[];
+  MONTH_ORDER.forEach((m,mi)=>[1,2,3,4].forEach(w=>{ labels.push(`${m.slice(0,3)} W${w}`); counts.push(data.filter(d=>d.jadwal&&d.jadwal.toLowerCase().includes(m.toLowerCase())&&getWeekNum(d.jadwal)===w).length); }));
+  charts['weekly']=new Chart(document.getElementById('chart-weekly'),{
+    type:'bar',
+    data:{labels,datasets:[{label:'Publikasi',data:counts,backgroundColor:'rgba(59,130,246,.7)',borderRadius:3,borderSkipped:false}]},
+    options:{...baseOpts({indexAxis:'y'}),plugins:{legend:{display:false},datalabels:{display:false},tooltip:CHART_TOOLTIP},scales:{x:{beginAtZero:true,ticks:{color:TICK_COLOR,font:TICK_FONT,stepSize:1},grid:{color:CHART_GRID}},y:{ticks:{color:TICK_COLOR,font:{family:'Inter',size:9}},grid:{display:false}}}}
+  });
+}
+function renderCumulativeChart(data){
+  destroyChart('cumulative');
+  let cs=0,cb=0;const sd=[],bd=[];
+  MONTH_ORDER.forEach(m=>{ const im=data.filter(d=>d.jadwal&&d.jadwal.toLowerCase().includes(m.toLowerCase())); cs+=im.filter(d=>getStatus(d)==='selesai').length; cb+=im.filter(d=>getStatus(d)==='belum').length; sd.push(cs); bd.push(cb); });
+  charts['cumulative']=new Chart(document.getElementById('chart-cumulative'),{
+    type:'line',
+    data:{labels:MONTH_ORDER.map(m=>m.slice(0,3)),datasets:[
+      {label:'Selesai (Kumulatif)',       data:sd,borderColor:'#22c55e',backgroundColor:'rgba(34,197,94,.08)',fill:true,tension:.4,pointRadius:4,pointBackgroundColor:'#22c55e',pointHoverRadius:6},
+      {label:'Belum Selesai (Kumulatif)', data:bd,borderColor:'#ef4444',backgroundColor:'rgba(239,68,68,.08)',fill:true,tension:.4,pointRadius:4,pointBackgroundColor:'#ef4444',pointHoverRadius:6},
+    ]},
+    options:{...baseOpts(),plugins:{legend:{display:true,position:'top',labels:LEGEND_LABEL},datalabels:{display:false},tooltip:CHART_TOOLTIP}}
+  });
+}
+
+/* ══════════════════════════════════════════════════════════
+   UNITS PAGE
+   ══════════════════════════════════════════════════════════ */
+function renderUnitsPage(data){
+  const allUnits=[...new Set(RAW.flatMap(d=>getAllUnits(d.unit)))].sort();
+  const uStats=allUnits.map(u=>{ const ud=data.filter(d=>d.unit.includes(u)); return {unit:u,total:ud.length,selesai:ud.filter(d=>getStatus(d)==='selesai').length,belum:ud.filter(d=>getStatus(d)==='belum').length,planned:ud.filter(d=>getStatus(d)==='planned').length}; }).filter(u=>u.total>0).sort((a,b)=>b.total-a.total);
+
+  document.getElementById('unit-completion-list').innerHTML=uStats.map(u=>{ const pct=u.total?Math.round(u.selesai/u.total*100):0; const uc=UNIT_COLORS[u.unit]||UNIT_COLORS['MULTI'];
+    return `<div class="progress-item">
+      <div class="progress-row">
+        <span class="progress-label"><span class="badge" style="background:${uc.bg};color:${uc.text};border-color:${uc.bg}">${u.unit}</span></span>
+        <span class="progress-count">${u.selesai}/${u.total} · <strong>${pct}%</strong></span>
+      </div>
+      <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:${pct}%;background:${uc.bar}"></div></div>
+    </div>`; }).join('');
+
+  document.getElementById('unit-cards-container').innerHTML=uStats.map(u=>{ const pct=u.total?Math.round(u.selesai/u.total*100):0; const uc=UNIT_COLORS[u.unit]||UNIT_COLORS['MULTI'];
+    return `<div class="kpi-card" style="--accent-color:${uc.bar}">
+      <div class="kpi-icon" style="background:${uc.bg};color:${uc.text}"><i class="fa-solid fa-building"></i></div>
+      <div class="kpi-value" style="color:${uc.text};font-size:20px;margin-bottom:2px">${u.unit}</div>
+      <div class="kpi-label">${u.total} Publikasi</div>
+      <div class="progress-bar-bg" style="margin-top:10px"><div class="progress-bar-fill" style="width:${pct}%;background:${uc.bar}"></div></div>
+      <div class="kpi-sub">${u.selesai} Selesai · ${u.belum} Pending · ${pct}%</div>
+    </div>`; }).join('');
+
+  destroyChart('unit-cluster-stacked');
+  const clusters=[...new Set(RAW.map(d=>d.cluster).filter(Boolean))];
+  const ul=uStats.map(u=>u.unit);
+  charts['unit-cluster-stacked']=new Chart(document.getElementById('chart-unit-cluster-stacked'),{
+    type:'bar',
+    data:{labels:ul,datasets:clusters.map(c=>({label:c,data:ul.map(u=>data.filter(d=>d.unit.includes(u)&&d.cluster===c).length),backgroundColor:(CLUSTER_COLORS[c]||{bar:'#94a3b8'}).bar+'bb',borderRadius:2,borderSkipped:false}))},
+    options:{...baseOpts(),scales:{x:{stacked:true,ticks:{color:TICK_COLOR,font:TICK_FONT},grid:{color:CHART_GRID}},y:{stacked:true,beginAtZero:true,ticks:{color:TICK_COLOR,font:TICK_FONT},grid:{color:CHART_GRID}}},plugins:{legend:{display:true,position:'top',labels:LEGEND_LABEL},datalabels:{display:false},tooltip:CHART_TOOLTIP}}
+  });
+}
+
+/* ══════════════════════════════════════════════════════════
+   CHANNELS PAGE
+   ══════════════════════════════════════════════════════════ */
+function renderChannelsPage(data){
+  document.getElementById('channel-kpi-grid').innerHTML=CHANNEL_DEFS.map(cd=>{
+    const cnt=data.filter(d=>hasLink(d[cd.field])).length;
+    const pct=data.length?Math.round(cnt/data.length*100):0;
+    return `<div class="kpi-card" style="--accent-color:${cd.color}">
+      <div class="kpi-icon" style="background:${cd.bg};border:1.5px solid ${cd.border};color:${cd.color};border-radius:10px">
+        <svg width="18" height="18" style="color:${cd.color}"><use href="#${cd.iconId}"/></svg>
+      </div>
+      <div class="kpi-value" style="color:${cd.color};font-size:26px">${cnt}</div>
+      <div class="kpi-label">${cd.label}</div>
+      <div class="kpi-sub">${pct}% dari total publikasi</div>
+    </div>`;
+  }).join('');
+
+  destroyChart('channel-bar');
+  charts['channel-bar']=new Chart(document.getElementById('chart-channel-bar'),{
+    type:'bar',
+    data:{labels:CHANNEL_DEFS.map(c=>c.label),datasets:[{label:'Publikasi',data:CHANNEL_DEFS.map(cd=>data.filter(d=>hasLink(d[cd.field])).length),backgroundColor:CHANNEL_DEFS.map(cd=>cd.color+'99'),borderRadius:5,borderSkipped:false}]},
+    options:{...baseOpts(),plugins:{legend:{display:false},datalabels:{display:true,color:'#fff',font:{size:10,weight:'700'},anchor:'end',align:'top',formatter:v=>v>0?v:''},tooltip:CHART_TOOLTIP},scales:{y:{beginAtZero:true,ticks:{color:TICK_COLOR,font:TICK_FONT},grid:{color:CHART_GRID}},x:{ticks:{color:TICK_COLOR,font:TICK_FONT},grid:{display:false}}}}
+  });
+
+  destroyChart('channel-unit-heatmap');
+  const units=[...new Set(data.flatMap(d=>getAllUnits(d.unit)))].sort();
+  charts['channel-unit-heatmap']=new Chart(document.getElementById('chart-channel-unit-heatmap'),{
+    type:'bar',
+    data:{labels:units,datasets:CHANNEL_DEFS.slice(0,4).map(cd=>({label:cd.label,data:units.map(u=>data.filter(d=>d.unit.includes(u)&&hasLink(d[cd.field])).length),backgroundColor:cd.color+'88',borderRadius:2,borderSkipped:false}))},
+    options:{...baseOpts(),scales:{x:{ticks:{color:TICK_COLOR,font:TICK_FONT},grid:{display:false}},y:{beginAtZero:true,ticks:{color:TICK_COLOR,font:TICK_FONT},grid:{color:CHART_GRID}}},plugins:{legend:{display:true,position:'top',labels:LEGEND_LABEL},datalabels:{display:false},tooltip:CHART_TOOLTIP}}
+  });
+
+  const units2=[...new Set(RAW.flatMap(d=>getAllUnits(d.unit)))].sort();
+  document.getElementById('channel-matrix-body').innerHTML=units2.map(u=>{
+    const ud=data.filter(d=>d.unit.includes(u));
+    if(!ud.length) return '';
+    const cells=CHANNEL_DEFS.map(cd=>{ const cnt=ud.filter(d=>hasLink(d[cd.field])).length; return `<td style="text-align:center">${cnt>0?`<span class="badge badge-blue">${cnt}</span>`:`<span style="color:var(--text3);font-size:13px">—</span>`}</td>`; });
+    const total=CHANNEL_DEFS.reduce((acc,cd)=>acc+(ud.filter(d=>hasLink(d[cd.field])).length>0?1:0),0);
+    const uc=UNIT_COLORS[u]||UNIT_COLORS['MULTI'];
+    return `<tr><td><span class="badge" style="background:${uc.bg};color:${uc.text};border:none">${u}</span></td>${cells.join('')}<td style="text-align:center"><span class="badge badge-purple">${total}/8</span></td></tr>`;
+  }).filter(Boolean).join('');
+}
+
+/* ══════════════════════════════════════════════════════════
+   ALERTS PAGE
+   ══════════════════════════════════════════════════════════ */
+function renderAlertsPage(data){
+  const critical=[], info=[];
+  const noChannel=data.filter(d=>getChannelCount(d)===0);
+  if(noChannel.length) critical.push({cls:'danger',icon:'fa-link-slash',title:`${noChannel.length} publikasi tanpa channel terdeteksi`,desc:'Tidak ada satupun link channel yang terdaftar.'});
+  const noSched=data.filter(d=>d.tahun==='2026'&&!d.jadwal);
+  if(noSched.length) critical.push({cls:'warn',icon:'fa-calendar-xmark',title:`${noSched.length} publikasi 2026 tanpa jadwal`,desc:'Kolom jadwal masih kosong.'});
+  const noYear=data.filter(d=>!d.tahun);
+  if(noYear.length) critical.push({cls:'warn',icon:'fa-circle-exclamation',title:`${noYear.length} publikasi tanpa tahun`,desc:'Kolom tahun kosong — perlu dilengkapi.'});
+  const noCluster=data.filter(d=>!d.cluster);
+  if(noCluster.length) critical.push({cls:'warn',icon:'fa-tags',title:`${noCluster.length} publikasi tanpa cluster kebijakan`,desc:'Belum diklasifikasikan ke cluster manapun.'});
+  const overdue=data.filter(d=>getStatus(d)==='belum'&&getMonthNum(d.jadwal)<9);
+  if(overdue.length) critical.push({cls:'danger',icon:'fa-clock-rotate-left',title:`${overdue.length} publikasi melewati jadwal`,desc:'Status Belum Selesai namun jadwal sudah lewat.'});
+  const sedang=data.filter(d=>(d.ket||'').toLowerCase().includes('sedang'));
+  if(sedang.length) info.push({cls:'info',icon:'fa-spinner',title:`${sedang.length} publikasi dalam proses aktif`,desc:'Keterangan menunjukkan kegiatan sedang berlangsung.'});
+  const webinar=data.filter(d=>(d.ket||'').toLowerCase().includes('webinar'));
+  if(webinar.length) info.push({cls:'info',icon:'fa-video',title:`${webinar.length} publikasi terkait webinar`,desc:'Disebutkan melalui kegiatan webinar.'});
+  const collab=data.filter(d=>d.unit.includes('|'));
+  if(collab.length) info.push({cls:'info',icon:'fa-handshake',title:`${collab.length} publikasi kolaborasi multi-unit`,desc:'Melibatkan lebih dari satu unit kerja.'});
+
+  document.getElementById('alert-list-critical').innerHTML=critical.map(a=>`<div class="alert-item ${a.cls}"><div class="alert-icon"><i class="fa-solid ${a.icon}"></i></div><div class="alert-text"><div class="alert-title">${a.title}</div><div class="alert-desc">${a.desc}</div></div></div>`).join('');
+  document.getElementById('alert-list-info').innerHTML=info.map(a=>`<div class="alert-item ${a.cls}"><div class="alert-icon"><i class="fa-solid ${a.icon}"></i></div><div class="alert-text"><div class="alert-title">${a.title}</div><div class="alert-desc">${a.desc}</div></div></div>`).join('');
+  document.getElementById('no-channel-count').textContent=`${noChannel.length}`;
+  document.getElementById('no-channel-body').innerHTML=noChannel.map(d=>`<tr><td style="color:var(--text3)">${d.no}</td><td>${d.unit}</td><td class="title-cell"><span>${d.judul}</span></td><td style="white-space:nowrap">${d.jadwal||'—'}</td><td>${statusBadge(getStatus(d))}</td><td style="max-width:200px;font-size:11px;color:var(--text2)">${(d.ket||'').slice(0,80)||'—'}</td></tr>`).join('');
+}
+
+/* ══════════════════════════════════════════════════════════
+   DATA TABLE
+   ══════════════════════════════════════════════════════════ */
+function renderTable(){
+  const search=(document.getElementById('r-search').value||'').toLowerCase();
+  const unit=document.getElementById('r-unit').value,cluster=document.getElementById('r-cluster').value,status=document.getElementById('r-status').value,year=document.getElementById('r-year').value;
+  let data=RAW.filter(d=>{
+    if(year&&d.tahun!==year) return false;
+    if(unit&&!d.unit.includes(unit)) return false;
+    if(cluster&&d.cluster!==cluster) return false;
+    if(status&&getStatus(d)!==status) return false;
+    if(search&&!(d.judul.toLowerCase().includes(search)||d.unit.toLowerCase().includes(search)||(d.cluster||'').toLowerCase().includes(search))) return false;
+    return true;
+  }).sort((a,b)=>{ let va=a[sortState.key]||'',vb=b[sortState.key]||''; if(sortState.key==='no'){va=+va||0;vb=+vb||0;} if(sortState.key==='status'){va=getStatus(a);vb=getStatus(b);} return (va<vb?-1:va>vb?1:0)*sortState.dir; });
+  document.getElementById('table-count-label').textContent=`${data.length} records`;
+  const pu=u=>UNIT_COLORS[getPrimaryUnit(u)]||UNIT_COLORS['MULTI'];
+  document.getElementById('main-tbody').innerHTML=data.map(d=>{ const st=getStatus(d),ch=getChannelCount(d),uc=pu(d.unit),cc=CLUSTER_COLORS[d.cluster]; const chColor=ch===0?'#dc2626':ch<3?'#d97706':'#16a34a';
+    return `<tr>
+      <td style="color:var(--text3);font-size:11px">${d.no}</td>
+      <td><span class="badge" style="background:${uc.bg};color:${uc.text};border-color:${uc.bg}">${getPrimaryUnit(d.unit)}</span></td>
+      <td class="title-cell"><span title="${d.judul}">${d.judul}</span></td>
+      <td style="color:var(--text2);font-size:11px">${d.jenis||'—'}</td>
+      <td style="white-space:nowrap;font-size:11px;color:var(--text2)">${d.jadwal||'—'}</td>
+      <td style="text-align:center;font-size:11px;color:var(--text2)">${d.tahun||'—'}</td>
+      <td>${d.cluster&&cc?`<span class="badge" style="background:${cc.bg};color:${cc.text};border-color:${cc.bg};font-size:9px">${d.cluster}</span>`:'—'}</td>
+      <td style="text-align:center"><span style="color:${chColor};font-weight:700;font-size:13px">${ch}</span></td>
+      <td>${statusBadge(st)}</td>
+      <td><button onclick="openModal(${d.no-1})" style="background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:7px;padding:4px 11px;font-size:11px;cursor:pointer;transition:all .18s;font-family:Inter" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text2)'"><i class="fa-solid fa-expand"></i></button></td>
+    </tr>`; }).join('')||'<tr><td colspan="10" style="padding:40px;text-align:center;color:var(--text3)">Tidak ada data ditemukan</td></tr>';
+}
+function sortTable(key){ if(sortState.key===key) sortState.dir*=-1; else{sortState.key=key;sortState.dir=1;} document.querySelectorAll('thead th').forEach(th=>th.classList.toggle('sorted',th.dataset.sort===key)); renderTable(); }
+function resetTableFilters(){ ['r-search','r-unit','r-cluster','r-status','r-year'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; }); renderTable(); }
+
+/* ══════════════════════════════════════════════════════════
+   MODAL
+   ══════════════════════════════════════════════════════════ */
+function openModal(idx){
+  const d=RAW[idx]; if(!d) return;
+  document.getElementById('modal-title').textContent=d.judul;
+  const uc=UNIT_COLORS[getPrimaryUnit(d.unit)]||UNIT_COLORS['MULTI'];
+  const cc=CLUSTER_COLORS[d.cluster];
+  const meta=[
+    {l:'No',v:d.no,bg:'#f1f5f9',tc:'#475569'},
+    {l:'Unit',v:d.unit,bg:uc.bg,tc:uc.text},
+    {l:'Tahun',v:d.tahun||'—',bg:'#f1f5f9',tc:'#475569'},
+    {l:'Jadwal',v:d.jadwal||'—',bg:'#f1f5f9',tc:'#475569'},
+    {l:'Cluster',v:d.cluster||'—',bg:cc?cc.bg:'#f1f5f9',tc:cc?cc.text:'#475569'},
+    {l:'Jenis',v:d.jenis||'Survei/Laporan',bg:'#f1f5f9',tc:'#475569'},
+  ];
+  document.getElementById('modal-meta').innerHTML=meta.map(m=>`<span class="badge" style="background:${m.bg};color:${m.tc};border:none;font-size:11px;padding:4px 10px">${m.l}: <strong>${m.v}</strong></span>`).join('');
+  const st=getStatus(d);
+  document.getElementById('modal-channels').innerHTML=[statusBadge(st),...CHANNEL_DEFS.map(cd=>{ if(!hasLink(d[cd.field])) return `<span class="badge badge-gray" style="opacity:.45">${cd.label}</span>`; const cnt=countLinks(d[cd.field]); return `<span class="badge" style="background:${cd.bg};color:${cd.color};border:1px solid ${cd.border}">${cd.label}${cnt>1?` ×${cnt}`:''}</span>`; })].join('');
+  const ks=document.getElementById('modal-ket-section'); if(d.ket){ks.style.display='block';document.getElementById('modal-ket').textContent=d.ket;}else{ks.style.display='none';}
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function closeModal(e){ if(!e||e.target===document.getElementById('modal-overlay')) document.getElementById('modal-overlay').classList.remove('open'); }
+
+/* ══════════════════════════════════════════════════════════
+   TAB NAVIGATION
+   ══════════════════════════════════════════════════════════ */
+document.querySelectorAll('.nav-tab').forEach(tab=>{
+  tab.addEventListener('click',()=>{
+    document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    tab.classList.add('active');
+    const id=tab.dataset.tab;
+    document.getElementById(`page-${id}`)?.classList.add('active');
+    if(id==='records') renderTable();
+  });
+});
+
+/* ══════════════════════════════════════════════════════════
+   INIT — load from localStorage (admin edits), fallback to RAW
+   ══════════════════════════════════════════════════════════ */
+Chart.register(ChartDataLabels);
+document.getElementById('header-date').textContent=new Date().toLocaleDateString('id-ID',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
+// Merge localStorage data if available (edited via admin panel)
+(function(){
+  try {
+    const stored = localStorage.getItem('lan_pub_data');
+    if(stored){
+      const parsed = JSON.parse(stored);
+      if(Array.isArray(parsed) && parsed.length > 0){
+        RAW.length = 0;
+        parsed.forEach(d => RAW.push(d));
+      }
+    }
+  } catch(e){ console.warn('localStorage data error, using default:', e); }
+})();
+
+populateDropdowns();
+filteredData=[...RAW];
+renderKPIs();
+renderCharts();
+renderTable();
+</script>
+</body>
+</html>

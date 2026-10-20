@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Admin Panel — Publikasi LAN RI</title>
+  <!-- Favicon: Admin shield icon in amber -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23d97706'/%3E%3Cpath d='M16 5 L26 9 L26 16 C26 21.5 21.5 26.5 16 28 C10.5 26.5 6 21.5 6 16 L6 9 Z' fill='%23fff' opacity='.95'/%3E%3Cpath d='M12 16 L15 19 L20 13' stroke='%23d97706' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E" />
+  <link rel="shortcut icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23d97706'/%3E%3Cpath d='M16 5 L26 9 L26 16 C26 21.5 21.5 26.5 16 28 C10.5 26.5 6 21.5 6 16 L6 9 Z' fill='%23fff' opacity='.95'/%3E%3Cpath d='M12 16 L15 19 L20 13' stroke='%23d97706' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#f0f4f8;--bg2:#fff;--bg3:#f7f9fb;--border:#e4e9ef;--border2:#d0d7e0;
+      --text1:#1a2232;--text2:#5a6678;--text3:#94a3b8;
+      --accent:#2563eb;--accent-bg:#eff6ff;--accent-border:#bfdbfe;
+      --success:#16a34a;--success-bg:#f0fdf4;--success-border:#bbf7d0;
+      --warn:#d97706;--warn-bg:#fffbeb;--warn-border:#fde68a;
+      --danger:#dc2626;--danger-bg:#fef2f2;--danger-border:#fecaca;
+      --purple:#7c3aed;--purple-bg:#f5f3ff;
+      --r:12px;--shadow:0 2px 12px rgba(15,23,42,.09);--shadow-lg:0 12px 40px rgba(15,23,42,.14);
+    }
+    html{scroll-behavior:smooth}
+    body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text1);font-size:14px;line-height:1.5;min-height:100vh}
+    ::-webkit-scrollbar{width:5px;height:5px}
+    ::-webkit-scrollbar-track{background:var(--bg)}
+    ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+
+    /* ══ LOGIN SCREEN ══ */
+    #login-screen{
+      position:fixed;inset:0;background:linear-gradient(135deg,#1e3a5f 0%,#2563eb 50%,#0ea5e9 100%);
+      display:flex;align-items:center;justify-content:center;z-index:999;
+    }
+    .login-box{
+      background:#fff;border-radius:20px;padding:44px 40px;width:380px;
+      box-shadow:0 20px 60px rgba(0,0,0,.25);text-align:center;
+    }
+    .login-logo{width:110px;margin:0 auto 20px;display:block}
+    .login-title{font-size:20px;font-weight:800;color:var(--text1);margin-bottom:4px}
+    .login-sub{font-size:12px;color:var(--text3);margin-bottom:28px}
+    .login-field{margin-bottom:14px;text-align:left}
+    .login-field label{font-size:12px;font-weight:600;color:var(--text2);display:block;margin-bottom:5px}
+    .login-field input{
+      width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:9px;
+      font-family:inherit;font-size:13px;color:var(--text1);outline:none;background:var(--bg3);
+      transition:border-color .18s,box-shadow .18s;
+    }
+    .login-field input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.12);background:#fff}
+    .login-btn{
+      width:100%;padding:11px;background:linear-gradient(135deg,#2563eb,#0ea5e9);
+      color:#fff;border:none;border-radius:9px;font-size:14px;font-weight:700;
+      cursor:pointer;margin-top:6px;transition:opacity .18s;font-family:inherit;
+    }
+    .login-btn:hover{opacity:.9}
+    .login-err{color:var(--danger);font-size:12px;margin-top:10px;display:none}
+    .login-hint{font-size:11px;color:var(--text3);margin-top:16px}
+
+    /* ══ APP SHELL ══ */
+    #app{display:none}
+
+    /* ── Topbar ── */
+    .topbar{
+      background:#fff;border-bottom:1px solid var(--border);padding:0 24px;
+      position:sticky;top:0;z-index:100;box-shadow:0 1px 4px rgba(15,23,42,.06);
+    }
+    .topbar-inner{display:flex;align-items:center;justify-content:space-between;max-width:1400px;margin:0 auto;height:62px}
+    .topbar-left{display:flex;align-items:center;gap:14px}
+    .topbar-logo{height:44px;width:auto;object-fit:contain}
+    .topbar-title{font-size:14px;font-weight:700;color:var(--text1)}
+    .topbar-sub{font-size:11px;color:var(--text3)}
+    .topbar-right{display:flex;align-items:center;gap:10px}
+    .topbar-badge{
+      display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;
+      background:var(--warn-bg);border:1px solid var(--warn-border);color:var(--warn);
+      padding:4px 11px;border-radius:20px;
+    }
+    .topbar-badge i{font-size:10px}
+
+    /* ── Sidebar ── */
+    .layout{display:flex;max-width:1400px;margin:0 auto;padding:24px;gap:22px;align-items:flex-start}
+    .sidebar{
+      width:220px;flex-shrink:0;background:#fff;border:1px solid var(--border);
+      border-radius:var(--r);padding:14px 10px;box-shadow:var(--shadow);position:sticky;top:86px;
+    }
+    .sidebar-section{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;padding:8px 10px 5px}
+    .sidebar-item{
+      display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;
+      font-size:13px;font-weight:500;color:var(--text2);cursor:pointer;transition:all .15s;
+      user-select:none;
+    }
+    .sidebar-item:hover{background:var(--bg3);color:var(--text1)}
+    .sidebar-item.active{background:var(--accent-bg);color:var(--accent);font-weight:600}
+    .sidebar-item i{width:16px;text-align:center;font-size:12px}
+    .sidebar-divider{height:1px;background:var(--border);margin:8px 6px}
+
+    /* ── Content ── */
+    .content{flex:1;min-width:0}
+
+    /* ── Page header ── */
+    .page-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:12px}
+    .page-title{font-size:18px;font-weight:800;color:var(--text1)}
+    .page-sub{font-size:12px;color:var(--text3);margin-top:2px}
+    .btn{
+      display:inline-flex;align-items:center;gap:7px;padding:9px 16px;border-radius:9px;
+      font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid transparent;
+      font-family:inherit;transition:all .18s;white-space:nowrap;
+    }
+    .btn-primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+    .btn-primary:hover{background:#1d4ed8}
+    .btn-success{background:var(--success);color:#fff;border-color:var(--success)}
+    .btn-success:hover{background:#15803d}
+    .btn-danger{background:var(--danger);color:#fff;border-color:var(--danger)}
+    .btn-danger:hover{background:#b91c1c}
+    .btn-outline{background:#fff;color:var(--text2);border-color:var(--border)}
+    .btn-outline:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-bg)}
+    .btn-warn{background:var(--warn);color:#fff;border-color:var(--warn)}
+    .btn-warn:hover{background:#b45309}
+    .btn-sm{padding:6px 12px;font-size:11px}
+    .btn-xs{padding:4px 9px;font-size:10px;border-radius:6px}
+    .btn-group{display:flex;gap:8px;flex-wrap:wrap}
+
+    /* ── Cards ── */
+    .card{background:#fff;border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;margin-bottom:18px}
+    .card-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border)}
+    .card-title{font-size:13px;font-weight:700;color:var(--text1);display:flex;align-items:center;gap:8px}
+    .card-title i{color:var(--accent);font-size:12px}
+    .card-body{padding:18px}
+
+    /* ── Stats mini ── */
+    .stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+    .stat-card{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:16px;box-shadow:var(--shadow)}
+    .stat-card::before{content:'';display:block;height:3px;margin:-16px -16px 14px;border-radius:12px 12px 0 0;background:var(--c,var(--accent))}
+    .stat-val{font-size:26px;font-weight:800;color:var(--c,var(--accent))}
+    .stat-label{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.4px}
+
+    /* ── Filter / Search bar ── */
+    .filter-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:12px 18px;background:var(--bg3);border-bottom:1px solid var(--border)}
+    .filter-bar input,.filter-bar select{
+      background:#fff;border:1px solid var(--border);color:var(--text1);
+      border-radius:7px;padding:7px 11px;font-size:12px;font-family:inherit;
+      outline:none;transition:border-color .18s;
+    }
+    .filter-bar input:focus,.filter-bar select:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(37,99,235,.1)}
+    .filter-bar input[type=text]{min-width:200px}
+    .record-count{margin-left:auto;font-size:11px;color:var(--text3);font-weight:500}
+
+    /* ── Table ── */
+    .table-wrap{overflow-x:auto;max-height:560px;overflow-y:auto}
+    table{width:100%;border-collapse:collapse;font-size:12px}
+    thead{position:sticky;top:0;z-index:2}
+    thead th{
+      background:var(--bg3);padding:10px 12px;text-align:left;font-weight:700;
+      color:var(--text2);font-size:10px;text-transform:uppercase;letter-spacing:.5px;
+      border-bottom:1px solid var(--border);white-space:nowrap;user-select:none;
+    }
+    tbody tr{border-bottom:1px solid rgba(228,233,239,.7);transition:background .12s}
+    tbody tr:hover{background:#f8fafd}
+    tbody td{padding:10px 12px;vertical-align:middle}
+    td.td-judul{max-width:260px}
+    td.td-judul span{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+    .actions-cell{display:flex;gap:5px;white-space:nowrap}
+
+    /* ── Badge ── */
+    .badge{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600;white-space:nowrap}
+    .badge-green{background:#dcfce7;color:#15803d;border:1px solid #bbf7d0}
+    .badge-red  {background:#fee2e2;color:#b91c1c;border:1px solid #fecaca}
+    .badge-gray {background:#f1f5f9;color:#64748b;border:1px solid #e2e8f0}
+    .badge-blue {background:#dbeafe;color:#1d4ed8;border:1px solid #bfdbfe}
+    .badge-warn {background:#fef9c3;color:#a16207;border:1px solid #fde047}
+    .badge-purple{background:#ede9fe;color:#6d28d9;border:1px solid #ddd6fe}
+
+    /* ══ MODAL ══ */
+    .overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,.45);backdrop-filter:blur(6px);z-index:300;align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto}
+    .overlay.open{display:flex}
+    .modal{
+      background:#fff;border-radius:18px;width:100%;max-width:820px;
+      box-shadow:var(--shadow-lg);border:1px solid var(--border);
+      animation:slideIn .22s ease;
+    }
+    @keyframes slideIn{from{opacity:0;transform:translateY(-16px)}to{opacity:1;transform:none}}
+    .modal-header{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:20px 24px;border-bottom:1px solid var(--border);
+    }
+    .modal-header h2{font-size:16px;font-weight:800;color:var(--text1)}
+    .modal-close{
+      width:32px;height:32px;border-radius:8px;background:var(--bg3);border:1px solid var(--border);
+      color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;
+      font-size:14px;transition:all .15s;
+    }
+    .modal-close:hover{background:var(--danger-bg);color:var(--danger);border-color:var(--danger-border)}
+    .modal-body{padding:24px}
+    .modal-footer{padding:16px 24px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;background:var(--bg3)}
+
+    /* Form grid */
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .form-grid.col3{grid-template-columns:1fr 1fr 1fr}
+    .form-full{grid-column:1/-1}
+    .form-group{display:flex;flex-direction:column;gap:5px}
+    .form-group label{font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.4px}
+    .form-group label .req{color:var(--danger)}
+    .form-control{
+      padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;
+      font-family:inherit;font-size:13px;color:var(--text1);background:#fff;
+      outline:none;transition:border-color .18s,box-shadow .18s;
+    }
+    .form-control:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+    .form-control::placeholder{color:var(--text3)}
+    textarea.form-control{resize:vertical;min-height:80px;line-height:1.5}
+    select.form-control{cursor:pointer}
+    .form-section{
+      grid-column:1/-1;font-size:10px;font-weight:700;color:var(--text3);
+      text-transform:uppercase;letter-spacing:.6px;padding:12px 0 4px;
+      border-top:1px solid var(--border);margin-top:4px;
+      display:flex;align-items:center;gap:8px;
+    }
+    .form-section i{color:var(--accent)}
+    .form-hint{font-size:10px;color:var(--text3);margin-top:2px}
+
+    /* ── Channel group ── */
+    .channel-group{
+      grid-column:1/-1;display:grid;grid-template-columns:repeat(4,1fr);gap:10px;
+      background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px;
+    }
+    .channel-item label{font-size:10px;font-weight:700;color:var(--text2);display:flex;align-items:center;gap:5px;margin-bottom:4px}
+    .channel-item .ch-icon{width:16px;height:16px;border-radius:3px;display:inline-flex;align-items:center;justify-content:center;font-size:9px;color:#fff}
+
+    /* ── Alert ── */
+    .alert{padding:11px 14px;border-radius:9px;font-size:12px;font-weight:500;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+    .alert-success{background:var(--success-bg);color:var(--success);border:1px solid var(--success-border)}
+    .alert-danger{background:var(--danger-bg);color:var(--danger);border:1px solid var(--danger-border)}
+    .alert-warn{background:var(--warn-bg);color:var(--warn);border:1px solid var(--warn-border)}
+    .alert-info{background:var(--accent-bg);color:var(--accent);border:1px solid var(--accent-border)}
+    .toast{
+      position:fixed;bottom:24px;right:24px;z-index:999;
+      padding:13px 18px;border-radius:10px;font-size:13px;font-weight:600;
+      display:flex;align-items:center;gap:9px;box-shadow:var(--shadow-lg);
+      transition:all .3s;opacity:0;transform:translateY(12px);pointer-events:none;
+    }
+    .toast.show{opacity:1;transform:none}
+    .toast.success{background:var(--success-bg);color:var(--success);border:1px solid var(--success-border)}
+    .toast.error  {background:var(--danger-bg); color:var(--danger); border:1px solid var(--danger-border)}
+    .toast.warn   {background:var(--warn-bg);   color:var(--warn);   border:1px solid var(--warn-border)}
+
+    /* ── Confirm modal ── */
+    .confirm-modal{max-width:420px;text-align:center}
+    .confirm-icon{font-size:40px;margin-bottom:14px}
+    .confirm-modal h3{font-size:17px;font-weight:800;margin-bottom:6px}
+    .confirm-modal p{font-size:13px;color:var(--text2);margin-bottom:4px}
+
+    /* ── Settings page ── */
+    .settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+    @media(max-width:900px){.settings-grid{grid-template-columns:1fr}}
+
+    /* ── Changelog ── */
+    .log-item{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
+    .log-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px}
+    .log-time{font-size:10px;color:var(--text3);white-space:nowrap}
+    .log-msg{font-size:12px;color:var(--text1)}
+    .log-user{font-size:10px;color:var(--text3)}
+
+    /* ── Empty state ── */
+    .empty{padding:48px;text-align:center;color:var(--text3)}
+    .empty i{font-size:36px;margin-bottom:12px;display:block;color:var(--border2)}
+
+    /* responsive */
+    @media(max-width:900px){
+      .layout{flex-direction:column}
+      .sidebar{width:100%;position:static}
+      .form-grid,.form-grid.col3{grid-template-columns:1fr}
+      .channel-group{grid-template-columns:1fr 1fr}
+      .stat-row{grid-template-columns:1fr 1fr}
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════ LOGIN SCREEN ══════════════════════ -->
+<div id="login-screen">
+  <div class="login-box">
+    <img src="logo-lan.png" alt="LAN RI" class="login-logo"/>
+    <div class="login-title">Admin Panel</div>
+    <div class="login-sub">Dashboard Rekap Publikasi LAN RI</div>
+    <div class="login-field">
+      <label>Username</label>
+      <input type="text" id="inp-user" placeholder="admin" autocomplete="username"/>
+    </div>
+    <div class="login-field">
+      <label>Password</label>
+      <input type="password" id="inp-pass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"/>
+    </div>
+    <button class="login-btn" onclick="doLogin()"><i class="fa-solid fa-right-to-bracket"></i> Masuk</button>
+    <div class="login-err" id="login-err"><i class="fa-solid fa-circle-xmark"></i> Username atau password salah.</div>
+    <div class="login-hint">Default: admin / admin2026</div>
+  </div>
+</div>
+
+<!-- ══════════════════════ APP ══════════════════════ -->
+<div id="app">
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div class="topbar-left">
+        <img src="logo-lan.png" alt="LAN RI" class="topbar-logo"/>
+        <div>
+          <div class="topbar-title">Admin Panel — Manajemen Publikasi</div>
+          <div class="topbar-sub">Lembaga Administrasi Negara</div>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <div class="topbar-badge"><i class="fa-solid fa-shield-halved"></i> Admin</div>
+        <a href="index.html" style="text-decoration:none">
+          <button class="btn btn-outline btn-sm"><i class="fa-solid fa-chart-pie"></i> Lihat Dashboard</button>
+        </a>
+        <button class="btn btn-outline btn-sm" onclick="doLogout()"><i class="fa-solid fa-right-from-bracket"></i> Keluar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Layout -->
+  <div class="layout">
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-section">Menu</div>
+      <div class="sidebar-item active" onclick="showPage('data')" id="nav-data"><i class="fa-solid fa-table"></i> Data Publikasi</div>
+      <div class="sidebar-item" onclick="showPage('add')"  id="nav-add"><i class="fa-solid fa-plus-circle"></i> Tambah Baru</div>
+      <div class="sidebar-divider"></div>
+      <div class="sidebar-section">Sistem</div>
+      <div class="sidebar-item" onclick="showPage('settings')" id="nav-settings"><i class="fa-solid fa-gear"></i> Pengaturan</div>
+      <div class="sidebar-item" onclick="showPage('log')" id="nav-log"><i class="fa-solid fa-clock-rotate-left"></i> Riwayat Perubahan</div>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+
+      <!-- ── NOTIFICATION ── -->
+      <div id="page-notification" style="margin-bottom:0"></div>
+
+      <!-- ══════════ PAGE: DATA ══════════ -->
+      <div id="page-data">
+        <div class="page-header">
+          <div>
+            <div class="page-title"><i class="fa-solid fa-table" style="color:var(--accent);margin-right:8px"></i>Data Publikasi</div>
+            <div class="page-sub">Kelola seluruh rekap publikasi LAN RI</div>
+          </div>
+          <div class="btn-group">
+            <button class="btn btn-outline btn-sm" onclick="exportJSON()"><i class="fa-solid fa-file-export"></i> Export JSON</button>
+            <button class="btn btn-outline btn-sm" onclick="document.getElementById('importFile').click()"><i class="fa-solid fa-file-import"></i> Import JSON</button>
+            <input type="file" id="importFile" accept=".json" style="display:none" onchange="importJSON(this)"/>
+            <button class="btn btn-primary" onclick="showPage('add')"><i class="fa-solid fa-plus"></i> Tambah Publikasi</button>
+          </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stat-row" id="stat-row"></div>
+
+        <!-- Table Card -->
+        <div class="card">
+          <div class="filter-bar">
+            <input type="text" id="s-search" placeholder="🔍  Cari judul, unit, cluster…" oninput="renderDataTable()"/>
+            <select id="s-unit" onchange="renderDataTable()"><option value="">Semua Unit</option></select>
+            <select id="s-cluster" onchange="renderDataTable()"><option value="">Semua Cluster</option></select>
+            <select id="s-status" onchange="renderDataTable()">
+              <option value="">Semua Status</option>
+              <option value="selesai">Selesai</option>
+              <option value="belum">Belum Selesai</option>
+              <option value="planned">Perencanaan</option>
+            </select>
+            <select id="s-year" onchange="renderDataTable()">
+              <option value="">Semua Tahun</option>
+              <option value="2025">2025</option>
+              <option value="2026">2026</option>
+            </select>
+            <button class="btn btn-outline btn-sm" onclick="resetSearch()"><i class="fa-solid fa-rotate-left"></i></button>
+            <span class="record-count" id="rec-count">— records</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:38px">No</th>
+                  <th>Unit</th>
+                  <th>Judul</th>
+                  <th>Jenis</th>
+                  <th>Jadwal</th>
+                  <th>Tahun</th>
+                  <th>Cluster</th>
+                  <th style="width:60px;text-align:center">Ch</th>
+                  <th>Status</th>
+                  <th style="width:110px">Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="data-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div><!-- /page-data -->
+
+      <!-- ══════════ PAGE: ADD / EDIT ══════════ -->
+      <div id="page-add" style="display:none">
+        <div class="page-header">
+          <div>
+            <div class="page-title" id="form-title"><i class="fa-solid fa-plus-circle" style="color:var(--accent);margin-right:8px"></i>Tambah Publikasi</div>
+            <div class="page-sub">Isi formulir di bawah untuk menambah entri baru</div>
+          </div>
+          <button class="btn btn-outline" onclick="showPage('data')"><i class="fa-solid fa-arrow-left"></i> Kembali</button>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title"><i class="fa-solid fa-file-pen"></i> Formulir Publikasi</span>
+          </div>
+          <div class="card-body">
+            <form id="pub-form" onsubmit="saveRecord(event)">
+              <input type="hidden" id="f-id"/>
+
+              <div class="form-grid">
+                <!-- Identitas -->
+                <div class="form-section form-full"><i class="fa-solid fa-id-card"></i> Identitas Publikasi</div>
+
+                <div class="form-group">
+                  <label>Unit Kerja <span class="req">*</span></label>
+                  <select class="form-control" id="f-unit" required>
+                    <option value="">— Pilih Unit —</option>
+                    <option>SKPP</option>
+                    <option>DAPKK</option>
+                    <option>SKMP</option>
+                    <option>SKTAN</option>
+                    <option>SKMK</option>
+                    <option>STIA JKT</option>
+                    <option>STIA MKS</option>
+                    <option>STIA BDG</option>
+                    <option>DSPK2AN</option>
+                    <option>STIA JKT|STIA MKS|STIA BDG</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label>Jenis Publikasi</label>
+                  <select class="form-control" id="f-jenis">
+                    <option value="">— Survei / Laporan Umum —</option>
+                    <option>Jurnal/Penelitian</option>
+                    <option>Jurnal/Penelitian Kolaborasi</option>
+                    <option>Policy Brief</option>
+                    <option>Policy Paper</option>
+                    <option>Laporan</option>
+                    <option>Buku</option>
+                  </select>
+                </div>
+
+                <div class="form-group form-full">
+                  <label>Judul Publikasi <span class="req">*</span></label>
+                  <textarea class="form-control" id="f-judul" rows="2" placeholder="Judul lengkap publikasi…" required></textarea>
+                </div>
+
+                <div class="form-group">
+                  <label>Cluster Kebijakan</label>
+                  <select class="form-control" id="f-cluster">
+                    <option value="">— Belum diklasifikasikan —</option>
+                    <option>Prioritas Presiden</option>
+                    <option>Tata Kelola &amp; Manajemen ASN</option>
+                    <option>Pelayanan Publik</option>
+                    <option>Digitalisasi</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label>Tahun</label>
+                  <select class="form-control" id="f-tahun">
+                    <option value="">— Pilih Tahun —</option>
+                    <option>2025</option>
+                    <option>2026</option>
+                    <option>2027</option>
+                  </select>
+                </div>
+
+                <!-- Jadwal -->
+                <div class="form-section form-full"><i class="fa-solid fa-calendar-days"></i> Jadwal Publikasi</div>
+
+                <div class="form-group">
+                  <label>Bulan Jadwal</label>
+                  <select class="form-control" id="f-bulan">
+                    <option value="">— Belum ditentukan —</option>
+                    <option>Januari</option><option>Februari</option><option>Maret</option>
+                    <option>April</option><option>Mei</option><option>Juni</option>
+                    <option>Juli</option><option>Agustus</option><option>September</option>
+                    <option>Oktober</option><option>November</option><option>Desember</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label>Minggu Ke-</label>
+                  <select class="form-control" id="f-minggu">
+                    <option value="">— Pilih Minggu —</option>
+                    <option value="1">Minggu 1</option>
+                    <option value="2">Minggu 2</option>
+                    <option value="3">Minggu 3</option>
+                    <option value="4">Minggu 4</option>
+                  </select>
+                </div>
+
+                <!-- Status -->
+                <div class="form-section form-full"><i class="fa-solid fa-circle-half-stroke"></i> Status & Keterangan</div>
+
+                <div class="form-group">
+                  <label>Status Publikasi</label>
+                  <select class="form-control" id="f-status">
+                    <option value="planned">Dalam Perencanaan</option>
+                    <option value="selesai">Selesai</option>
+                    <option value="belum">Belum Selesai</option>
+                  </select>
+                </div>
+
+                <div class="form-group form-full">
+                  <label>Keterangan / Catatan</label>
+                  <textarea class="form-control" id="f-ket" rows="3" placeholder="Catatan detail, progress, atau informasi tambahan…"></textarea>
+                  <div class="form-hint">Keterangan akan digabungkan otomatis dengan Status.</div>
+                </div>
+
+                <!-- Channel -->
+                <div class="form-section form-full"><i class="fa-solid fa-satellite-dish"></i> Channel Publikasi (Link)</div>
+
+                <div class="channel-group">
+                  <div class="channel-item">
+                    <label><span class="ch-icon" style="background:#d97706">📚</span> Jurnal</label>
+                    <input class="form-control" id="f-jurnal" placeholder="Link atau keterangan"/>
+                    <div class="form-hint">Pisahkan beberapa link dengan "|"</div>
+                  </div>
+                  <div class="channel-item">
+                    <label><span class="ch-icon" style="background:#2563eb">📰</span> Media Online</label>
+                    <input class="form-control" id="f-media" placeholder="Link media online"/>
+                  </div>
+                  <div class="channel-item">
+                    <label><span class="ch-icon" style="background:#059669">🌐</span> Website LAN</label>
+                    <input class="form-control" id="f-webLAN" placeholder="Link website LAN"/>
+                    <div class="form-hint">Pisahkan dengan "|" bila lebih dari satu</div>
+                  </div>
+                  <div class="channel-item">
+                    <label><span class="ch-icon" style="background:#ea580c">🏠</span> Website Unit</label>
+                    <input class="form-control" id="f-webUnit" placeholder="Link website unit"/>
+                  </div>
+                  <div class="channel-item">
+                    <label><span class="ch-icon" style="background:#7c3aed">📸</span> Instagram LAN</label>
+                    <input class="form-control" id="f-igLAN" placeholder="Link postingan IG LAN"/>
+                  </div>
+                  <div class="channel-item">
+                    <label><span class="ch-icon" style="background:#db2777">📷</span> Instagram Unit</label>
+                    <input class="form-control" id="f-igUnit" placeholder="Link postingan IG Unit"/>
+                  </div>
+                  <div class="channel-item">
+                    <label><span class="ch-icon" style="background:#dc2626">▶️</span> YouTube LAN</label>
+                    <input class="form-control" id="f-ytLAN" placeholder="Link video YouTube LAN"/>
+                  </div>
+                  <div class="channel-item">
+                    <label><span class="ch-icon" style="background:#0891b2">🎬</span> YouTube Unit</label>
+                    <input class="form-control" id="f-ytUnit" placeholder="Link video YouTube Unit"/>
+                  </div>
+                </div>
+
+              </div><!-- /form-grid -->
+
+              <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:24px;padding-top:20px;border-top:1px solid var(--border)">
+                <button type="button" class="btn btn-outline" onclick="showPage('data')">Batal</button>
+                <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Simpan Publikasi</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div><!-- /page-add -->
+
+      <!-- ══════════ PAGE: SETTINGS ══════════ -->
+      <div id="page-settings" style="display:none">
+        <div class="page-header">
+          <div>
+            <div class="page-title"><i class="fa-solid fa-gear" style="color:var(--accent);margin-right:8px"></i>Pengaturan</div>
+            <div class="page-sub">Kelola konfigurasi dan keamanan sistem</div>
+          </div>
+        </div>
+        <div class="settings-grid">
+          <!-- Ganti password -->
+          <div class="card">
+            <div class="card-header"><span class="card-title"><i class="fa-solid fa-lock"></i> Ganti Password</span></div>
+            <div class="card-body">
+              <div class="form-group" style="margin-bottom:12px">
+                <label>Password Lama</label>
+                <input type="password" class="form-control" id="s-old-pass" placeholder="Password saat ini"/>
+              </div>
+              <div class="form-group" style="margin-bottom:12px">
+                <label>Password Baru</label>
+                <input type="password" class="form-control" id="s-new-pass" placeholder="Minimal 6 karakter"/>
+              </div>
+              <div class="form-group" style="margin-bottom:16px">
+                <label>Konfirmasi Password Baru</label>
+                <input type="password" class="form-control" id="s-confirm-pass" placeholder="Ulangi password baru"/>
+              </div>
+              <button class="btn btn-primary" onclick="changePassword()"><i class="fa-solid fa-key"></i> Simpan Password</button>
+            </div>
+          </div>
+
+          <!-- Data management -->
+          <div class="card">
+            <div class="card-header"><span class="card-title"><i class="fa-solid fa-database"></i> Manajemen Data</span></div>
+            <div class="card-body">
+              <div style="display:flex;flex-direction:column;gap:10px">
+                <div class="alert alert-info"><i class="fa-solid fa-circle-info"></i> Perubahan data tersimpan otomatis di browser (localStorage).</div>
+                <button class="btn btn-outline" onclick="exportJSON()"><i class="fa-solid fa-file-export"></i> Export Semua Data (JSON)</button>
+                <button class="btn btn-outline" onclick="document.getElementById('importFile2').click()">
+                  <i class="fa-solid fa-file-import"></i> Import Data (JSON)
+                </button>
+                <input type="file" id="importFile2" accept=".json" style="display:none" onchange="importJSON(this)"/>
+                <hr style="border:none;border-top:1px solid var(--border);margin:4px 0"/>
+                <button class="btn btn-warn" onclick="confirmResetData()"><i class="fa-solid fa-rotate-left"></i> Reset ke Data Awal</button>
+                <button class="btn btn-danger" onclick="confirmClearAll()"><i class="fa-solid fa-trash"></i> Hapus Semua Data</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Info -->
+          <div class="card">
+            <div class="card-header"><span class="card-title"><i class="fa-solid fa-circle-info"></i> Informasi Sistem</span></div>
+            <div class="card-body" style="font-size:12px;line-height:2">
+              <div><strong>Versi:</strong> 1.0.0</div>
+              <div><strong>Platform:</strong> Static HTML + localStorage</div>
+              <div><strong>Data Engine:</strong> Browser localStorage</div>
+              <div><strong>Terakhir diperbarui:</strong> <span id="s-last-updated">—</span></div>
+              <div><strong>Total Record:</strong> <span id="s-total">—</span></div>
+            </div>
+          </div>
+        </div>
+      </div><!-- /page-settings -->
+
+      <!-- ══════════ PAGE: LOG ══════════ -->
+      <div id="page-log" style="display:none">
+        <div class="page-header">
+          <div>
+            <div class="page-title"><i class="fa-solid fa-clock-rotate-left" style="color:var(--accent);margin-right:8px"></i>Riwayat Perubahan</div>
+            <div class="page-sub">Log aktivitas pengeditan data</div>
+          </div>
+          <button class="btn btn-outline btn-sm" onclick="clearLog()"><i class="fa-solid fa-trash"></i> Bersihkan Log</button>
+        </div>
+        <div class="card">
+          <div class="card-body" id="log-list">
+            <div class="empty"><i class="fa-solid fa-scroll"></i>Belum ada riwayat perubahan.</div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /layout -->
+</div><!-- /app -->
+
+<!-- ══ CONFIRM MODAL ══ -->
+<div class="overlay" id="confirm-overlay" onclick="closeConfirm(event)">
+  <div class="modal confirm-modal" style="max-width:420px;margin:auto">
+    <div class="modal-body" style="text-align:center;padding:36px 28px">
+      <div class="confirm-icon" id="confirm-icon">⚠️</div>
+      <h3 id="confirm-title">Konfirmasi</h3>
+      <p id="confirm-desc" style="font-size:13px;color:var(--text2);margin:8px 0 20px"></p>
+      <div style="display:flex;gap:10px;justify-content:center">
+        <button class="btn btn-outline" onclick="closeConfirm()">Batal</button>
+        <button class="btn" id="confirm-ok-btn" onclick="confirmAction()">Ya, Lanjutkan</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TOAST ══ -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* ══════════════════════════════════════════════════════════
+   DEFAULT DATA (same as index.html)
+   ══════════════════════════════════════════════════════════ */
+const DEFAULT_DATA = [
+  {no:1,  unit:"SKPP",                        judul:"Survei Optimalisasi Akses Layanan Kesehatan",                                                              jenis:"",jadwal:"",            tahun:"2025",cluster:"Prioritas Presiden",         jurnal:"",  media:"Link",webLAN:"Link",  webUnit:"Link 1|Link 2",igLAN:"",    igUnit:"Link 1|Link 2",ytLAN:"",   ytUnit:"",ket:""},
+  {no:2,  unit:"DAPKK",                       judul:"Survei Disrupsi Pekerjaan dan Keterampilan Strategis (Top Skills ASN)",                                    jenis:"",jadwal:"",            tahun:"2025",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",  media:"Link",webLAN:"Link",  webUnit:"Link",         igLAN:"",    igUnit:"Link",       ytLAN:"",   ytUnit:"",ket:""},
+  {no:3,  unit:"SKMP",                        judul:"Survei Indeks Kesehatan Organisasi (OHI)",                                                                 jenis:"",jadwal:"",            tahun:"2025",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",  media:"Link",webLAN:"Link",  webUnit:"",             igLAN:"Link",igUnit:"",          ytLAN:"Link",ytUnit:"",ket:""},
+  {no:4,  unit:"SKPP",                        judul:"Kemudahan Penanaman Modal di Daerah",                                                                      jenis:"",jadwal:"",            tahun:"2025",cluster:"Prioritas Presiden",         jurnal:"",  media:"Link",webLAN:"Link 1|Link 2",webUnit:"",igLAN:"",  igUnit:"",          ytLAN:"",   ytUnit:"",ket:""},
+  {no:5,  unit:"SKTAN",                       judul:"Implementasi Penerapan Manajemen Talenta di Lingkungan Pemerintah Daerah",                                 jenis:"",jadwal:"",            tahun:"2025",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",  media:"Link",webLAN:"Link 1|Link 2|Link 3|Link 4|Link 5|Link 6|Link 7",webUnit:"",igLAN:"",igUnit:"Link 1|Link 2",ytLAN:"Link",ytUnit:"",ket:""},
+  {no:6,  unit:"STIA JKT|STIA MKS|STIA BDG", judul:"Survei Birokrasi Melayani Outlook",                                                                       jenis:"",jadwal:"",            tahun:"2025",cluster:"Pelayanan Publik",           jurnal:"",  media:"",   webLAN:"Link",  webUnit:"",             igLAN:"",    igUnit:"",          ytLAN:"",   ytUnit:"",ket:""},
+  {no:7,  unit:"DAPKK",                       judul:"Survei Future Jobs and Skills Sektor Ketahanan Pangan",                                                    jenis:"",jadwal:"",            tahun:"2025",cluster:"Prioritas Presiden",         jurnal:"",  media:"Link",webLAN:"",     webUnit:"",             igLAN:"",    igUnit:"",          ytLAN:"",   ytUnit:"",ket:""},
+  {no:8,  unit:"SKMK",                        judul:"Survei Efektivitas Kinerja Jabatan Fungsional",                                                            jenis:"",jadwal:"",            tahun:"2025",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",  media:"Link",webLAN:"Link 1|Link 2",webUnit:"",igLAN:"",  igUnit:"Link",       ytLAN:"",   ytUnit:"",ket:""},
+  {no:9,  unit:"SKPP",                        judul:"Customer Journey Pelayanan Publik Instansi Pemerintah",                                                    jenis:"",jadwal:"",            tahun:"2025",cluster:"Pelayanan Publik",           jurnal:"",  media:"Link",webLAN:"Link 1|Link 2",webUnit:"",igLAN:"",  igUnit:"",          ytLAN:"",   ytUnit:"",ket:""},
+  {no:10, unit:"SKTAN",                       judul:"Persepsi Masyarakat dan Birokrasi terhadap kompetensi dan nilai ASN",                                      jenis:"",jadwal:"",            tahun:"2025",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",  media:"",   webLAN:"Link 1|Link 2|Link 3|Link 4",webUnit:"",igLAN:"",igUnit:"",ytLAN:"",ytUnit:"",ket:""},
+  {no:11, unit:"DAPKK",                       judul:"Survei Produktivitas Sektor Publik Pertanian dengan Pendekatan APO",                                       jenis:"",jadwal:"",            tahun:"2025",cluster:"Prioritas Presiden",         jurnal:"",  media:"Link",webLAN:"",     webUnit:"",             igLAN:"",    igUnit:"",          ytLAN:"",   ytUnit:"",ket:""},
+  {no:12, unit:"SKMP",                        judul:"Survei Strategi Peningkatan Tata Kelola BUMDes",                                                           jenis:"",jadwal:"",            tahun:"2025",cluster:"Prioritas Presiden",         jurnal:"",  media:"Link",webLAN:"Link",  webUnit:"",             igLAN:"Link",igUnit:"",          ytLAN:"Link",ytUnit:"",ket:""},
+  {no:13, unit:"SKMK",                        judul:"Survei Strategi Peningkatan Kinerja ASN di Era Efisiensi Anggaran",                                        jenis:"",jadwal:"",            tahun:"2025",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",  media:"Link",webLAN:"Link 1|Link 2|Link 3",webUnit:"",igLAN:"",igUnit:"",ytLAN:"",ytUnit:"",ket:""},
+  {no:14, unit:"STIA JKT",                    judul:"Flexible Working Arrangement untuk Pegawai Perempuan ASN dan Swasta",                                      jenis:"Jurnal/Penelitian Kolaborasi",jadwal:"",tahun:"2025",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",media:"",webLAN:"",webUnit:"",igLAN:"",igUnit:"",ytLAN:"",ytUnit:"",ket:"Materi sudah dipaparkan di depan DFT Australia. Sudah coba dikirim ke jurnal tapi belum diterima"},
+  {no:15, unit:"DAPKK",                       judul:"Ekosistem Inovasi",                                                                                        jenis:"Buku",jadwal:"",        tahun:"2025",cluster:"Digitalisasi",              jurnal:"",  media:"Link",webLAN:"",     webUnit:"",             igLAN:"",    igUnit:"",          ytLAN:"",   ytUnit:"",ket:""},
+  {no:16, unit:"SKTAN",                       judul:"Survei persepsi alumni terkait dampak pelatihan kepemimpinan terhadap manajemen karir",                    jenis:"Jurnal/Penelitian",jadwal:"Januari (1)",tahun:"2026",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",media:"",webLAN:"Link",webUnit:"",igLAN:"",igUnit:"link",ytLAN:"link",ytUnit:"",ket:"Selesai\ndengan publikasi di Prosiding dan youtube"},
+  {no:17, unit:"STIA BDG",                    judul:"Survey Budaya Kerja ASN",                                                                                  jenis:"",jadwal:"Januari (4)", tahun:"2026",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",  media:"Link",webLAN:"",     webUnit:"",             igLAN:"",    igUnit:"",          ytLAN:"",   ytUnit:"Link",ket:"Selesai\ndengan publikasi di website lan dan podcast di youtube Poltek"},
+  {no:18, unit:"STIA MKS",                    judul:"Survei Kesiapan Pemerintah Desa/Kelurahan dalam Mengelola Koperasi Merah Putih",                           jenis:"Policy Paper",jadwal:"Februari (3)",tahun:"2026",cluster:"Prioritas Presiden",jurnal:"",media:"",webLAN:"Link",webUnit:"",igLAN:"",igUnit:"Link 1|Link 2",ytLAN:"Link 1|Link 2",ytUnit:"",ket:"Selesai\ndengan publikasi di website Poltek dan Podcast di LAN dan Poltek"},
+  {no:19, unit:"DSPK2AN",                     judul:"Survei Indonesia Leadership Outlook 2026",                                                                  jenis:"Laporan",jadwal:"Februari (4)",tahun:"2026",cluster:"Digitalisasi",jurnal:"",media:"Link",webLAN:"Link",webUnit:"Link 1|Link 2",igLAN:"Link 1|Link 2",igUnit:"Link 1|Link 2|Link 3",ytLAN:"Link 1|Link 2|Link 3",ytUnit:"",ket:"Selesai\ndengan publikasi di Website LAN, Instagram LAN & D1 (Infografis & Podcast), dan Youtube LAN (Podcast)"},
+  {no:20, unit:"STIA BDG",                    judul:"Difusi Inovasi",                                                                                           jenis:"",jadwal:"Maret (1)",   tahun:"2026",cluster:"Digitalisasi",              jurnal:"",  media:"Link",webLAN:"",     webUnit:"",             igLAN:"",    igUnit:"",          ytLAN:"Link",ytUnit:"Link",ket:"Selesai\ndengan publikasi di Website LAN dan Youtube LAN & Poltek (Podcast)"},
+  {no:21, unit:"DAPKK",                       judul:"Desain kelembagaan pengentasan kemiskinan",                                                                jenis:"",jadwal:"Maret (4)",   tahun:"2026",cluster:"Prioritas Presiden",         jurnal:"",  media:"Link",webLAN:"Link",  webUnit:"Link 1|Link 2",igLAN:"Link 1|Link 2",igUnit:"Link 1|Link 2",ytLAN:"Link 1|Link 2",ytUnit:"",ket:"Selesai\ndengan publikasi di Website LAN, Instagram LAN & D1 (Podcast), dan Youtube LAN (Podcast)"},
+  {no:22, unit:"SKMP",                        judul:"Kesiapan dan kebutuhan kompetensi ASN muda dalam mendukung komponen cadangan pertahanan negara",           jenis:"",jadwal:"April (1)",   tahun:"2026",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",  media:"",   webLAN:"Link",  webUnit:"",             igLAN:"",    igUnit:"Link",       ytLAN:"Link",ytUnit:"",ket:"Selesai\ndengan publikasi di Website (Media Berita Online) dan Youtube LAN dan Pusjar (Podcast)"},
+  {no:23, unit:"SKPP",                        judul:"Efektifitas layanan call center di daerah",                                                                jenis:"",jadwal:"April (3)",   tahun:"2026",cluster:"Pelayanan Publik",           jurnal:"",  media:"Link",webLAN:"Link 1|Link 2",webUnit:"",igLAN:"",igUnit:"Link",ytLAN:"Link",ytUnit:"Link",ket:"Selesai\ndengan publikasi di Website Pusjar & Online (Media Indonesia), Instagram Pusjar (Podcast), dan Youtube LAN & Pusjar (Podcast)"},
+  {no:24, unit:"STIA JKT|STIA MKS|STIA BDG", judul:"Birokrasi melayani outlook",                                                                              jenis:"",jadwal:"Mei (1)",     tahun:"2026",cluster:"Pelayanan Publik",           jurnal:"",  media:"",   webLAN:"",     webUnit:"",             igLAN:"",    igUnit:"",          ytLAN:"",   ytUnit:"",ket:"Belum Selesai\nBelum dilanjutkan berhubung banyak kegiatan relatif bertumpuk"},
+  {no:25, unit:"SKMK",                        judul:"Survei Resiliensi ASN dalam situasi Krisis Bencana",                                                       jenis:"",jadwal:"Mei (2)",     tahun:"2026",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",  media:"",   webLAN:"",     webUnit:"",             igLAN:"",    igUnit:"",          ytLAN:"",   ytUnit:"",ket:"Belum Selesai\nSudah disusun policy brief dan akan dilakukan webinar tgl 14 Oktober 2026"},
+  {no:26, unit:"DAPKK",                       judul:"Monitoring dan Evaluasi Sekolah Rakyat",                                                                   jenis:"",jadwal:"Mei (4)",     tahun:"2026",cluster:"Prioritas Presiden",         jurnal:"",  media:"Link",webLAN:"Link",  webUnit:"",             igLAN:"",    igUnit:"Link",       ytLAN:"Link",ytUnit:"",ket:"Selesai\ndengan publikasi di Website LAN dan Youtube LAN (Podcast)"},
+  {no:27, unit:"SKMP",                        judul:"Strategi adaptasi fiskal Pemda terhadap pemangkasan dana transfer ke daerah dalam APBN 2026",              jenis:"",jadwal:"Juni (1)",    tahun:"2026",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",  media:"",   webLAN:"",     webUnit:"",             igLAN:"",    igUnit:"",          ytLAN:"",   ytUnit:"",ket:"Belum Selesai\nSudah dilakukan pengumpulan data namun belum ada penambahan jumlah responden (masih 28)"},
+  {no:28, unit:"STIA JKT",                    judul:"Survey Kualitatif Sistem Penilaian Integritas: Integritas Masih Sebatas Jargon?",                          jenis:"Policy Brief",jadwal:"Juni (2)",tahun:"2026",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",media:"Link",webLAN:"",webUnit:"Link",igLAN:"Link",igUnit:"Link",ytLAN:"",ytUnit:"",ket:"Selesai\ndengan publikasi di Website LAN, Instagram LAN (Podcast), Instagram Unit & D1 (Podcast), dan Youtube LAN (Podcast)"},
+  {no:29, unit:"STIA MKS",                    judul:"Preferensi pilihan karier Gen Z untuk menjadi ASN",                                                        jenis:"",jadwal:"Juni (3)",    tahun:"2026",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",  media:"",   webLAN:"",     webUnit:"",             igLAN:"",    igUnit:"",          ytLAN:"",   ytUnit:"",ket:"Belum Selesai\nSedang dilakukan penyebaran instrumen survei."},
+  {no:30, unit:"SKTAN",                       judul:"Preferensi pilihan karier ASN Gen Z",                                                                      jenis:"Policy Brief",jadwal:"Juli (1)",tahun:"2026",cluster:"Tata Kelola & Manajemen ASN",jurnal:"Opini di Ayobandung Link 2",media:"",webLAN:"link",webUnit:"",igLAN:"Instagram",igUnit:"Link",ytLAN:"Link",ytUnit:"",ket:"Belum Selesai (Policy Paper & Publikasi).\nPublikasi baru di Instagram Pusjar & D1 (Infografis)"},
+  {no:31, unit:"SKMK",                        judul:"Survei Nasional Kesiapan ASN sebagai Policy Entrepreneur dalam Mendukung Program Prioritas Nasional 2026", jenis:"",jadwal:"Juli (2)",    tahun:"2026",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",  media:"",   webLAN:"",     webUnit:"",             igLAN:"",    igUnit:"",          ytLAN:"",   ytUnit:"",ket:"Belum Selesai\nSedang dilakukan penyempurnaan instrumen"},
+  {no:32, unit:"SKPP",                        judul:"Penguatan layanan tanggap bencana di daerah",                                                              jenis:"",jadwal:"Juli (3)",    tahun:"2026",cluster:"Pelayanan Publik",           jurnal:"",  media:"Link",webLAN:"Link",  webUnit:"",             igLAN:"",    igUnit:"Link",       ytLAN:"",   ytUnit:"Link",ket:"Selesai dengan publikasi di Website Pusjar, Instagram Pusjar (Dokumentasi Webinar), dan Youtube Pusjar (Webinar)."},
+  {no:33, unit:"STIA JKT|STIA MKS|STIA BDG", judul:"Organizational Trend in Indonesia's Public Sector",                                                       jenis:"",jadwal:"Agustus (1)", tahun:"2026",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",  media:"",   webLAN:"",     webUnit:"",             igLAN:"",    igUnit:"",          ytLAN:"",   ytUnit:"",ket:"Belum Selesai\nSedang dilakukan penyusunan instrumen survei."},
+  {no:34, unit:"SKPP",                        judul:"Pelayanan Publik Outlook",                                                                                 jenis:"",jadwal:"Agustus (2)", tahun:"2026",cluster:"Pelayanan Publik",           jurnal:"",  media:"Link",webLAN:"",     webUnit:"",             igLAN:"Link",igUnit:"",          ytLAN:"",   ytUnit:"",ket:"Selesai dengan publikasi di instagram"},
+  {no:35, unit:"SKTAN",                       judul:"Survei Kesiapan Operasional Koperasi Desa Merah Putih di Desa",                                            jenis:"",jadwal:"Agustus (3)", tahun:"2026",cluster:"Prioritas Presiden",         jurnal:"",  media:"",   webLAN:"",     webUnit:"",             igLAN:"",    igUnit:"Link",       ytLAN:"",   ytUnit:"",ket:"Belum Selesai\nSedang dilakukan review policy brief oleh Deputi"},
+  {no:36, unit:"SKMK",                        judul:"Menyusun proses bisnis continuity dan disaster recovery serta SOP darurat",                                jenis:"",jadwal:"Agustus (4)", tahun:"2026",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",  media:"",   webLAN:"",     webUnit:"",             igLAN:"",    igUnit:"",          ytLAN:"",   ytUnit:"",ket:"Belum Selesai\nSedang dalam tahap penyempurnaan Policy Brief"},
+  {no:37, unit:"STIA MKS",                    judul:"Pemberantasan kemiskinan",                                                                                 jenis:"",jadwal:"September (1)",tahun:"2026",cluster:"Prioritas Presiden",        jurnal:"",  media:"",   webLAN:"",     webUnit:"",             igLAN:"",    igUnit:"",          ytLAN:"",   ytUnit:"",ket:"Belum Selesai\nSedang dilakukan penyebaran instrumen survei."},
+  {no:38, unit:"DAPKK",                       judul:"Workplace trend",                                                                                          jenis:"",jadwal:"September (2)",tahun:"2026",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",media:"",webLAN:"",webUnit:"",igLAN:"Link",igUnit:"",ytLAN:"",ytUnit:"",ket:"Belum Selesai\nSedang dilakukan pengolahan data"},
+  {no:39, unit:"SKTAN",                       judul:"Pelestarian lingkungan hidup / Transformasi Kebijakan Lingkungan",                                         jenis:"Policy Brief",jadwal:"September (3)",tahun:"2026",cluster:"Prioritas Presiden",jurnal:"",media:"",webLAN:"",webUnit:"",igLAN:"",igUnit:"link",ytLAN:"",ytUnit:"",ket:"Belum Selesai\nSedang dilakukan review policy brief oleh deputi"},
+  {no:40, unit:"DSPK2AN",                     judul:"Reformasi Tata Kelola Makan Bergizi Gratis (MBG)",                                                        jenis:"Policy Paper",jadwal:"September (4)",tahun:"2026",cluster:"Prioritas Presiden",jurnal:"",media:"",webLAN:"Link",webUnit:"",igLAN:"",igUnit:"",ytLAN:"",ytUnit:"",ket:"Belum Selesai\nSudah ada Policy Paper"},
+  {no:41, unit:"SKPP",                        judul:"Fenomena Polyworking di kalangan ASN",                                                                     jenis:"",jadwal:"September (4)",tahun:"2026",cluster:"Tata Kelola & Manajemen ASN",jurnal:"link",media:"Link",webLAN:"link",webUnit:"",igLAN:"Link",igUnit:"-",ytLAN:"Link",ytUnit:"",ket:"Selesai\ndengan publikasi di Website Pusjar, Instagram Pusjar (Dokumentasi Webinar), dan Youtube Pusjar (Webinar)"},
+  {no:42, unit:"STIA JKT|STIA MKS|STIA BDG", judul:"Regenerative Leadership",                                                                                 jenis:"",jadwal:"Oktober (1)", tahun:"2026",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",  media:"",   webLAN:"",     webUnit:"",             igLAN:"",    igUnit:"",          ytLAN:"",   ytUnit:"",ket:"Belum Selesai\nSedang dalam tahap persiapan"},
+  {no:43, unit:"SKMK",                        judul:"Evaluasi Kebijakan Makan Bergizi Gratis",                                                                  jenis:"",jadwal:"Oktober (1)", tahun:"2026",cluster:"Prioritas Presiden",         jurnal:"",  media:"",   webLAN:"",     webUnit:"",             igLAN:"",    igUnit:"",          ytLAN:"",   ytUnit:"",ket:"Belum Selesai\nSedang dilakukan penyusunan Policy Brief"},
+  {no:44, unit:"DSPK2AN",                     judul:"Penguatan Kebijakan Kedaulatan Pangan Nasional",                                                           jenis:"Policy Brief",jadwal:"Oktober (2)",tahun:"2026",cluster:"Prioritas Presiden",jurnal:"",media:"",webLAN:"Link",webUnit:"",igLAN:"Link",igUnit:"",ytLAN:"",ytUnit:"",ket:"Belum Selesai\nSedang disusun Policy Brief\nPublikasi baru informasi kegiatan"},
+  {no:45, unit:"SKMP",                        judul:"Persepsi ASN mengenai Upaya Penguatan/Pembentukan Lembaga Pengawas sistem merit",                          jenis:"",jadwal:"Oktober (2)", tahun:"2026",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",  media:"",   webLAN:"",     webUnit:"",             igLAN:"",    igUnit:"",          ytLAN:"",   ytUnit:"",ket:""},
+  {no:46, unit:"DAPKK",                       judul:"Survei Perilaku Kepemimpinan Adaptif Berdasarkan Persepsi Aparatur Sipil Negara",                          jenis:"",jadwal:"Oktober (3)", tahun:"2026",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",  media:"",   webLAN:"",     webUnit:"",             igLAN:"",    igUnit:"",          ytLAN:"",   ytUnit:"",ket:""},
+  {no:47, unit:"SKTAN",                       judul:"Ketahanan pangan sebagai fondasi kemandirian bangsa",                                                      jenis:"",jadwal:"Oktober (4)", tahun:"2026",cluster:"Prioritas Presiden",         jurnal:"",  media:"",   webLAN:"",     webUnit:"",             igLAN:"",    igUnit:"",          ytLAN:"",   ytUnit:"",ket:"Sedang dilakukan penyusunan instrumen"},
+  {no:48, unit:"STIA JKT",                    judul:"Pendidikan bermutu untuk SDM berdaya saing global",                                                        jenis:"",jadwal:"November (1)",tahun:"2026",cluster:"Prioritas Presiden",         jurnal:"",  media:"",   webLAN:"",     webUnit:"",             igLAN:"",    igUnit:"",          ytLAN:"",   ytUnit:"",ket:""},
+  {no:49, unit:"STIA BDG",                    judul:"Program Pemberdayaan dan Kesiapan Masa Depan Siswa Sekolah Rakyat",                                        jenis:"",jadwal:"November (2)",tahun:"2026",cluster:"Prioritas Presiden",         jurnal:"",  media:"",   webLAN:"",     webUnit:"",             igLAN:"",    igUnit:"",          ytLAN:"",   ytUnit:"",ket:""},
+  {no:50, unit:"SKMP",                        judul:"Persepsi masyarakat terhadap peran opini publik/agenda kebijakan pemerintah",                              jenis:"",jadwal:"November (3)",tahun:"2026",cluster:"Prioritas Presiden",         jurnal:"",  media:"",   webLAN:"",     webUnit:"",             igLAN:"",    igUnit:"",          ytLAN:"",   ytUnit:"",ket:""},
+  {no:51, unit:"SKPP",                        judul:"Penguatan kebijakan ekonomi hijau dalam mendukung hilirisasi berkelanjutan",                               jenis:"",jadwal:"November (4)",tahun:"2026",cluster:"Prioritas Presiden",         jurnal:"link",media:"",webLAN:"",   webUnit:"",             igLAN:"",    igUnit:"Link",       ytLAN:"",   ytUnit:"",ket:"Sudah dilakukan ekspose kegiatan dan saat ini sedang disusun PB"},
+  {no:52, unit:"SKTAN",                       judul:"Learning agility ASN dalam mendukung Pendidikan vokasi dan peningkatan kualitas guru",                     jenis:"",jadwal:"Desember (1)",tahun:"2026",cluster:"Prioritas Presiden",        jurnal:"",  media:"",   webLAN:"",     webUnit:"",             igLAN:"",    igUnit:"",          ytLAN:"",   ytUnit:"",ket:"Sedang dilakukan penyusunan instrumen"},
+  {no:53, unit:"SKPP",                        judul:"Survei Tata Kelola dan Kualitas Pelayanan Program Bantuan Sosial",                                         jenis:"",jadwal:"Desember (1)",tahun:"",   cluster:"",                          jurnal:"",  media:"",   webLAN:"",     webUnit:"",             igLAN:"",    igUnit:"",          ytLAN:"",   ytUnit:"",ket:""},
+  {no:54, unit:"DSPK2AN",                     judul:"Analisis Pemantauan dan Solusi atas Program Prioritas Nasional",                                           jenis:"",jadwal:"Desember (2)",tahun:"2026",cluster:"Prioritas Presiden",        jurnal:"",  media:"",   webLAN:"",     webUnit:"",             igLAN:"",    igUnit:"",          ytLAN:"",   ytUnit:"",ket:""},
+  {no:55, unit:"SKPP",                        judul:"Survei Integrasi Pelayanan Publik",                                                                        jenis:"",jadwal:"Desember (2)",tahun:"",   cluster:"",                          jurnal:"",  media:"",   webLAN:"",     webUnit:"",             igLAN:"",    igUnit:"",          ytLAN:"",   ytUnit:"",ket:""},
+  {no:56, unit:"DSPK2AN",                     judul:"Survei Indonesia Leadership Outlook 2027",                                                                 jenis:"Laporan",jadwal:"Desember (3)",tahun:"2026",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",media:"",webLAN:"",webUnit:"",igLAN:"",igUnit:"",ytLAN:"",ytUnit:"",ket:""},
+];
+
+/* ══════════════════════════════════════════════════════════
+   STATE
+   ══════════════════════════════════════════════════════════ */
+const LS_DATA     = 'lan_pub_data';
+const LS_PASS     = 'lan_admin_pass';
+const LS_LOG      = 'lan_admin_log';
+const LS_UPDATED  = 'lan_last_updated';
+
+let DB = [];
+let confirmCallback = null;
+
+/* ══ AUTH ══ */
+function getPass(){ return localStorage.getItem(LS_PASS) || 'admin2026'; }
+function doLogin(){
+  const u = document.getElementById('inp-user').value.trim();
+  const p = document.getElementById('inp-pass').value;
+  if(u === 'admin' && p === getPass()){
+    document.getElementById('login-screen').style.display='none';
+    document.getElementById('app').style.display='block';
+    sessionStorage.setItem('lan_auth','1');
+    init();
+  } else {
+    const err = document.getElementById('login-err');
+    err.style.display='flex'; err.style.alignItems='center'; err.style.gap='6px';
+    document.getElementById('inp-pass').value='';
+    setTimeout(()=>err.style.display='none', 3000);
+  }
+}
+function doLogout(){ sessionStorage.removeItem('lan_auth'); location.reload(); }
+
+/* ══ DATA ══ */
+function loadDB(){
+  const raw = localStorage.getItem(LS_DATA);
+  DB = raw ? JSON.parse(raw) : JSON.parse(JSON.stringify(DEFAULT_DATA));
+  if(!raw) saveDB();
+}
+function saveDB(){
+  localStorage.setItem(LS_DATA, JSON.stringify(DB));
+  localStorage.setItem(LS_UPDATED, new Date().toISOString());
+}
+
+/* ══ HELPERS ══ */
+function hasLink(v){ return v && v.trim()!=='' && v.trim()!=='-'; }
+function chCount(d){ return ['jurnal','media','webLAN','webUnit','igLAN','igUnit','ytLAN','ytUnit'].filter(f=>hasLink(d[f])).length; }
+function getStatus(d){
+  const k=(d.ket||'').toLowerCase().trim();
+  if(k.startsWith('selesai')) return 'selesai';
+  if(k.includes('belum selesai')||k.startsWith('belum')) return 'belum';
+  return 'planned';
+}
+function statusBadge(s){
+  if(s==='selesai') return '<span class="badge badge-green">✓ Selesai</span>';
+  if(s==='belum')   return '<span class="badge badge-red">⏱ Belum</span>';
+  return '<span class="badge badge-gray">— Rencana</span>';
+}
+function chBadge(n){ return n===0?`<span style="color:#dc2626;font-weight:700">${n}</span>`:n<3?`<span style="color:#d97706;font-weight:700">${n}</span>`:`<span style="color:#16a34a;font-weight:700">${n}</span>`; }
+function nextNo(){ return DB.length ? Math.max(...DB.map(d=>d.no))+1 : 1; }
+
+/* ══ LOG ══ */
+function addLog(msg, type='info'){
+  const logs = JSON.parse(localStorage.getItem(LS_LOG)||'[]');
+  logs.unshift({ time: new Date().toISOString(), msg, type });
+  if(logs.length>100) logs.pop();
+  localStorage.setItem(LS_LOG, JSON.stringify(logs));
+}
+function renderLog(){
+  const logs = JSON.parse(localStorage.getItem(LS_LOG)||'[]');
+  const el = document.getElementById('log-list');
+  if(!logs.length){ el.innerHTML='<div class="empty"><i class="fa-solid fa-scroll"></i>Belum ada riwayat perubahan.</div>'; return; }
+  const dotColors = {add:'#16a34a',edit:'#2563eb',delete:'#dc2626',info:'#94a3b8',reset:'#d97706'};
+  el.innerHTML = logs.map(l=>`
+    <div class="log-item">
+      <div class="log-dot" style="background:${dotColors[l.type]||'#94a3b8'}"></div>
+      <div style="flex:1">
+        <div class="log-msg">${l.msg}</div>
+        <div class="log-time">${new Date(l.time).toLocaleString('id-ID')}</div>
+      </div>
+    </div>`).join('');
+}
+function clearLog(){ localStorage.removeItem(LS_LOG); renderLog(); showToast('Log dibersihkan','warn'); }
+
+/* ══ STATS ══ */
+function renderStats(){
+  const s=DB.filter(d=>getStatus(d)==='selesai').length;
+  const b=DB.filter(d=>getStatus(d)==='belum').length;
+  const p=DB.filter(d=>getStatus(d)==='planned').length;
+  document.getElementById('stat-row').innerHTML=`
+    <div class="stat-card" style="--c:#2563eb"><div class="stat-val">${DB.length}</div><div class="stat-label">Total Publikasi</div></div>
+    <div class="stat-card" style="--c:#16a34a"><div class="stat-val">${s}</div><div class="stat-label">Selesai</div></div>
+    <div class="stat-card" style="--c:#dc2626"><div class="stat-val">${b}</div><div class="stat-label">Belum Selesai</div></div>
+    <div class="stat-card" style="--c:#94a3b8"><div class="stat-val">${p}</div><div class="stat-label">Perencanaan</div></div>
+  `;
+}
+
+/* ══ DROPDOWNS ══ */
+function populateFilters(){
+  const units=[...new Set(DB.flatMap(d=>d.unit.split('|').map(u=>u.trim())))].sort();
+  const clusters=[...new Set(DB.map(d=>d.cluster).filter(Boolean))].sort();
+  ['s-unit'].forEach(id=>{ const el=document.getElementById(id); el.innerHTML='<option value="">Semua Unit</option>'; units.forEach(u=>{ const o=document.createElement('option'); o.value=u; o.textContent=u; el.appendChild(o); }); });
+  ['s-cluster'].forEach(id=>{ const el=document.getElementById(id); el.innerHTML='<option value="">Semua Cluster</option>'; clusters.forEach(c=>{ const o=document.createElement('option'); o.value=c; o.textContent=c; el.appendChild(o); }); });
+}
+
+/* ══ TABLE ══ */
+function renderDataTable(){
+  const search=(document.getElementById('s-search').value||'').toLowerCase();
+  const unit=document.getElementById('s-unit').value;
+  const cluster=document.getElementById('s-cluster').value;
+  const status=document.getElementById('s-status').value;
+  const year=document.getElementById('s-year').value;
+  let data=DB.filter(d=>{
+    if(year && d.tahun!==year) return false;
+    if(unit && !d.unit.includes(unit)) return false;
+    if(cluster && d.cluster!==cluster) return false;
+    if(status && getStatus(d)!==status) return false;
+    if(search && !(d.judul.toLowerCase().includes(search)||d.unit.toLowerCase().includes(search)||(d.cluster||'').toLowerCase().includes(search))) return false;
+    return true;
+  });
+  document.getElementById('rec-count').textContent=`${data.length} dari ${DB.length} records`;
+  document.getElementById('data-tbody').innerHTML=data.map(d=>{
+    const st=getStatus(d), ch=chCount(d);
+    return `<tr>
+      <td style="color:var(--text3);font-size:11px">${d.no}</td>
+      <td><span style="font-size:11px;font-weight:600;color:var(--accent)">${d.unit}</span></td>
+      <td class="td-judul"><span title="${d.judul}">${d.judul}</span></td>
+      <td style="font-size:11px;color:var(--text2)">${d.jenis||'—'}</td>
+      <td style="font-size:11px;white-space:nowrap;color:var(--text2)">${d.jadwal||'—'}</td>
+      <td style="text-align:center;font-size:11px">${d.tahun||'—'}</td>
+      <td style="font-size:10px">${d.cluster?`<span class="badge badge-blue" style="font-size:9px">${d.cluster}</span>`:'—'}</td>
+      <td style="text-align:center">${chBadge(ch)}</td>
+      <td>${statusBadge(st)}</td>
+      <td>
+        <div class="actions-cell">
+          <button class="btn btn-outline btn-xs" onclick="editRecord(${d.no})" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>
+          <button class="btn btn-danger btn-xs" onclick="deleteRecord(${d.no})" title="Hapus"><i class="fa-solid fa-trash"></i></button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('')||'<tr><td colspan="10" style="padding:36px;text-align:center;color:var(--text3)">Tidak ada data ditemukan</td></tr>';
+}
+function resetSearch(){ ['s-search','s-unit','s-cluster','s-status','s-year'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; }); renderDataTable(); }
+
+/* ══ FORM HELPERS ══ */
+function buildJadwal(bulan, minggu){ if(!bulan) return ''; return minggu ? `${bulan} (${minggu})` : bulan; }
+function parseJadwal(jadwal){ if(!jadwal) return {bulan:'',minggu:''}; const m=jadwal.match(/\((\d)\)/); const minggu=m?m[1]:''; const bulan=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'].find(mn=>jadwal.includes(mn))||''; return {bulan,minggu}; }
+function buildKet(status, ket){
+  const ketClean=(ket||'').trim();
+  if(status==='selesai') return ketClean?`Selesai\n${ketClean}`:'Selesai';
+  if(status==='belum') return ketClean?`Belum Selesai\n${ketClean}`:'Belum Selesai';
+  return ketClean;
+}
+function parseKetStatus(ket){
+  const k=(ket||'').trim();
+  if(!k) return {status:'planned',ketRest:''};
+  const lines=k.split('\n'); const first=lines[0].toLowerCase();
+  if(first.startsWith('selesai')&&!first.includes('belum')) return {status:'selesai', ketRest:lines.slice(1).join('\n').trim()};
+  if(first.includes('belum selesai')||first.startsWith('belum')) return {status:'belum', ketRest:lines.slice(1).join('\n').trim()};
+  return {status:'planned', ketRest:k};
+}
+
+/* ══ ADD / EDIT ══ */
+function showPage(pg){
+  ['data','add','settings','log'].forEach(p=>{ document.getElementById(`page-${p}`).style.display = p===pg?'':'none'; });
+  ['data','add','settings','log'].forEach(p=>{ document.getElementById(`nav-${p}`)?.classList.toggle('active', p===pg); });
+  if(pg==='data'){ renderStats(); renderDataTable(); }
+  if(pg==='log')  renderLog();
+  if(pg==='settings') renderSettings();
+}
+
+function resetForm(){
+  document.getElementById('f-id').value='';
+  document.getElementById('form-title').innerHTML='<i class="fa-solid fa-plus-circle" style="color:var(--accent);margin-right:8px"></i>Tambah Publikasi';
+  ['f-unit','f-jenis','f-judul','f-cluster','f-tahun','f-bulan','f-minggu','f-jurnal','f-media','f-webLAN','f-webUnit','f-igLAN','f-igUnit','f-ytLAN','f-ytUnit','f-ket'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  document.getElementById('f-status').value='planned';
+}
+
+function editRecord(no){
+  const d=DB.find(r=>r.no===no); if(!d) return;
+  resetForm();
+  document.getElementById('f-id').value=d.no;
+  document.getElementById('form-title').innerHTML=`<i class="fa-solid fa-pen-to-square" style="color:var(--accent);margin-right:8px"></i>Edit Publikasi #${d.no}`;
+  document.getElementById('f-unit').value=d.unit||'';
+  document.getElementById('f-jenis').value=d.jenis||'';
+  document.getElementById('f-judul').value=d.judul||'';
+  document.getElementById('f-cluster').value=d.cluster||'';
+  document.getElementById('f-tahun').value=d.tahun||'';
+  const {bulan,minggu}=parseJadwal(d.jadwal);
+  document.getElementById('f-bulan').value=bulan;
+  document.getElementById('f-minggu').value=minggu;
+  const {status,ketRest}=parseKetStatus(d.ket);
+  document.getElementById('f-status').value=status;
+  document.getElementById('f-ket').value=ketRest;
+  document.getElementById('f-jurnal').value=d.jurnal||'';
+  document.getElementById('f-media').value=d.media||'';
+  document.getElementById('f-webLAN').value=d.webLAN||'';
+  document.getElementById('f-webUnit').value=d.webUnit||'';
+  document.getElementById('f-igLAN').value=d.igLAN||'';
+  document.getElementById('f-igUnit').value=d.igUnit||'';
+  document.getElementById('f-ytLAN').value=d.ytLAN||'';
+  document.getElementById('f-ytUnit').value=d.ytUnit||'';
+  showPage('add');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function saveRecord(e){
+  e.preventDefault();
+  const id=document.getElementById('f-id').value;
+  const bulan=document.getElementById('f-bulan').value;
+  const minggu=document.getElementById('f-minggu').value;
+  const status=document.getElementById('f-status').value;
+  const ketNote=document.getElementById('f-ket').value.trim();
+
+  const rec={
+    no:     id ? parseInt(id) : nextNo(),
+    unit:   document.getElementById('f-unit').value.trim(),
+    judul:  document.getElementById('f-judul').value.trim(),
+    jenis:  document.getElementById('f-jenis').value,
+    jadwal: buildJadwal(bulan, minggu),
+    tahun:  document.getElementById('f-tahun').value,
+    cluster:document.getElementById('f-cluster').value,
+    jurnal: document.getElementById('f-jurnal').value.trim(),
+    media:  document.getElementById('f-media').value.trim(),
+    webLAN: document.getElementById('f-webLAN').value.trim(),
+    webUnit:document.getElementById('f-webUnit').value.trim(),
+    igLAN:  document.getElementById('f-igLAN').value.trim(),
+    igUnit: document.getElementById('f-igUnit').value.trim(),
+    ytLAN:  document.getElementById('f-ytLAN').value.trim(),
+    ytUnit: document.getElementById('f-ytUnit').value.trim(),
+    ket:    buildKet(status, ketNote),
+  };
+
+  if(id){
+    const idx=DB.findIndex(r=>r.no===parseInt(id));
+    if(idx>=0){ DB[idx]=rec; addLog(`Edit: "${rec.judul.slice(0,50)}" (No.${rec.no})`, 'edit'); }
+  } else {
+    DB.push(rec);
+    addLog(`Tambah: "${rec.judul.slice(0,50)}" (No.${rec.no})`, 'add');
+  }
+  saveDB();
+  showToast(id ? 'Perubahan berhasil disimpan!' : 'Publikasi baru berhasil ditambahkan!', 'success');
+  showPage('data');
+}
+
+/* ══ DELETE ══ */
+function deleteRecord(no){
+  const d=DB.find(r=>r.no===no);
+  showConfirm('🗑️','Hapus Publikasi?',`"${d?.judul?.slice(0,60)||'Record ini'}" akan dihapus permanen.`, 'btn-danger', 'Hapus', ()=>{
+    DB=DB.filter(r=>r.no!==no);
+    saveDB();
+    addLog(`Hapus: "${d?.judul?.slice(0,50)}" (No.${no})`, 'delete');
+    showToast('Publikasi dihapus.','warn');
+    renderStats(); renderDataTable();
+  });
+}
+
+/* ══ EXPORT / IMPORT ══ */
+function exportJSON(){
+  const blob=new Blob([JSON.stringify(DB,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download=`lan_publikasi_${new Date().toISOString().slice(0,10)}.json`; a.click();
+  addLog('Export JSON dilakukan','info');
+  showToast('Data berhasil diexport!','success');
+}
+function importJSON(input){
+  const file=input.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=e=>{ try{ const data=JSON.parse(e.target.result); if(!Array.isArray(data)) throw new Error('Format salah'); DB=data; saveDB(); populateFilters(); renderStats(); renderDataTable(); addLog(`Import JSON: ${data.length} records`,'info'); showToast(`${data.length} records berhasil diimport!`,'success'); } catch(err){ showToast('Format JSON tidak valid!','error'); } };
+  reader.readAsText(file); input.value='';
+}
+
+/* ══ RESET / CLEAR ══ */
+function confirmResetData(){
+  showConfirm('⚠️','Reset ke Data Awal?','Semua perubahan akan hilang dan data akan kembali ke default.','btn-warn','Reset',()=>{
+    DB=JSON.parse(JSON.stringify(DEFAULT_DATA)); saveDB(); populateFilters(); renderStats(); renderDataTable();
+    addLog('Reset ke data awal','reset'); showToast('Data direset ke default.','warn');
+  });
+}
+function confirmClearAll(){
+  showConfirm('🚨','Hapus Semua Data?','Seluruh data akan dihapus permanen. Tindakan ini tidak dapat dibatalkan!','btn-danger','Hapus Semua',()=>{
+    DB=[]; saveDB(); renderStats(); renderDataTable(); addLog('Semua data dihapus','delete'); showToast('Semua data dihapus!','error');
+  });
+}
+
+/* ══ SETTINGS ══ */
+function renderSettings(){
+  const upd=localStorage.getItem(LS_UPDATED);
+  document.getElementById('s-last-updated').textContent=upd?new Date(upd).toLocaleString('id-ID'):'—';
+  document.getElementById('s-total').textContent=DB.length;
+}
+function changePassword(){
+  const old=document.getElementById('s-old-pass').value;
+  const nw=document.getElementById('s-new-pass').value;
+  const cf=document.getElementById('s-confirm-pass').value;
+  if(old!==getPass()){ showToast('Password lama salah!','error'); return; }
+  if(nw.length<6){ showToast('Password baru minimal 6 karakter!','warn'); return; }
+  if(nw!==cf){ showToast('Konfirmasi password tidak cocok!','error'); return; }
+  localStorage.setItem(LS_PASS, nw);
+  addLog('Password admin diubah','info');
+  showToast('Password berhasil diubah!','success');
+  ['s-old-pass','s-new-pass','s-confirm-pass'].forEach(id=>document.getElementById(id).value='');
+}
+
+/* ══ CONFIRM MODAL ══ */
+function showConfirm(icon, title, desc, btnCls, btnText, cb){
+  document.getElementById('confirm-icon').textContent=icon;
+  document.getElementById('confirm-title').textContent=title;
+  document.getElementById('confirm-desc').textContent=desc;
+  const btn=document.getElementById('confirm-ok-btn');
+  btn.className=`btn ${btnCls}`;
+  btn.textContent=btnText;
+  confirmCallback=cb;
+  document.getElementById('confirm-overlay').classList.add('open');
+}
+function confirmAction(){ if(confirmCallback) confirmCallback(); closeConfirm(); }
+function closeConfirm(e){ if(!e||e.target===document.getElementById('confirm-overlay')) document.getElementById('confirm-overlay').classList.remove('open'); }
+
+/* ══ TOAST ══ */
+function showToast(msg, type='success'){
+  const t=document.getElementById('toast');
+  const icons={success:'fa-circle-check',error:'fa-circle-xmark',warn:'fa-triangle-exclamation'};
+  t.className=`toast ${type}`;
+  t.innerHTML=`<i class="fa-solid ${icons[type]||icons.success}"></i> ${msg}`;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+/* ══ INIT ══ */
+function init(){
+  loadDB();
+  populateFilters();
+  renderStats();
+  renderDataTable();
+  document.getElementById('f-id'); // ensure form exists
+}
+
+// Auto-login if session exists
+if(sessionStorage.getItem('lan_auth')==='1'){
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app').style.display='block';
+  init();
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', e=>{
+  if(e.key==='Escape'){ document.getElementById('confirm-overlay').classList.remove('open'); }
+});
+</script>
+</body>
+</html>
