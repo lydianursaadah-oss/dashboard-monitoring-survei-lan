@@ -687,14 +687,26 @@ async function loadFromGAS(){
     const json = await res.json();
     const records = Array.isArray(json) ? json : (json.data || json.records || null);
     if(records && records.length > 0){
-      localStorage.setItem('lan_pub_data', JSON.stringify(records));
-      setGasBadge('','Terhubung Google Sheet');
-      console.log('[GAS] Synced', records.length, 'records from Google Sheets.');
+      // Quality check before saving: ensure records have ket/status fields
+      const hasStatus = records.filter(d => d.ket && d.ket.trim().length > 3).length;
+      const expectedMin = Math.floor(records.length * 0.2);
+      if(hasStatus >= expectedMin){
+        // Good data — safe to save and use
+        localStorage.setItem('lan_pub_data', JSON.stringify(records));
+        RAW.length = 0; records.forEach(d => RAW.push(d));
+        filteredData = [...RAW];
+        renderKPIs(); renderCharts(); renderTable();
+        setGasBadge('','Terhubung Google Sheet');
+        console.log('[GAS] Synced', records.length, 'records from Google Sheets.');
+      } else {
+        // GAS returned data without status — badge shows connected but don't overwrite
+        setGasBadge('','Terhubung Google Sheet');
+        console.warn('[GAS] Data received but ket field empty — keeping local data.');
+      }
     } else {
       setGasBadge('','Terhubung Google Sheet');
     }
   } catch(e) {
-    // Silently fall back to localStorage / default data
     const stored = localStorage.getItem('lan_pub_data');
     if(stored){ setGasBadge('','Terhubung Google Sheet'); }
     else { setGasBadge('disconnected','Google Sheet'); }
@@ -1657,15 +1669,26 @@ document.querySelectorAll('.nav-tab').forEach(tab=>{
 Chart.register(ChartDataLabels);
 document.getElementById('header-date').textContent=new Date().toLocaleDateString('id-ID',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
 
-// Merge localStorage data if available (edited via admin panel)
+// Load data: validate quality before using localStorage
+// If GAS data is bad (all ket empty = all "planned"), restore defaults
 (function(){
   try {
     const stored = localStorage.getItem('lan_pub_data');
     if(stored){
       const parsed = JSON.parse(stored);
       if(Array.isArray(parsed) && parsed.length > 0){
-        RAW.length = 0;
-        parsed.forEach(d => RAW.push(d));
+        // Quality check: count records that have meaningful ket (status info)
+        const hasStatus = parsed.filter(d => d.ket && d.ket.trim().length > 3).length;
+        const expectedMin = Math.floor(parsed.length * 0.2); // expect at least 20% to have ket
+        if(hasStatus < expectedMin){
+          // Bad data (likely from GAS with empty ket column) — clear and use defaults
+          localStorage.removeItem('lan_pub_data');
+          console.warn('[DATA] Stored data has no status info — cleared, using hardcoded defaults.');
+        } else {
+          RAW.length = 0;
+          parsed.forEach(d => RAW.push(d));
+          console.log('[DATA] Loaded', parsed.length, 'records from localStorage.');
+        }
       }
     }
   } catch(e){ console.warn('localStorage data error, using default:', e); }
