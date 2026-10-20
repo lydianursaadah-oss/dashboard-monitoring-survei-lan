@@ -4,9 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Monitoring Publikasi Survei LAN RI</title>
-  <!-- Favicon: LAN RI analytics icon -->
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232563eb'/%3E%3Crect x='5' y='18' width='4' height='9' rx='1' fill='%23fff' opacity='.6'/%3E%3Crect x='11' y='12' width='4' height='15' rx='1' fill='%23fff' opacity='.8'/%3E%3Crect x='17' y='7' width='4' height='20' rx='1' fill='%23fff'/%3E%3Crect x='23' y='14' width='4' height='13' rx='1' fill='%2393c5fd'/%3E%3Ccircle cx='7' cy='17' r='1.5' fill='%2322c55e'/%3E%3Ccircle cx='13' cy='11' r='1.5' fill='%2322c55e'/%3E%3Ccircle cx='19' cy='6' r='1.5' fill='%2322c55e'/%3E%3Ccircle cx='25' cy='13' r='1.5' fill='%2322c55e'/%3E%3C/svg%3E" />
-  <link rel="shortcut icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232563eb'/%3E%3Crect x='5' y='18' width='4' height='9' rx='1' fill='%23fff' opacity='.6'/%3E%3Crect x='11' y='12' width='4' height='15' rx='1' fill='%23fff' opacity='.8'/%3E%3Crect x='17' y='7' width='4' height='20' rx='1' fill='%23fff'/%3E%3Crect x='23' y='14' width='4' height='13' rx='1' fill='%2393c5fd'/%3E%3Ccircle cx='7' cy='17' r='1.5' fill='%2322c55e'/%3E%3Ccircle cx='13' cy='11' r='1.5' fill='%2322c55e'/%3E%3Ccircle cx='19' cy='6' r='1.5' fill='%2322c55e'/%3E%3Ccircle cx='25' cy='13' r='1.5' fill='%2322c55e'/%3E%3C/svg%3E" />
+  <!-- Favicon: Logo LAN RI -->
+  <link rel="icon" type="image/png" href="logo-lan.png" />
+  <link rel="shortcut icon" href="logo-lan.png" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -388,7 +388,6 @@
       white-space: pre-wrap;
     }
 
-    /* ═══════════════════ MISC ═══════════════════ */
     .section-sep { margin: 20px 0; border: none; border-top: 1px solid var(--border); }
     .text-muted { color: var(--text2); }
     .text-center { text-align: center; }
@@ -396,6 +395,160 @@
     .empty-state i { font-size: 30px; margin-bottom: 10px; display: block; color: var(--border2); }
     .full-width { grid-column: 1 / -1; }
     .unit-color { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 4px; }
+
+    /* ═══════════════════ GOOGLE SHEETS SYNC ═══════════════════ */
+    .gs-badge {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 11px; font-weight: 600; padding: 4px 10px;
+      border-radius: 20px; cursor: pointer; transition: all .18s;
+      border: 1px solid #bbf7d0; background: var(--success-bg); color: var(--success);
+      white-space: nowrap;
+    }
+    .gs-badge.disconnected { border-color: var(--border); background: var(--bg3); color: var(--text3); }
+    .gs-badge.syncing { border-color: #bfdbfe; background: var(--accent-bg); color: var(--accent); }
+    .gs-badge.error { border-color: #fecaca; background: var(--danger-bg); color: var(--danger); }
+    .gs-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; flex-shrink:0; }
+    .gs-badge:not(.disconnected) .gs-dot { animation: pulse 2s infinite; }
+    /* GAS Settings Modal */
+    .gas-modal-overlay {
+      display: none; position: fixed; inset: 0; z-index: 500;
+      background: rgba(15,23,42,.5); backdrop-filter: blur(8px);
+      align-items: center; justify-content: center; padding: 16px;
+    }
+    .gas-modal-overlay.open { display: flex; }
+    .gas-modal {
+      background: #fff; border-radius: 18px; width: 100%; max-width: 520px;
+      box-shadow: 0 20px 60px rgba(15,23,42,.2); border: 1px solid var(--border);
+      overflow: hidden;
+    }
+    .gas-modal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 22px; background: #1a2232; color: #fff;
+    }
+    .gas-modal-header h3 { font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+    .gas-modal-header i { color: var(--warn); }
+    .gas-modal-close {
+      width: 28px; height: 28px; border-radius: 7px; background: rgba(255,255,255,.12);
+      border: none; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center;
+      font-size: 13px; transition: background .15s;
+    }
+    .gas-modal-close:hover { background: rgba(255,255,255,.22); }
+    .gas-modal-body { padding: 22px; }
+    .gas-info-box {
+      background: var(--accent-bg); border: 1px solid var(--accent-border, #bfdbfe);
+      border-radius: 10px; padding: 12px 14px; margin-bottom: 18px;
+    }
+    .gas-info-box strong { font-size: 12px; color: var(--accent); display: block; margin-bottom: 3px; }
+    .gas-info-box p { font-size: 11px; color: var(--text2); line-height: 1.5; }
+    .gas-field label { font-size: 11px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: .4px; display: block; margin-bottom: 6px; }
+    .gas-field input {
+      width: 100%; padding: 10px 13px; border: 1.5px solid var(--border); border-radius: 9px;
+      font-family: 'Courier New', monospace; font-size: 11px; color: var(--text1); background: var(--bg3);
+      outline: none; transition: border-color .18s;
+    }
+    .gas-field input:focus { border-color: var(--accent); background: #fff; }
+    .gas-field .hint { font-size: 10px; color: var(--text3); margin-top: 5px; }
+    .gas-test-btn {
+      margin-top: 12px; display: inline-flex; align-items: center; gap: 7px;
+      padding: 8px 16px; border-radius: 8px; background: var(--bg3); border: 1.5px solid var(--border);
+      color: var(--text2); font-size: 12px; font-weight: 600; cursor: pointer;
+      font-family: inherit; transition: all .18s;
+    }
+    .gas-test-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
+    .gas-test-result { margin-top: 10px; font-size: 12px; font-weight: 600; display: none; padding: 8px 12px; border-radius: 8px; }
+    .gas-modal-footer { padding: 14px 22px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: var(--bg3); gap: 8px; flex-wrap: wrap; }
+    .gas-reset-btn {
+      display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px;
+      border-radius: 8px; background: #fff; border: 1.5px solid #fecaca;
+      color: var(--danger); font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit;
+    }
+    .gas-save-btn {
+      display: inline-flex; align-items: center; gap: 7px; padding: 9px 20px;
+      border-radius: 9px; background: var(--accent); border: none;
+      color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit;
+      transition: background .18s;
+    }
+    .gas-save-btn:hover { background: #1d4ed8; }
+    .gas-close-plain {
+      display: inline-flex; align-items: center; padding: 8px 14px;
+      border-radius: 8px; background: #fff; border: 1.5px solid var(--border);
+      color: var(--text2); font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit;
+    }
+
+    /* ═══════════════════ MOBILE RESPONSIVE ═══════════════════ */
+    @media (max-width: 768px) {
+      /* Header */
+      header { padding: 0 14px; }
+      .header-inner { height: auto; padding: 10px 0; flex-wrap: wrap; gap: 8px; }
+      .logo-badge { height: 36px; }
+      .logo-title { font-size: 13px; }
+      .logo-sub { display: none; }
+      .header-right { gap: 8px; flex-wrap: wrap; }
+      .header-date { display: none; }
+      .live-badge { font-size: 10px; padding: 3px 8px; }
+      .gs-badge { font-size: 10px; padding: 3px 8px; }
+      .gs-badge span.gs-label { display: none; }
+
+      /* Nav tabs */
+      .nav-tabs { padding: 0 6px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+      .nav-tabs-inner { gap: 0; }
+      .nav-tab { padding: 10px 12px; font-size: 11px; gap: 5px; }
+      .nav-tab i { font-size: 11px; }
+
+      /* Main padding */
+      .main { padding: 14px 12px; }
+
+      /* Filter bar */
+      .filter-bar { padding: 10px 12px; gap: 8px; }
+      .filter-bar select, .filter-bar input { font-size: 11px; padding: 5px 8px; width: 100%; }
+      .filter-divider { display: none; }
+      .filter-reset { margin-left: 0; width: 100%; text-align: center; }
+
+      /* KPI grid — 2 col on mobile */
+      .kpi-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+      .kpi-card { padding: 14px 12px; }
+      .kpi-value { font-size: 22px; }
+      .kpi-label { font-size: 10px; }
+      .kpi-icon { width: 30px; height: 30px; font-size: 13px; margin-bottom: 10px; }
+      .kpi-delta { font-size: 10px; padding: 2px 6px; }
+
+      /* Charts grid — single column */
+      .charts-grid,
+      [style*="grid-template-columns"] { grid-template-columns: 1fr !important; }
+      .full-width { grid-column: 1 !important; }
+
+      /* Cards */
+      .card-header { padding: 12px 14px; flex-wrap: wrap; gap: 8px; }
+      .card-title { font-size: 12px; }
+
+      /* Tables */
+      .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+      table { font-size: 11px; min-width: 600px; }
+      th, td { padding: 8px 10px; }
+
+      /* Modal */
+      .modal { padding: 18px 16px; width: 95%; border-radius: 14px; }
+      .modal h2 { font-size: 14px; }
+
+      /* Timeline items */
+      .timeline-grid { grid-template-columns: 1fr !important; }
+
+      /* Channel cards */
+      .channel-grid { grid-template-columns: 1fr 1fr !important; }
+
+      /* Heatmap */
+      .heatmap-cell { width: 22px !important; height: 22px !important; font-size: 7px !important; }
+
+      /* Alert cards */
+      .alert-grid { grid-template-columns: 1fr !important; }
+    }
+
+    @media (max-width: 480px) {
+      /* Very small screens: 1 col KPI */
+      .kpi-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+      .nav-tab span { display: none; } /* icon only on tiny screens */
+      .header-inner { flex-direction: row; justify-content: space-between; }
+    }
   </style>
 </head>
 <body>
@@ -413,11 +566,145 @@
     <div class="header-right">
       <div class="live-badge"><div class="live-dot"></div> Live</div>
       <div class="header-date" id="header-date"></div>
+      <!-- Google Sheets Sync Badge -->
+      <div class="gs-badge disconnected" id="gs-badge" onclick="openGasModal()" title="Pengaturan Sinkronisasi Google Sheets">
+        <div class="gs-dot"></div>
+        <span class="gs-label" id="gs-label">Google Sheet</span>
+        <i class="fa-solid fa-gear" style="font-size:10px;opacity:.7"></i>
+      </div>
     </div>
   </div>
 </header>
 
+<!-- ══════════════════════ GAS SETTINGS MODAL ══════════════════════ -->
+<div class="gas-modal-overlay" id="gas-modal-overlay" onclick="if(event.target===this)closeGasModal()">
+  <div class="gas-modal">
+    <div class="gas-modal-header">
+      <h3><i class="fa-solid fa-gear"></i> Pengaturan Koneksi Google Sheets</h3>
+      <button class="gas-modal-close" onclick="closeGasModal()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="gas-modal-body">
+      <div class="gas-info-box">
+        <strong>Sinkronisasi Otomatis 2 Arah</strong>
+        <p>Hubungkan dashboard ini dengan Google Apps Script Web App agar data selalu sinkron dengan spreadsheet LAN RI.</p>
+      </div>
+      <div class="gas-field">
+        <label>URL Google Apps Script Web App</label>
+        <input type="url" id="gas-url-input" placeholder="https://script.google.com/macros/s/…/exec"/>
+        <div class="hint">Panduan deploy skrip: pastikan Web App di-deploy dengan akses "Anyone".</div>
+      </div>
+      <button class="gas-test-btn" onclick="testGasConnection()">
+        <i class="fa-solid fa-wave-square"></i> Uji Koneksi
+      </button>
+      <div id="gas-test-result" class="gas-test-result"></div>
+    </div>
+    <div class="gas-modal-footer">
+      <button class="gas-reset-btn" onclick="resetGasCache()"><i class="fa-solid fa-rotate-left"></i> Reset Cache</button>
+      <div style="display:flex;gap:8px">
+        <button class="gas-close-plain" onclick="closeGasModal()">Tutup</button>
+        <button class="gas-save-btn" onclick="saveGasSettings()"><i class="fa-solid fa-floppy-disk"></i> Simpan Pengaturan</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
+/* ══════════════ GOOGLE APPS SCRIPT SYNC ══════════════ */
+const GAS_LS_KEY = 'lan_gas_url';
+const GAS_DEFAULT = 'https://script.google.com/macros/s/AKfycbxQCEUQuVnxiLE6q4ZCBD1AV6lYfLgreflkXeWPvsUfmGpPCAOhvyI5UOYjaDGkKhj5YA/exec';
+
+function getGasUrl(){ return localStorage.getItem(GAS_LS_KEY) || GAS_DEFAULT; }
+
+function setGasBadge(state, label){
+  const badge = document.getElementById('gs-badge');
+  const lbl   = document.getElementById('gs-label');
+  badge.className = 'gs-badge ' + (state||'disconnected');
+  if(lbl) lbl.textContent = label || 'Google Sheet';
+}
+
+function openGasModal(){
+  document.getElementById('gas-url-input').value = getGasUrl();
+  document.getElementById('gas-test-result').style.display = 'none';
+  document.getElementById('gas-modal-overlay').classList.add('open');
+}
+function closeGasModal(){ document.getElementById('gas-modal-overlay').classList.remove('open'); }
+
+function saveGasSettings(){
+  const url = document.getElementById('gas-url-input').value.trim();
+  if(url) localStorage.setItem(GAS_LS_KEY, url);
+  closeGasModal();
+  loadFromGAS();
+}
+
+function resetGasCache(){
+  localStorage.removeItem('lan_pub_data');
+  localStorage.removeItem(GAS_LS_KEY);
+  document.getElementById('gas-url-input').value = GAS_DEFAULT;
+  showGasResult('Cache dihapus. Reload halaman untuk ambil data ulang.','warn');
+}
+
+function showGasResult(msg, type){
+  const el = document.getElementById('gas-test-result');
+  el.style.display = 'block';
+  const colors = {
+    success: {bg:'#f0fdf4',color:'#16a34a',border:'#bbf7d0'},
+    error:   {bg:'#fef2f2',color:'#dc2626',border:'#fecaca'},
+    warn:    {bg:'#fffbeb',color:'#d97706',border:'#fde68a'},
+  };
+  const c = colors[type] || colors.warn;
+  el.style.background = c.bg; el.style.color = c.color;
+  el.style.border = `1px solid ${c.border}`; el.style.borderRadius = '8px';
+  el.textContent = msg;
+}
+
+async function testGasConnection(){
+  const url = document.getElementById('gas-url-input').value.trim() || GAS_DEFAULT;
+  showGasResult('⏳ Menguji koneksi…','warn');
+  try {
+    const res = await fetch(url + (url.includes('?')?'&':'?') + 'action=ping', {mode:'cors'});
+    const text = await res.text();
+    if(res.ok){ showGasResult('✅ Koneksi berhasil! Server merespons.','success'); }
+    else { showGasResult(`⚠️ Server merespons dengan status ${res.status}.`,'warn'); }
+  } catch(e) {
+    // Try no-cors as fallback (CORS blocked but server alive)
+    try {
+      await fetch(url, {mode:'no-cors'});
+      showGasResult('✅ Server dapat dijangkau. (CORS aktif — data akan tersinkron)','success');
+    } catch(e2) {
+      showGasResult('❌ Tidak dapat terhubung. Periksa URL atau koneksi internet.','error');
+    }
+  }
+}
+
+async function loadFromGAS(){
+  const url = getGasUrl();
+  if(!url) { setGasBadge('disconnected','Google Sheet'); return; }
+  setGasBadge('syncing','Menyinkron…');
+  try {
+    const endpoint = url + (url.includes('?')?'&':'?') + 'action=getData';
+    const res = await fetch(endpoint, {mode:'cors'});
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    const json = await res.json();
+    const records = Array.isArray(json) ? json : (json.data || json.records || null);
+    if(records && records.length > 0){
+      localStorage.setItem('lan_pub_data', JSON.stringify(records));
+      setGasBadge('','Terhubung Google Sheet');
+      console.log('[GAS] Synced', records.length, 'records from Google Sheets.');
+    } else {
+      setGasBadge('','Terhubung Google Sheet');
+    }
+  } catch(e) {
+    // Silently fall back to localStorage / default data
+    const stored = localStorage.getItem('lan_pub_data');
+    if(stored){ setGasBadge('','Terhubung Google Sheet'); }
+    else { setGasBadge('disconnected','Google Sheet'); }
+    console.warn('[GAS] Sync failed, using cached data:', e.message);
+  }
+}
+
+// Auto-sync on load
+loadFromGAS();
+
 /* ── Secret admin access: click logo 5× within 3 s ── */
 (function(){
   let clicks=0, timer=null;
