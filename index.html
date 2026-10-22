@@ -739,7 +739,7 @@
   </div>
 </header>
 
-<!-- ══════════════════════ GAS SETTINGS MODAL ══════════════════════ -->
+<!-- ══════════════════════ GOOGLE SHEETS SETTINGS MODAL ══════════════════════ -->
 <div class="gas-modal-overlay" id="gas-modal-overlay" onclick="if(event.target===this)closeGasModal()">
   <div class="gas-modal">
     <div class="gas-modal-header">
@@ -748,21 +748,30 @@
     </div>
     <div class="gas-modal-body">
       <div class="gas-info-box">
-        <strong>Sinkronisasi Otomatis 2 Arah</strong>
-        <p>Hubungkan dashboard ini dengan Google Apps Script Web App agar data selalu sinkron dengan spreadsheet LAN RI.</p>
+        <strong>Sinkronisasi Real-Time Langsung (Live Sync)</strong>
+        <p>Dashboard ini terhubung langsung dengan Google Spreadsheet LAN RI (Tab <em>Analis/Survei 2026</em>). Setiap kali ada pembaruan di spreadsheet, data akan langsung diperbarui di dashboard.</p>
       </div>
       <div class="gas-field">
-        <label>URL Google Apps Script Web App</label>
-        <input type="url" id="gas-url-input" placeholder="https://script.google.com/macros/s/…/exec"/>
-        <div class="hint">Panduan deploy skrip: pastikan Web App di-deploy dengan akses "Anyone".</div>
+        <label>ID Spreadsheet Google</label>
+        <input type="text" id="sheet-id-input" placeholder="1dZbVC-lcYubhuDVSN-PjvZl0R6-huTFePcHDW6eJtqE"/>
       </div>
-      <button class="gas-test-btn" onclick="testGasConnection()">
-        <i class="fa-solid fa-wave-square"></i> Uji Koneksi
+      <div class="gas-field">
+        <label>GID Tab Sheet</label>
+        <input type="text" id="sheet-gid-input" placeholder="988003932"/>
+        <div class="hint">Tab 'Analis/Survei 2026' memiliki GID 988003932.</div>
+      </div>
+      <div style="margin: 10px 0 16px;">
+        <a id="sheet-ext-link" href="https://docs.google.com/spreadsheets/d/1dZbVC-lcYubhuDVSN-PjvZl0R6-huTFePcHDW6eJtqE/edit?gid=988003932#gid=988003932" target="_blank" style="color:var(--accent);font-size:12px;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:6px">
+          <i class="fa-solid fa-arrow-up-right-from-square"></i> Buka Google Spreadsheet di Tab Baru
+        </a>
+      </div>
+      <button class="gas-test-btn" onclick="testLiveSync()">
+        <i class="fa-solid fa-rotate"></i> Uji & Sinkronkan Sekarang
       </button>
       <div id="gas-test-result" class="gas-test-result"></div>
     </div>
     <div class="gas-modal-footer">
-      <button class="gas-reset-btn" onclick="resetGasCache()"><i class="fa-solid fa-rotate-left"></i> Reset Cache</button>
+      <button class="gas-reset-btn" onclick="resetGasCache()"><i class="fa-solid fa-rotate-left"></i> Reset Default</button>
       <div style="display:flex;gap:8px">
         <button class="gas-close-plain" onclick="closeGasModal()">Tutup</button>
         <button class="gas-save-btn" onclick="saveGasSettings()"><i class="fa-solid fa-floppy-disk"></i> Simpan Pengaturan</button>
@@ -772,38 +781,231 @@
 </div>
 
 <script>
-/* ══════════════ GOOGLE APPS SCRIPT SYNC ══════════════ */
-const GAS_LS_KEY = 'lan_gas_url';
+/* ══════════════ REAL-TIME GOOGLE SHEETS SYNC ══════════════ */
+const SHEET_ID_DEFAULT = '1dZbVC-lcYubhuDVSN-PjvZl0R6-huTFePcHDW6eJtqE';
+const SHEET_GID_DEFAULT = '988003932';
 const GAS_DEFAULT = 'https://script.google.com/macros/s/AKfycbxQCEUQuVnxiLE6q4ZCBD1AV6lYfLgreflkXeWPvsUfmGpPCAOhvyI5UOYjaDGkKhj5YA/exec';
 
-function getGasUrl(){ return localStorage.getItem(GAS_LS_KEY) || GAS_DEFAULT; }
+function getSheetId() { return localStorage.getItem('lan_sheet_id') || SHEET_ID_DEFAULT; }
+function getSheetGid() { return localStorage.getItem('lan_sheet_gid') || SHEET_GID_DEFAULT; }
+function getGasUrl() { return localStorage.getItem('lan_gas_url') || GAS_DEFAULT; }
 
-function setGasBadge(state, label){
+function setGasBadge(state, label) {
   const badge = document.getElementById('gs-badge');
   const lbl   = document.getElementById('gs-label');
-  badge.className = 'gs-badge ' + (state||'disconnected');
-  if(lbl) lbl.textContent = label || 'Google Sheet';
+  if(!badge) return;
+  badge.className = 'gs-badge ' + (state || '');
+  if(lbl) lbl.textContent = label || 'Terhubung Google Sheet';
+}
+
+function showNotificationToast(msg, type='success'){
+  let toast = document.getElementById('sync-toast');
+  if(!toast){
+    toast = document.createElement('div');
+    toast.id = 'sync-toast';
+    toast.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:9999;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,0.18);display:flex;align-items:center;gap:10px;transition:all .3s ease;transform:translateY(100px);opacity:0;pointer-events:none;font-family:Inter,sans-serif;';
+    document.body.appendChild(toast);
+  }
+  const isErr = type === 'error' || type === 'warn';
+  toast.style.background = isErr ? '#991b1b' : '#065f46';
+  toast.style.color = '#ffffff';
+  toast.style.border = isErr ? '1px solid #f87171' : '1px solid #34d399';
+  toast.innerHTML = msg;
+  toast.style.transform = 'translateY(0)';
+  toast.style.opacity = '1';
+  clearTimeout(toast._timer);
+  toast._timer = setTimeout(() => {
+    toast.style.transform = 'translateY(100px)';
+    toast.style.opacity = '0';
+  }, 4000);
+}
+
+function parseCSV(text) {
+  const rows = [];
+  let currentRow = [];
+  let currentCell = '';
+  let inQuotes = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    const next = text[i + 1];
+    if (c === '"') {
+      if (inQuotes && next === '"') {
+        currentCell += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (c === ',' && !inQuotes) {
+      currentRow.push(currentCell);
+      currentCell = '';
+    } else if ((c === '\r' || c === '\n') && !inQuotes) {
+      if (c === '\r' && next === '\n') i++;
+      currentRow.push(currentCell);
+      rows.push(currentRow);
+      currentRow = [];
+      currentCell = '';
+    } else {
+      currentCell += c;
+    }
+  }
+  if (currentRow.length > 0 || currentCell !== '') {
+    currentRow.push(currentCell);
+    rows.push(currentRow);
+  }
+  return rows;
+}
+
+function cleanLinks(val) {
+  if (!val) return '';
+  return val.split(/\r?\n/).map(s => s.trim()).filter(Boolean).join('|');
+}
+
+function normalizeRecordsFromCSV(csvText) {
+  const rows = parseCSV(csvText);
+  const dataRows = rows.slice(1).filter(r => r.length > 2 && r[2] && r[2].trim());
+  return dataRows.map((r, idx) => ({
+    no: parseInt(r[0]) || (idx + 1),
+    unit: (r[1] || '').trim(),
+    judul: (r[2] || '').trim(),
+    jenis: (r[3] || '').trim(),
+    jadwal: (r[4] || '').trim(),
+    tahun: (r[5] || '').trim(),
+    cluster: (r[6] || r[7] || '').trim(),
+    jurnal: cleanLinks(r[8]),
+    media: cleanLinks(r[9]),
+    webLAN: cleanLinks(r[10]),
+    webUnit: cleanLinks(r[11]),
+    igLAN: cleanLinks(r[12]),
+    igUnit: cleanLinks(r[13]),
+    ytLAN: cleanLinks(r[14]),
+    ytUnit: cleanLinks(r[15]),
+    ket: (r[16] || '').trim(),
+  }));
+}
+
+function normalizeRecordsFromGAS(records) {
+  return records.map((d, idx) => ({
+    no: d.no || (idx + 1),
+    unit: (d.unit || '').trim(),
+    judul: (d.judul || '').trim(),
+    jenis: (d.jenis || '').trim(),
+    jadwal: (d.jadwal || '').trim(),
+    tahun: (d.tahun || '').trim(),
+    cluster: (d.cluster || d.cluster1 || d.cluster2 || '').trim(),
+    jurnal: cleanLinks(d.jurnal),
+    media: cleanLinks(d.media || d.media_online),
+    webLAN: cleanLinks(d.webLAN || d.web_lan),
+    webUnit: cleanLinks(d.webUnit || d.web_unit),
+    igLAN: cleanLinks(d.igLAN || d.ig_lan),
+    igUnit: cleanLinks(d.igUnit || d.ig_unit),
+    ytLAN: cleanLinks(d.ytLAN || d.yt_lan),
+    ytUnit: cleanLinks(d.ytUnit || d.yt_unit),
+    ket: (d.ket || d.keterangan || '').trim(),
+  }));
+}
+
+async function syncDataFromSheet(isManual = false) {
+  setGasBadge('syncing', 'Menyinkron…');
+  let newRecords = null;
+  let syncSource = 'Google Sheet Live';
+
+  // 1. Direct fetch from Google Sheet CSV (Real-time with CORS enabled)
+  try {
+    const sheetId = getSheetId();
+    const sheetGid = getSheetGid();
+    const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${sheetGid}&_t=${Date.now()}`;
+    const res = await fetch(csvUrl, { cache: 'no-store' });
+    if (res.ok) {
+      const text = await res.text();
+      const parsed = normalizeRecordsFromCSV(text);
+      if (parsed && parsed.length > 0) {
+        newRecords = parsed;
+        syncSource = 'Google Sheet Live';
+      }
+    }
+  } catch(e) {
+    console.warn('[SYNC] Direct Google Sheet CSV fetch failed, falling back:', e);
+  }
+
+  // 2. Fallback to GAS if direct fetch didn't return data
+  if (!newRecords) {
+    try {
+      const gasUrl = getGasUrl();
+      if (gasUrl) {
+        const endpoint = gasUrl + (gasUrl.includes('?') ? '&' : '?') + 'action=getData&_t=' + Date.now();
+        const res = await fetch(endpoint, { mode: 'cors', cache: 'no-store' });
+        if (res.ok) {
+          const json = await res.json();
+          const list = Array.isArray(json) ? json : (json.data || json.records || null);
+          if (list && list.length > 0) {
+            newRecords = normalizeRecordsFromGAS(list);
+            syncSource = 'Google Apps Script';
+          }
+        }
+      }
+    } catch(e) {
+      console.warn('[SYNC] GAS fallback failed:', e);
+    }
+  }
+
+  // 3. Apply new records to dashboard
+  if (newRecords && newRecords.length > 0) {
+    RAW.length = 0;
+    newRecords.forEach(d => RAW.push(d));
+    try { localStorage.setItem('lan_pub_data', JSON.stringify(newRecords)); } catch(e){}
+
+    // Update all views
+    applyFilters();
+    renderRoadmap(filteredData);
+    renderTable();
+
+    const nowStr = new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+    setGasBadge('', `Terhubung Google Sheet (${nowStr})`);
+
+    if (isManual) {
+      showNotificationToast(`✅ Berhasil disinkronkan langsung dari Google Sheet! (${newRecords.length} publikasi diperbarui)`, 'success');
+    }
+    console.log(`[SYNC] ${newRecords.length} records updated via ${syncSource} at ${nowStr}`);
+    return true;
+  } else {
+    const stored = localStorage.getItem('lan_pub_data');
+    if (stored) {
+      setGasBadge('', 'Terhubung Google Sheet (Offline)');
+    } else {
+      setGasBadge('disconnected', 'Google Sheet Terputus');
+    }
+    if (isManual) {
+      showNotificationToast('⚠️ Tidak dapat terhubung ke Google Sheet. Menampilkan data lokal.', 'warn');
+    }
+    return false;
+  }
 }
 
 function openGasModal(){
-  document.getElementById('gas-url-input').value = getGasUrl();
+  document.getElementById('sheet-id-input').value = getSheetId();
+  document.getElementById('sheet-gid-input').value = getSheetGid();
   document.getElementById('gas-test-result').style.display = 'none';
   document.getElementById('gas-modal-overlay').classList.add('open');
 }
 function closeGasModal(){ document.getElementById('gas-modal-overlay').classList.remove('open'); }
 
-function saveGasSettings(){
-  const url = document.getElementById('gas-url-input').value.trim();
-  if(url) localStorage.setItem(GAS_LS_KEY, url);
+async function saveGasSettings(){
+  const sId = document.getElementById('sheet-id-input').value.trim();
+  const sGid = document.getElementById('sheet-gid-input').value.trim();
+  if(sId) localStorage.setItem('lan_sheet_id', sId);
+  if(sGid) localStorage.setItem('lan_sheet_gid', sGid);
   closeGasModal();
-  loadFromGAS();
+  await syncDataFromSheet(true);
 }
 
 function resetGasCache(){
   localStorage.removeItem('lan_pub_data');
-  localStorage.removeItem(GAS_LS_KEY);
-  document.getElementById('gas-url-input').value = GAS_DEFAULT;
-  showGasResult('Cache dihapus. Reload halaman untuk ambil data ulang.','warn');
+  localStorage.removeItem('lan_sheet_id');
+  localStorage.removeItem('lan_sheet_gid');
+  document.getElementById('sheet-id-input').value = SHEET_ID_DEFAULT;
+  document.getElementById('sheet-gid-input').value = SHEET_GID_DEFAULT;
+  showGasResult('Pengaturan direset ke default sheet LAN RI. Menyinkronkan ulang…', 'warn');
+  syncDataFromSheet(true);
 }
 
 function showGasResult(msg, type){
@@ -820,65 +1022,28 @@ function showGasResult(msg, type){
   el.textContent = msg;
 }
 
-async function testGasConnection(){
-  const url = document.getElementById('gas-url-input').value.trim() || GAS_DEFAULT;
-  showGasResult('⏳ Menguji koneksi…','warn');
-  try {
-    const res = await fetch(url + (url.includes('?')?'&':'?') + 'action=ping', {mode:'cors'});
-    const text = await res.text();
-    if(res.ok){ showGasResult('✅ Koneksi berhasil! Server merespons.','success'); }
-    else { showGasResult(`⚠️ Server merespons dengan status ${res.status}.`,'warn'); }
-  } catch(e) {
-    // Try no-cors as fallback (CORS blocked but server alive)
-    try {
-      await fetch(url, {mode:'no-cors'});
-      showGasResult('✅ Server dapat dijangkau. (CORS aktif — data akan tersinkron)','success');
-    } catch(e2) {
-      showGasResult('❌ Tidak dapat terhubung. Periksa URL atau koneksi internet.','error');
-    }
+async function testLiveSync(){
+  showGasResult('⏳ Menghubungi Google Sheet live…', 'warn');
+  const ok = await syncDataFromSheet(false);
+  if(ok){
+    showGasResult(`✅ Berhasil! ${RAW.length} data survei berhasil disinkronkan langsung dari Google Sheet.`, 'success');
+  } else {
+    showGasResult('❌ Gagal menyinkronkan. Pastikan akses Google Sheet disetel "Anyone with the link".', 'error');
   }
 }
 
-async function loadFromGAS(){
-  const url = getGasUrl();
-  if(!url) { setGasBadge('disconnected','Google Sheet'); return; }
-  setGasBadge('syncing','Menyinkron…');
-  try {
-    const endpoint = url + (url.includes('?')?'&':'?') + 'action=getData';
-    const res = await fetch(endpoint, {mode:'cors'});
-    if(!res.ok) throw new Error('HTTP ' + res.status);
-    const json = await res.json();
-    const records = Array.isArray(json) ? json : (json.data || json.records || null);
-    if(records && records.length > 0){
-      // Quality check before saving: ensure records have ket/status fields
-      const hasStatus = records.filter(d => d.ket && d.ket.trim().length > 3).length;
-      const expectedMin = Math.floor(records.length * 0.2);
-      if(hasStatus >= expectedMin){
-        // Good data — safe to save and use
-        localStorage.setItem('lan_pub_data', JSON.stringify(records));
-        RAW.length = 0; records.forEach(d => RAW.push(d));
-        filteredData = [...RAW];
-        renderKPIs(); renderCharts(); renderTable();
-        setGasBadge('','Terhubung Google Sheet');
-        console.log('[GAS] Synced', records.length, 'records from Google Sheets.');
-      } else {
-        // GAS returned data without status — badge shows connected but don't overwrite
-        setGasBadge('','Terhubung Google Sheet');
-        console.warn('[GAS] Data received but ket field empty — keeping local data.');
-      }
-    } else {
-      setGasBadge('','Terhubung Google Sheet');
-    }
-  } catch(e) {
-    const stored = localStorage.getItem('lan_pub_data');
-    if(stored){ setGasBadge('','Terhubung Google Sheet'); }
-    else { setGasBadge('disconnected','Google Sheet'); }
-    console.warn('[GAS] Sync failed, using cached data:', e.message);
-  }
-}
+// Auto-sync immediately on page load
+syncDataFromSheet(false);
 
-// Auto-sync on load
-loadFromGAS();
+// Auto-sync when user returns to this tab / window
+window.addEventListener('focus', () => {
+  syncDataFromSheet(false);
+});
+
+// Periodic background auto-sync every 30 seconds for true real-time updates
+setInterval(() => {
+  syncDataFromSheet(false);
+}, 30000);
 
 /* ── Secret admin access: click logo 5× within 3 s ── */
 (function(){
@@ -1308,62 +1473,62 @@ loadFromGAS();
    DATASET
    ══════════════════════════════════════════════════════════ */
 const RAW = [
-  {no:1,  unit:"SKPP",                        judul:"Survei Optimalisasi Akses Layanan Kesehatan",                                                               jenis:"",                            jadwal:"",             tahun:"2025",cluster:"Prioritas Presiden",          jurnal:"",   media:"Link",webLAN:"Link",   webUnit:"Link 1|Link 2",igLAN:"",     igUnit:"Link 1|Link 2",ytLAN:"",   ytUnit:"",ket:""},
-  {no:2,  unit:"DAPKK",                       judul:"Survei Disrupsi Pekerjaan dan Keterampilan Strategis (Top Skills ASN)",                                     jenis:"",                            jadwal:"",             tahun:"2025",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",   media:"Link",webLAN:"Link",   webUnit:"Link",          igLAN:"",     igUnit:"Link",        ytLAN:"",   ytUnit:"",ket:""},
-  {no:3,  unit:"SKMP",                        judul:"Survei Indeks Kesehatan Organisasi (OHI)",                                                                  jenis:"",                            jadwal:"",             tahun:"2025",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",   media:"Link",webLAN:"Link",   webUnit:"",              igLAN:"Link", igUnit:"",            ytLAN:"Link",ytUnit:"",ket:""},
-  {no:4,  unit:"SKPP",                        judul:"Kemudahan Penanaman Modal di Daerah",                                                                       jenis:"",                            jadwal:"",             tahun:"2025",cluster:"Prioritas Presiden",          jurnal:"",   media:"Link",webLAN:"Link 1|Link 2",webUnit:"",    igLAN:"",     igUnit:"",            ytLAN:"",   ytUnit:"",ket:""},
-  {no:5,  unit:"SKTAN",                       judul:"Implementasi Penerapan Manajemen Talenta di Lingkungan Pemerintah Daerah",                                  jenis:"",                            jadwal:"",             tahun:"2025",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",   media:"Link",webLAN:"Link 1|Link 2|Link 3|Link 4|Link 5|Link 6|Link 7",webUnit:"",igLAN:"",igUnit:"Link 1|Link 2",ytLAN:"Link",ytUnit:"",ket:""},
-  {no:6,  unit:"STIA JKT|STIA MKS|STIA BDG", judul:"Survei Birokrasi Melayani Outlook",                                                                        jenis:"",                            jadwal:"",             tahun:"2025",cluster:"Pelayanan Publik",            jurnal:"",   media:"",   webLAN:"Link",   webUnit:"",              igLAN:"",     igUnit:"",            ytLAN:"",   ytUnit:"",ket:""},
-  {no:7,  unit:"DAPKK",                       judul:"Survei Future Jobs and Skills Sektor Ketahanan Pangan",                                                     jenis:"",                            jadwal:"",             tahun:"2025",cluster:"Prioritas Presiden",          jurnal:"",   media:"Link",webLAN:"",       webUnit:"",              igLAN:"",     igUnit:"",            ytLAN:"",   ytUnit:"",ket:""},
-  {no:8,  unit:"SKMK",                        judul:"Survei Efektivitas Kinerja Jabatan Fungsional",                                                             jenis:"",                            jadwal:"",             tahun:"2025",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",   media:"Link",webLAN:"Link 1|Link 2",webUnit:"",    igLAN:"",     igUnit:"Link",        ytLAN:"",   ytUnit:"",ket:""},
-  {no:9,  unit:"SKPP",                        judul:"Customer Journey Pelayanan Publik Instansi Pemerintah",                                                     jenis:"",                            jadwal:"",             tahun:"2025",cluster:"Pelayanan Publik",            jurnal:"",   media:"Link",webLAN:"Link 1|Link 2",webUnit:"",    igLAN:"",     igUnit:"",            ytLAN:"",   ytUnit:"",ket:""},
-  {no:10, unit:"SKTAN",                       judul:"Persepsi Masyarakat dan Birokrasi terhadap kompetensi dan nilai ASN",                                       jenis:"",                            jadwal:"",             tahun:"2025",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",   media:"",   webLAN:"Link 1|Link 2|Link 3|Link 4",webUnit:"",igLAN:"",igUnit:"",ytLAN:"",ytUnit:"",ket:""},
-  {no:11, unit:"DAPKK",                       judul:"Survei Produktivitas Sektor Publik Pertanian dengan Pendekatan APO",                                        jenis:"",                            jadwal:"",             tahun:"2025",cluster:"Prioritas Presiden",          jurnal:"",   media:"Link",webLAN:"",       webUnit:"",              igLAN:"",     igUnit:"",            ytLAN:"",   ytUnit:"",ket:""},
-  {no:12, unit:"SKMP",                        judul:"Survei Strategi Peningkatan Tata Kelola BUMDes",                                                            jenis:"",                            jadwal:"",             tahun:"2025",cluster:"Prioritas Presiden",          jurnal:"",   media:"Link",webLAN:"Link",   webUnit:"",              igLAN:"Link", igUnit:"",            ytLAN:"Link",ytUnit:"",ket:""},
-  {no:13, unit:"SKMK",                        judul:"Survei Strategi Peningkatan Kinerja ASN di Era Efisiensi Anggaran",                                         jenis:"",                            jadwal:"",             tahun:"2025",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",   media:"Link",webLAN:"Link 1|Link 2|Link 3",webUnit:"",igLAN:"",igUnit:"",ytLAN:"",ytUnit:"",ket:""},
-  {no:14, unit:"STIA JKT",                    judul:"Flexible Working Arrangement untuk Pegawai Perempuan ASN dan Swasta",                                       jenis:"Jurnal/Penelitian Kolaborasi",jadwal:"",             tahun:"2025",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",   media:"",   webLAN:"",       webUnit:"",              igLAN:"",     igUnit:"",            ytLAN:"",   ytUnit:"",ket:"Materi sudah dipaparkan di depan DFT Australia. Sudah coba dikirim ke jurnal tapi belum diterima"},
-  {no:15, unit:"DAPKK",                       judul:"Ekosistem Inovasi",                                                                                         jenis:"Buku",                        jadwal:"",             tahun:"2025",cluster:"Digitalisasi",               jurnal:"",   media:"Link",webLAN:"",       webUnit:"",              igLAN:"",     igUnit:"",            ytLAN:"",   ytUnit:"",ket:""},
-  {no:16, unit:"SKTAN",                       judul:"Survei persepsi alumni terkait dampak pelatihan kepemimpinan terhadap manajemen karir",                     jenis:"Jurnal/Penelitian",           jadwal:"Januari (1)",  tahun:"2026",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",   media:"",   webLAN:"Link",   webUnit:"",              igLAN:"",     igUnit:"link",        ytLAN:"link",ytUnit:"",ket:"Selesai\ndengan publikasi di Prosiding dan youtube"},
-  {no:17, unit:"STIA BDG",                    judul:"Survey Budaya Kerja ASN",                                                                                   jenis:"",                            jadwal:"Januari (4)",  tahun:"2026",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",   media:"Link",webLAN:"",       webUnit:"",              igLAN:"",     igUnit:"",            ytLAN:"",   ytUnit:"Link",ket:"Selesai\ndengan publikasi di website lan dan podcast di youtube Poltek"},
-  {no:18, unit:"STIA MKS",                    judul:"Survei Kesiapan Pemerintah Desa/Kelurahan dalam Mengelola Koperasi Merah Putih",                            jenis:"Policy Paper",                jadwal:"Februari (3)", tahun:"2026",cluster:"Prioritas Presiden",          jurnal:"",   media:"",   webLAN:"Link",   webUnit:"",              igLAN:"",     igUnit:"Link 1|Link 2",ytLAN:"Link 1|Link 2",ytUnit:"",ket:"Selesai\ndengan publikasi di website Poltek dan Podcast di LAN dan Poltek"},
-  {no:19, unit:"DSPK2AN",                     judul:"Survei Indonesia Leadership Outlook 2026",                                                                   jenis:"Laporan",                     jadwal:"Februari (4)", tahun:"2026",cluster:"Digitalisasi",               jurnal:"",   media:"Link",webLAN:"Link",   webUnit:"Link 1|Link 2", igLAN:"Link 1|Link 2",igUnit:"Link 1|Link 2|Link 3",ytLAN:"Link 1|Link 2|Link 3",ytUnit:"",ket:"Selesai\ndengan publikasi di Website LAN, Instagram LAN & D1 (Infografis & Podcast), dan Youtube LAN (Podcast)"},
-  {no:20, unit:"STIA BDG",                    judul:"Difusi Inovasi",                                                                                             jenis:"",                            jadwal:"Maret (1)",    tahun:"2026",cluster:"Digitalisasi",               jurnal:"",   media:"Link",webLAN:"",       webUnit:"",              igLAN:"",     igUnit:"",            ytLAN:"Link",ytUnit:"Link",ket:"Selesai\ndengan publikasi di Website LAN dan Youtube LAN & Poltek (Podcast)"},
-  {no:21, unit:"DAPKK",                       judul:"Desain kelembagaan pengentasan kemiskinan",                                                                 jenis:"",                            jadwal:"Maret (4)",    tahun:"2026",cluster:"Prioritas Presiden",          jurnal:"",   media:"Link",webLAN:"Link",   webUnit:"Link 1|Link 2", igLAN:"Link 1|Link 2",igUnit:"Link 1|Link 2",ytLAN:"Link 1|Link 2",ytUnit:"",ket:"Selesai\ndengan publikasi di Website LAN, Instagram LAN & D1 (Podcast), dan Youtube LAN (Podcast)"},
-  {no:22, unit:"SKMP",                        judul:"Kesiapan dan kebutuhan kompetensi ASN muda dalam mendukung komponen cadangan pertahanan negara",            jenis:"",                            jadwal:"April (1)",    tahun:"2026",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",   media:"",   webLAN:"Link",   webUnit:"",              igLAN:"",     igUnit:"Link",        ytLAN:"Link",ytUnit:"",ket:"Selesai\ndengan publikasi di Website (Media Berita Online) dan Youtube LAN dan Pusjar (Podcast)"},
-  {no:23, unit:"SKPP",                        judul:"Efektifitas layanan call center di daerah",                                                                 jenis:"",                            jadwal:"April (3)",    tahun:"2026",cluster:"Pelayanan Publik",            jurnal:"",   media:"Link",webLAN:"Link 1|Link 2",webUnit:"",    igLAN:"",     igUnit:"Link",        ytLAN:"Link",ytUnit:"Link",ket:"Selesai\ndengan publikasi di Website Pusjar & Online (Media Indonesia), Instagram Pusjar (Podcast), dan Youtube LAN & Pusjar (Podcast)"},
-  {no:24, unit:"STIA JKT|STIA MKS|STIA BDG", judul:"Birokrasi melayani outlook",                                                                                jenis:"",                            jadwal:"Mei (1)",      tahun:"2026",cluster:"Pelayanan Publik",            jurnal:"",   media:"",   webLAN:"",       webUnit:"",              igLAN:"",     igUnit:"",            ytLAN:"",   ytUnit:"",ket:"Belum Selesai\nBelum dilanjutkan berhubung banyak kegiatan relatif bertumpuk"},
-  {no:25, unit:"SKMK",                        judul:"Survei Resiliensi ASN dalam situasi Krisis Bencana",                                                        jenis:"",                            jadwal:"Mei (2)",      tahun:"2026",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",   media:"",   webLAN:"",       webUnit:"",              igLAN:"",     igUnit:"",            ytLAN:"",   ytUnit:"",ket:"Belum Selesai\nSudah disusun policy brief dan akan dilakukan webinar tgl 14 Oktober 2026"},
-  {no:26, unit:"DAPKK",                       judul:"Monitoring dan Evaluasi Sekolah Rakyat",                                                                    jenis:"",                            jadwal:"Mei (4)",      tahun:"2026",cluster:"Prioritas Presiden",          jurnal:"",   media:"Link",webLAN:"Link",   webUnit:"",              igLAN:"",     igUnit:"Link",        ytLAN:"Link",ytUnit:"",ket:"Selesai\ndengan publikasi di Website LAN dan Youtube LAN (Podcast)"},
-  {no:27, unit:"SKMP",                        judul:"Strategi adaptasi fiskal Pemda terhadap pemangkasan dana transfer ke daerah dalam APBN 2026",               jenis:"",                            jadwal:"Juni (1)",     tahun:"2026",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",   media:"",   webLAN:"",       webUnit:"",              igLAN:"",     igUnit:"",            ytLAN:"",   ytUnit:"",ket:"Belum Selesai\nSudah dilakukan pengumpulan data namun belum ada penambahan jumlah responden (masih 28)"},
-  {no:28, unit:"STIA JKT",                    judul:"Survey Kualitatif Sistem Penilaian Integritas: Integritas Masih Sebatas Jargon?",                           jenis:"Policy Brief",                jadwal:"Juni (2)",     tahun:"2026",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",   media:"Link",webLAN:"",       webUnit:"Link",          igLAN:"Link", igUnit:"Link",        ytLAN:"",   ytUnit:"",ket:"Selesai\ndengan publikasi di Website LAN, Instagram LAN (Podcast), Instagram Unit & D1 (Podcast), dan Youtube LAN (Podcast)"},
-  {no:29, unit:"STIA MKS",                    judul:"Preferensi pilihan karier Gen Z untuk menjadi ASN",                                                         jenis:"",                            jadwal:"Juni (3)",     tahun:"2026",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",   media:"",   webLAN:"",       webUnit:"",              igLAN:"",     igUnit:"",            ytLAN:"",   ytUnit:"",ket:"Belum Selesai\nSedang dilakukan penyebaran instrumen survei."},
-  {no:30, unit:"SKTAN",                       judul:"Preferensi pilihan karier ASN Gen Z",                                                                       jenis:"Policy Brief",                jadwal:"Juli (1)",     tahun:"2026",cluster:"Tata Kelola & Manajemen ASN",jurnal:"Opini di Ayobandung Link 2",media:"",webLAN:"link",webUnit:"",igLAN:"Instagram",igUnit:"Link",ytLAN:"Link",ytUnit:"",ket:"Belum Selesai (Policy Paper & Publikasi).\nPublikasi baru di Instagram Pusjar & D1 (Infografis)"},
-  {no:31, unit:"SKMK",                        judul:"Survei Nasional Kesiapan ASN sebagai Policy Entrepreneur dalam Mendukung Program Prioritas Nasional 2026",  jenis:"",                            jadwal:"Juli (2)",     tahun:"2026",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",   media:"",   webLAN:"",       webUnit:"",              igLAN:"",     igUnit:"",            ytLAN:"",   ytUnit:"",ket:"Belum Selesai\nSedang dilakukan penyempurnaan instrumen"},
-  {no:32, unit:"SKPP",                        judul:"Penguatan layanan tanggap bencana di daerah",                                                               jenis:"",                            jadwal:"Juli (3)",     tahun:"2026",cluster:"Pelayanan Publik",            jurnal:"",   media:"Link",webLAN:"Link",   webUnit:"",              igLAN:"",     igUnit:"Link",        ytLAN:"",   ytUnit:"Link",ket:"Selesai dengan publikasi di Website Pusjar, Instagram Pusjar (Dokumentasi Webinar), dan Youtube Pusjar (Webinar)."},
-  {no:33, unit:"STIA JKT|STIA MKS|STIA BDG", judul:"Organizational Trend in Indonesia's Public Sector",                                                        jenis:"",                            jadwal:"Agustus (1)",  tahun:"2026",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",   media:"",   webLAN:"",       webUnit:"",              igLAN:"",     igUnit:"",            ytLAN:"",   ytUnit:"",ket:"Belum Selesai\nSedang dilakukan penyusunan instrumen survei."},
-  {no:34, unit:"SKPP",                        judul:"Pelayanan Publik Outlook",                                                                                  jenis:"",                            jadwal:"Agustus (2)",  tahun:"2026",cluster:"Pelayanan Publik",            jurnal:"",   media:"Link",webLAN:"",       webUnit:"",              igLAN:"Link", igUnit:"",            ytLAN:"",   ytUnit:"",ket:"Selesai dengan publikasi di instagram"},
-  {no:35, unit:"SKTAN",                       judul:"Survei Kesiapan Operasional Koperasi Desa Merah Putih di Desa",                                             jenis:"",                            jadwal:"Agustus (3)",  tahun:"2026",cluster:"Prioritas Presiden",          jurnal:"",   media:"",   webLAN:"",       webUnit:"",              igLAN:"",     igUnit:"Link",        ytLAN:"",   ytUnit:"",ket:"Belum Selesai\nSedang dilakukan review policy brief oleh Deputi"},
-  {no:36, unit:"SKMK",                        judul:"Menyusun proses bisnis continuity dan disaster recovery serta SOP darurat",                                 jenis:"",                            jadwal:"Agustus (4)",  tahun:"2026",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",   media:"",   webLAN:"",       webUnit:"",              igLAN:"",     igUnit:"",            ytLAN:"",   ytUnit:"",ket:"Belum Selesai\nSedang dalam tahap penyempurnaan Policy Brief"},
-  {no:37, unit:"STIA MKS",                    judul:"Pemberantasan kemiskinan",                                                                                  jenis:"",                            jadwal:"September (1)",tahun:"2026",cluster:"Prioritas Presiden",          jurnal:"",   media:"",   webLAN:"",       webUnit:"",              igLAN:"",     igUnit:"",            ytLAN:"",   ytUnit:"",ket:"Belum Selesai\nSedang dilakukan penyebaran instrumen survei."},
-  {no:38, unit:"DAPKK",                       judul:"Workplace trend",                                                                                           jenis:"",                            jadwal:"September (2)",tahun:"2026",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",   media:"",   webLAN:"",       webUnit:"",              igLAN:"Link", igUnit:"",            ytLAN:"",   ytUnit:"",ket:"Belum Selesai\nSedang dilakukan pengolahan data"},
-  {no:39, unit:"SKTAN",                       judul:"Pelestarian lingkungan hidup / Transformasi Kebijakan Lingkungan",                                          jenis:"Policy Brief",                jadwal:"September (3)",tahun:"2026",cluster:"Prioritas Presiden",          jurnal:"",   media:"",   webLAN:"",       webUnit:"",              igLAN:"",     igUnit:"link",        ytLAN:"",   ytUnit:"",ket:"Belum Selesai\nSedang dilakukan review policy brief oleh deputi"},
-  {no:40, unit:"DSPK2AN",                     judul:"Reformasi Tata Kelola Makan Bergizi Gratis (MBG)",                                                         jenis:"Policy Paper",                jadwal:"September (4)",tahun:"2026",cluster:"Prioritas Presiden",          jurnal:"",   media:"",   webLAN:"Link",   webUnit:"",              igLAN:"",     igUnit:"",            ytLAN:"",   ytUnit:"",ket:"Belum Selesai\nSudah ada Policy Paper"},
-  {no:41, unit:"SKPP",                        judul:"Fenomena Polyworking di kalangan ASN",                                                                      jenis:"",                            jadwal:"September (4)",tahun:"2026",cluster:"Tata Kelola & Manajemen ASN",jurnal:"link",media:"Link",webLAN:"link", webUnit:"",              igLAN:"Link", igUnit:"-",           ytLAN:"Link",ytUnit:"",ket:"Selesai\ndengan publikasi di Website Pusjar, Instagram Pusjar (Dokumentasi Webinar), dan Youtube Pusjar (Webinar)"},
-  {no:42, unit:"STIA JKT|STIA MKS|STIA BDG", judul:"Regenerative Leadership",                                                                                  jenis:"",                            jadwal:"Oktober (1)",  tahun:"2026",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",   media:"",   webLAN:"",       webUnit:"",              igLAN:"",     igUnit:"",            ytLAN:"",   ytUnit:"",ket:"Belum Selesai\nSedang dalam tahap persiapan"},
-  {no:43, unit:"SKMK",                        judul:"Evaluasi Kebijakan Makan Bergizi Gratis",                                                                   jenis:"",                            jadwal:"Oktober (1)",  tahun:"2026",cluster:"Prioritas Presiden",          jurnal:"",   media:"",   webLAN:"",       webUnit:"",              igLAN:"",     igUnit:"",            ytLAN:"",   ytUnit:"",ket:"Belum Selesai\nSedang dilakukan penyusunan Policy Brief"},
-  {no:44, unit:"DSPK2AN",                     judul:"Penguatan Kebijakan Kedaulatan Pangan Nasional",                                                            jenis:"Policy Brief",                jadwal:"Oktober (2)",  tahun:"2026",cluster:"Prioritas Presiden",          jurnal:"",   media:"",   webLAN:"Link",   webUnit:"",              igLAN:"Link", igUnit:"",            ytLAN:"",   ytUnit:"",ket:"Belum Selesai\nSedang disusun Policy Brief\nPublikasi baru informasi kegiatan"},
-  {no:45, unit:"SKMP",                        judul:"Persepsi ASN mengenai Upaya Penguatan/Pembentukan Lembaga Pengawas sistem merit",                           jenis:"",                            jadwal:"Oktober (2)",  tahun:"2026",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",   media:"",   webLAN:"",       webUnit:"",              igLAN:"",     igUnit:"",            ytLAN:"",   ytUnit:"",ket:""},
-  {no:46, unit:"DAPKK",                       judul:"Survei Perilaku Kepemimpinan Adaptif Berdasarkan Persepsi Aparatur Sipil Negara",                           jenis:"",                            jadwal:"Oktober (3)",  tahun:"2026",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",   media:"",   webLAN:"",       webUnit:"",              igLAN:"",     igUnit:"",            ytLAN:"",   ytUnit:"",ket:""},
-  {no:47, unit:"SKTAN",                       judul:"Ketahanan pangan sebagai fondasi kemandirian bangsa",                                                       jenis:"",                            jadwal:"Oktober (4)",  tahun:"2026",cluster:"Prioritas Presiden",          jurnal:"",   media:"",   webLAN:"",       webUnit:"",              igLAN:"",     igUnit:"",            ytLAN:"",   ytUnit:"",ket:"Sedang dilakukan penyusunan instrumen"},
-  {no:48, unit:"STIA JKT",                    judul:"Pendidikan bermutu untuk SDM berdaya saing global",                                                         jenis:"",                            jadwal:"November (1)", tahun:"2026",cluster:"Prioritas Presiden",          jurnal:"",   media:"",   webLAN:"",       webUnit:"",              igLAN:"",     igUnit:"",            ytLAN:"",   ytUnit:"",ket:""},
-  {no:49, unit:"STIA BDG",                    judul:"Program Pemberdayaan dan Kesiapan Masa Depan Siswa Sekolah Rakyat",                                         jenis:"",                            jadwal:"November (2)", tahun:"2026",cluster:"Prioritas Presiden",          jurnal:"",   media:"",   webLAN:"",       webUnit:"",              igLAN:"",     igUnit:"",            ytLAN:"",   ytUnit:"",ket:""},
-  {no:50, unit:"SKMP",                        judul:"Persepsi masyarakat terhadap peran opini publik/agenda kebijakan pemerintah",                               jenis:"",                            jadwal:"November (3)", tahun:"2026",cluster:"Prioritas Presiden",          jurnal:"",   media:"",   webLAN:"",       webUnit:"",              igLAN:"",     igUnit:"",            ytLAN:"",   ytUnit:"",ket:""},
-  {no:51, unit:"SKPP",                        judul:"Penguatan kebijakan ekonomi hijau dalam mendukung hilirisasi berkelanjutan",                                 jenis:"",                            jadwal:"November (4)", tahun:"2026",cluster:"Prioritas Presiden",          jurnal:"link",media:"",  webLAN:"",       webUnit:"",              igLAN:"",     igUnit:"Link",        ytLAN:"",   ytUnit:"",ket:"Sudah dilakukan ekspose kegiatan dan saat ini sedang disusun PB"},
-  {no:52, unit:"SKTAN",                       judul:"Learning agility ASN dalam mendukung Pendidikan vokasi dan peningkatan kualitas guru",                      jenis:"",                            jadwal:"Desember (1)", tahun:"2026",cluster:"Prioritas Presiden",          jurnal:"",   media:"",   webLAN:"",       webUnit:"",              igLAN:"",     igUnit:"",            ytLAN:"",   ytUnit:"",ket:"Sedang dilakukan penyusunan instrumen"},
-  {no:53, unit:"SKPP",                        judul:"Survei Tata Kelola dan Kualitas Pelayanan Program Bantuan Sosial",                                          jenis:"",                            jadwal:"Desember (1)", tahun:"",    cluster:"",                           jurnal:"",   media:"",   webLAN:"",       webUnit:"",              igLAN:"",     igUnit:"",            ytLAN:"",   ytUnit:"",ket:""},
-  {no:54, unit:"DSPK2AN",                     judul:"Analisis Pemantauan dan Solusi atas Program Prioritas Nasional",                                            jenis:"",                            jadwal:"Desember (2)", tahun:"2026",cluster:"Prioritas Presiden",          jurnal:"",   media:"",   webLAN:"",       webUnit:"",              igLAN:"",     igUnit:"",            ytLAN:"",   ytUnit:"",ket:""},
-  {no:55, unit:"SKPP",                        judul:"Survei Integrasi Pelayanan Publik",                                                                         jenis:"",                            jadwal:"Desember (2)", tahun:"",    cluster:"",                           jurnal:"",   media:"",   webLAN:"",       webUnit:"",              igLAN:"",     igUnit:"",            ytLAN:"",   ytUnit:"",ket:""},
-  {no:56, unit:"DSPK2AN",                     judul:"Survei Indonesia Leadership Outlook 2027",                                                                  jenis:"Laporan",                     jadwal:"Desember (3)", tahun:"2026",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",   media:"",   webLAN:"",       webUnit:"",              igLAN:"",     igUnit:"",            ytLAN:"",   ytUnit:"",ket:""},
+  {no:1,unit:"SKPP",judul:"Survei Optimalisasi Akses Layanan Kesehatan",jenis:"",jadwal:"2025",tahun:"2025",cluster:"Prioritas Presiden",jurnal:"",media:"",webLAN:"Link",webUnit:"Link 1|Link 2",igLAN:"",igUnit:"Link 1|Link 2",ytLAN:"",ytUnit:"",ket:""},
+  {no:2,unit:"DAPKK",judul:"Survei Disrupsi Pekerjaan dan Keterampilan Strategis (Top Skills ASN)",jenis:"",jadwal:"2025",tahun:"2025",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",media:"",webLAN:"Link",webUnit:"Link",igLAN:"",igUnit:"Link",ytLAN:"Link",ytUnit:"",ket:""},
+  {no:3,unit:"SKMP",judul:"Survei Indeks Kesehatan Organisasi (OHI)",jenis:"",jadwal:"2025",tahun:"2025",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",media:"",webLAN:"Link",webUnit:"Link",igLAN:"",igUnit:"Link",ytLAN:"",ytUnit:"Link",ket:""},
+  {no:4,unit:"SKPP",judul:"Kemudahan Penanaman Modal di Daerah",jenis:"",jadwal:"2025",tahun:"2025",cluster:"Prioritas Presiden",jurnal:"",media:"",webLAN:"Link",webUnit:"Link 1|Link 2",igLAN:"",igUnit:"",ytLAN:"",ytUnit:"",ket:""},
+  {no:5,unit:"SKTAN",judul:"Implementasi Penerapan Manajemen Talenta di Lingkungan Pemerintah Daerah Provinsi / Kabupaten / Kota di Indonesia",jenis:"",jadwal:"2025",tahun:"2025",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",media:"",webLAN:"Link",webUnit:"Link 1|Link 2|Link 3|Link 4|Link 5|Link 6|Link 7",igLAN:"",igUnit:"Link 1|Link 2",ytLAN:"",ytUnit:"Link",ket:""},
+  {no:6,unit:"STIA JKT, STIA MKS, STIA BDG",judul:"Survei Birokrasi Melayani Outlook",jenis:"",jadwal:"2025",tahun:"2025",cluster:"Pelayanan Publik",jurnal:"",media:"",webLAN:"",webUnit:"Link",igLAN:"",igUnit:"",ytLAN:"",ytUnit:"",ket:""},
+  {no:7,unit:"DAPKK",judul:"Survei Future Jobs and Skills Sektor Ketahanan Pangan",jenis:"",jadwal:"2025",tahun:"2025",cluster:"Prioritas Presiden",jurnal:"",media:"",webLAN:"Link",webUnit:"",igLAN:"",igUnit:"",ytLAN:"",ytUnit:"",ket:""},
+  {no:8,unit:"SKMK",judul:"Survei Efektivitas Kinerja Jabatan Fungsional",jenis:"",jadwal:"2025",tahun:"2025",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",media:"",webLAN:"Link",webUnit:"Link 1|Link 2",igLAN:"",igUnit:"Link",ytLAN:"",ytUnit:"",ket:""},
+  {no:9,unit:"SKPP",judul:"“Customer Journey” Pelayanan Publik Instansi Pemerintah",jenis:"",jadwal:"2025",tahun:"2025",cluster:"Pelayanan Publik",jurnal:"",media:"",webLAN:"Link",webUnit:"Link 1|Link 2",igLAN:"",igUnit:"",ytLAN:"",ytUnit:"",ket:""},
+  {no:10,unit:"SKTAN",judul:"Persepsi Masyarakat dan Birokrasi terhadap kompetensi dan nilai ASN",jenis:"",jadwal:"2025",tahun:"2025",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",media:"",webLAN:"",webUnit:"Link 1|Link 2|Link 3|Link 4",igLAN:"",igUnit:"",ytLAN:"",ytUnit:"",ket:""},
+  {no:11,unit:"DAPKK",judul:"Survei Produktivitas Sektor Publik Pertanian dengan Pendekatan APO (Tanaman Padi dan Jagung)",jenis:"",jadwal:"2025",tahun:"2025",cluster:"Prioritas Presiden",jurnal:"",media:"",webLAN:"Link",webUnit:"",igLAN:"",igUnit:"",ytLAN:"",ytUnit:"",ket:""},
+  {no:12,unit:"SKMP",judul:"Survei Strategi Peningkatan Tata Kelola BUMDes berdasarkan potensi dan karakteristik wilayah",jenis:"",jadwal:"2025",tahun:"2025",cluster:"Prioritas Presiden",jurnal:"",media:"",webLAN:"Link",webUnit:"Link",igLAN:"",igUnit:"Link",ytLAN:"",ytUnit:"Link",ket:""},
+  {no:13,unit:"SKMK",judul:"Survei Strategi Peningkatan Kinerja ASN di Era Efisiensi Anggaran",jenis:"",jadwal:"2025",tahun:"2025",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",media:"",webLAN:"Link",webUnit:"Link 1|Link 2|Link 3",igLAN:"",igUnit:"",ytLAN:"",ytUnit:"",ket:""},
+  {no:14,unit:"STIA JKT",judul:"Flexible Working Arrangement untuk Pegawai Perempuan ASN dan Swasta",jenis:"Jurnal/Penelitian Kolaborasi",jadwal:"2025",tahun:"2025",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",media:"",webLAN:"",webUnit:"",igLAN:"",igUnit:"",ytLAN:"",ytUnit:"",ket:"Materi sudah dipaparkan di depan DFT Australia. Sudah coba dikirim ke jurnal tapi belum diterima"},
+  {no:15,unit:"DAPKK",judul:"Ekosistem Inovasi",jenis:"Buku",jadwal:"2025",tahun:"2025",cluster:"Digitalisasi",jurnal:"",media:"",webLAN:"Link",webUnit:"",igLAN:"",igUnit:"",ytLAN:"",ytUnit:"",ket:""},
+  {no:16,unit:"SKTAN",judul:"Survei persepsi alumni terkait dampak pelatihan kepemimpinan terhadap manajemen karir",jenis:"Jurnal/Penelitian",jadwal:"Januari (1)",tahun:"2026",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",media:"",webLAN:"",webUnit:"Link",igLAN:"",igUnit:"",ytLAN:"link",ytUnit:"link",ket:"Selesai\ndengan publikasi di Prosiding dan youtube"},
+  {no:17,unit:"STIA BDG",judul:"Survey Budaya Kerja ASN",jenis:"",jadwal:"Januari (4)",tahun:"2026",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",media:"",webLAN:"Link",webUnit:"",igLAN:"",igUnit:"",ytLAN:"",ytUnit:"Link",ket:"Selesai\ndengan publikasi di website lan dan podcast di youtube Poltek"},
+  {no:18,unit:"STIA MKS",judul:"Survei Kesiapan Pemerintah Desa/Kelurahan dalam Mengelola Koperasi Merah Putih",jenis:"Policy Paper",jadwal:"Februari (3)",tahun:"2026",cluster:"Prioritas Presiden",jurnal:"",media:"",webLAN:"",webUnit:"Link",igLAN:"",igUnit:"",ytLAN:"Link 1|Link 2",ytUnit:"Link 1|Link 2",ket:"Selesai\n dengan publikasi di website Poltek dan Podcast di LAN dan Poltek"},
+  {no:19,unit:"DSPK2AN",judul:"Survei Indonesia Leadership Outlook 2026",jenis:"Laporan",jadwal:"Februari (4)",tahun:"2026",cluster:"Digitalisasi",jurnal:"",media:"",webLAN:"Link",webUnit:"Link",igLAN:"Link 1|Link 2",igUnit:"Link 1|Link 2",ytLAN:"Link 1|Link 2|Link 3",ytUnit:"Link 1|Link 2|Link 3",ket:"Selesai\n dengan publikasi di Website LAN, Instagram LAN & D1 (Infografis & Podcast), dan Youtube LAN (Podcast)"},
+  {no:20,unit:"STIA BDG",judul:"Difusi Inovasi",jenis:"",jadwal:"Maret (1)",tahun:"2026",cluster:"Digitalisasi",jurnal:"",media:"",webLAN:"Link",webUnit:"",igLAN:"",igUnit:"",ytLAN:"Link",ytUnit:"Link",ket:"Selesai\n dengan publikasi di Website LAN dan Youtube LAN & Poltek (Podcast)"},
+  {no:21,unit:"DAPKK",judul:"Desain kelembagaan pengentasan kemiskinan",jenis:"",jadwal:"Maret (4)",tahun:"2026",cluster:"Prioritas Presiden",jurnal:"",media:"",webLAN:"Link",webUnit:"Link",igLAN:"Link 1|Link 2",igUnit:"Link 1|Link 2",ytLAN:"Link 1|Link 2",ytUnit:"Link 1|Link 2",ket:"Selesai\n dengan publikasi di Website LAN, Instagram LAN & D1 (Podcast), dan Youtube LAN (Podcast)"},
+  {no:22,unit:"SKMP",judul:"Kesiapan dan kebutuhan kompetensi ASN muda dalam mendukung komponen cadangan pertahanan negara",jenis:"",jadwal:"April (1)",tahun:"2026",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",media:"",webLAN:"",webUnit:"Link",igLAN:"",igUnit:"",ytLAN:"Link",ytUnit:"Link",ket:"Selesai\n dengan publikasi di Website (Media Berita Online) dan Youtube LAN dan Pusjar (Podcast)"},
+  {no:23,unit:"SKPP",judul:"Efektifitas layanan call center di daerah",jenis:"",jadwal:"April (3)",tahun:"2026",cluster:"Pelayanan Publik",jurnal:"",media:"",webLAN:"Link",webUnit:"Link 1|Link 2",igLAN:"",igUnit:"Link",ytLAN:"Link",ytUnit:"Link",ket:"Selesai\n dengan publikasi di Website Pusjar & Online (Media Indonesia), Instagram Pusjar (Podcast), dan Youtube LAN & Pusjar (Podcast)"},
+  {no:24,unit:"STIA JKT, STIA MKS, STIA BDG",judul:"Birokrasi melayani outlook",jenis:"",jadwal:"Mei (1)",tahun:"2026",cluster:"Pelayanan Publik",jurnal:"",media:"",webLAN:"",webUnit:"",igLAN:"",igUnit:"",ytLAN:"",ytUnit:"",ket:"Belum Selesai\nBelum dilanjutkan berhubung banyak kegiatan relatif bertumpuk"},
+  {no:25,unit:"SKMK",judul:"Survei Resiliensi ASN dalam situasi Krisis Bencana",jenis:"",jadwal:"Mei (2)",tahun:"2026",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",media:"",webLAN:"",webUnit:"",igLAN:"",igUnit:"",ytLAN:"",ytUnit:"",ket:"Belum Selesai\nSudah disusun policy brief dan akan dilakukan webinar tgl 14 Oktober 2026"},
+  {no:26,unit:"DAPKK",judul:"Monitoring dan Evaluasi Sekolah Rakyat",jenis:"",jadwal:"Mei (4)",tahun:"2026",cluster:"Prioritas Presiden",jurnal:"",media:"",webLAN:"Link",webUnit:"Link",igLAN:"",igUnit:"",ytLAN:"Link",ytUnit:"Link",ket:"Selesai\ndengan publikasi di Website LAN dan Youtube LAN (Podcast)"},
+  {no:27,unit:"SKMP",judul:"Strategi adaptasi fiskal Pemda terhadap pemangkasan dana transfer ke daerah dalam APBN 2026",jenis:"",jadwal:"Juni (1)",tahun:"2026",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",media:"",webLAN:"",webUnit:"",igLAN:"",igUnit:"",ytLAN:"",ytUnit:"",ket:"Belum Selesai\nSudah dilakukan pengumpulan data namun belum ada penambahan jumlah responden (masih 28)"},
+  {no:28,unit:"STIA JKT",judul:"Survey Kualitatif Sistem Penilaian Integritas: Integritas Masih Sebatas Jargon?",jenis:"Policy Brief",jadwal:"Juni (2)",tahun:"2026",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",media:"",webLAN:"Link",webUnit:"",igLAN:"Link",igUnit:"Link",ytLAN:"Link",ytUnit:"",ket:"Selesai\ndengan publikasi di Website LAN, Instagram LAN (Podcast), Instagram Unit & D1 (Podcast), dan Youtube LAN (Podcast)"},
+  {no:29,unit:"STIA MKS",judul:"Preferensi pilihan karier Gen Z untuk menjadi ASN",jenis:"",jadwal:"Juni (3)",tahun:"2026",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",media:"",webLAN:"",webUnit:"",igLAN:"",igUnit:"",ytLAN:"",ytUnit:"",ket:"Belum Selesai\nSedang dilakukan penyebaran instrumen survei."},
+  {no:30,unit:"SKTAN",judul:"Preferensi pilihan karier ASN Gen Z",jenis:"Policy Brief",jadwal:"Juli (1)",tahun:"2026",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",media:"Opini di Ayobandung Link 2",webLAN:"",webUnit:"link",igLAN:"",igUnit:"Instagram",ytLAN:"Link",ytUnit:"Link",ket:"Belum Selesai (Policy Paper & Publikasi).\n  \n Publikasi baru di Instagram Pusjar & D1 (Infografis)"},
+  {no:31,unit:"SKMK",judul:"Survei Nasional Kesiapan ASN sebagai Policy Entrepreneur dalam Mendukung Program Prioritas Nasional 2026",jenis:"",jadwal:"Juli (2)",tahun:"2026",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",media:"",webLAN:"",webUnit:"",igLAN:"",igUnit:"",ytLAN:"",ytUnit:"",ket:"Belum Selesai\nSedang dilakukan penyempurnaan instrumen"},
+  {no:32,unit:"SKPP",judul:"Penguatan layanan tanggap bencana di daerah (skupnya nasional)",jenis:"",jadwal:"Juli (3)",tahun:"2026",cluster:"Pelayanan Publik",jurnal:"",media:"",webLAN:"Link",webUnit:"Link",igLAN:"",igUnit:"Link",ytLAN:"",ytUnit:"Link",ket:"Selesai dengan publikasi di Website Pusjar, Instagram Pusjar (Dokumentasi Webinar), dan Youtube Pusjar (Webinar)."},
+  {no:33,unit:"STIA JKT, STIA MKS, STIA BDG",judul:"Organizational Trend in Indonesia's Public Sector: Mapping Change, Readiness, & Adaptive Capability",jenis:"",jadwal:"Agustus (1)",tahun:"2026",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",media:"",webLAN:"",webUnit:"",igLAN:"",igUnit:"",ytLAN:"",ytUnit:"",ket:"Belum Selesai\nSedang dilakukan penyusunan instrumen survei."},
+  {no:34,unit:"SKPP",judul:"Pelayanan Publik Outlook",jenis:"",jadwal:"Agustus (2)",tahun:"2026",cluster:"Pelayanan Publik",jurnal:"",media:"",webLAN:"Link",webUnit:"",igLAN:"",igUnit:"Link",ytLAN:"",ytUnit:"",ket:"Selesai dengan publikasi di instagram"},
+  {no:35,unit:"SKTAN",judul:"Survei Kesiapan Operasional Koperasi Desa Merah Putih di Desa",jenis:"",jadwal:"Agustus (3)",tahun:"2026",cluster:"Prioritas Presiden",jurnal:"",media:"",webLAN:"",webUnit:"",igLAN:"",igUnit:"Link",ytLAN:"",ytUnit:"",ket:"Belum Selesai\nSedang dilakukan review policy brief oleh Deputi"},
+  {no:36,unit:"SKMK",judul:"Menyusun proses bisnis continuity dan disaster recovery serta SOP darurat",jenis:"",jadwal:"Agustus (4)",tahun:"2026",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",media:"",webLAN:"",webUnit:"",igLAN:"",igUnit:"",ytLAN:"",ytUnit:"",ket:"Belum Selesai\nSedang dalam tahap penyempurnaan Policy Brief"},
+  {no:37,unit:"STIA MKS",judul:"Pemberantasan kemiskinan",jenis:"",jadwal:"September (1)",tahun:"2026",cluster:"Prioritas Presiden",jurnal:"",media:"",webLAN:"",webUnit:"",igLAN:"",igUnit:"",ytLAN:"",ytUnit:"",ket:"Belum Selesai\nSedang dilakukan penyebaran instrumen survei."},
+  {no:38,unit:"DAPKK",judul:"Workplace trend",jenis:"",jadwal:"September (2)",tahun:"2026",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",media:"",webLAN:"",webUnit:"",igLAN:"",igUnit:"Link",ytLAN:"",ytUnit:"",ket:"Belum Selesai \nSedang dilakukan pengolahan data"},
+  {no:39,unit:"SKTAN",judul:"Pelestarian lingkungan hidup (Bencana Sumatera Utara, Sumatera Barat dan Aceh)\nTransformasi Kebijakan Lingkungan dari Instrumen menuju Dampak",jenis:"Policy Brief",jadwal:"September (3)",tahun:"2026",cluster:"Prioritas Presiden",jurnal:"",media:"",webLAN:"",webUnit:"",igLAN:"",igUnit:"link",ytLAN:"",ytUnit:"",ket:"Belum Selesai\nSedang dilakukan review policy brief oleh deputi"},
+  {no:40,unit:"DSPK2AN",judul:"Reformasi Tata Kelola Makan Bergizi Gratis (MBG): Dari Ekspansi Berbasis Target menjadi Pelayanan Gizi Berbasis Standar, Resiko dan Akuntabilitas",jenis:"Policy Paper",jadwal:"September (4)",tahun:"2026",cluster:"Prioritas Presiden",jurnal:"",media:"",webLAN:"Link",webUnit:"Link",igLAN:"",igUnit:"",ytLAN:"",ytUnit:"",ket:"Selesai \n dengan publikasi di Website LAN dan Website Unit"},
+  {no:41,unit:"SKPP",judul:"Fenomena Polyworking di kalangan ASN",jenis:"",jadwal:"September (4)",tahun:"2026",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",media:"link",webLAN:"Link",webUnit:"link",igLAN:"",igUnit:"Link",ytLAN:"-",ytUnit:"Link",ket:"Selesai \ndengan publikasi di Website Pusjar, Instagram Pusjar (Dokumentasi Webinar), dan Youtube Pusjar (Webinar)"},
+  {no:42,unit:"STIA JKT, STIA MKS, STIA BDG",judul:"Regenerative Leadership",jenis:"",jadwal:"Oktober (1)",tahun:"2026",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",media:"",webLAN:"",webUnit:"",igLAN:"",igUnit:"",ytLAN:"",ytUnit:"",ket:"Belum Selesai\nSedang dalam tahap persiapan"},
+  {no:43,unit:"SKMK",judul:"Evaluasi Kebijakan Makan Bergizi Gratis",jenis:"",jadwal:"Oktober (1)",tahun:"2026",cluster:"Prioritas Presiden",jurnal:"",media:"",webLAN:"",webUnit:"",igLAN:"",igUnit:"",ytLAN:"",ytUnit:"",ket:"Belum Selesai\nSedang dilakukan penyusunan Policy Brief"},
+  {no:44,unit:"DSPK2AN",judul:"Penguatan Kebijakan Kedaulatan Pangan Nasional",jenis:"Policy Brief",jadwal:"Oktober (2)",tahun:"2026",cluster:"Prioritas Presiden",jurnal:"",media:"",webLAN:"Link",webUnit:"Link",igLAN:"",igUnit:"Link",ytLAN:"",ytUnit:"",ket:"Selesai\n dengan publikasi di Website Unit, website LAN & Instagram Unit"},
+  {no:45,unit:"SKMP",judul:"Persepsi ASN mengenai Upaya Penguatan/Pembentukan Lembaga Pengawas sistem merit",jenis:"",jadwal:"Oktober (2)",tahun:"2026",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",media:"",webLAN:"",webUnit:"",igLAN:"",igUnit:"",ytLAN:"",ytUnit:"",ket:""},
+  {no:46,unit:"DAPKK",judul:"Survei Perilaku Kepemimpinan Adaptif Berdasarkan Persepsi Aparatur Sipil Negara",jenis:"",jadwal:"Oktober (3)",tahun:"2026",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",media:"",webLAN:"",webUnit:"",igLAN:"",igUnit:"",ytLAN:"",ytUnit:"",ket:""},
+  {no:47,unit:"SKTAN",judul:"Ketahanan pangan sebagai fondasi kemandirian bangsa",jenis:"",jadwal:"Oktober (4)",tahun:"2026",cluster:"Prioritas Presiden",jurnal:"",media:"",webLAN:"",webUnit:"",igLAN:"",igUnit:"",ytLAN:"",ytUnit:"",ket:"Sedang dilakukan penyusunan instrumen"},
+  {no:48,unit:"STIA JKT",judul:"Pendidikan bermutu untuk SDM berdaya saing global",jenis:"",jadwal:"November (1)",tahun:"2026",cluster:"Prioritas Presiden",jurnal:"",media:"",webLAN:"",webUnit:"",igLAN:"",igUnit:"",ytLAN:"",ytUnit:"",ket:""},
+  {no:49,unit:"STIA BDG",judul:"Program Pemberdayaan dan Kesiapan Masa Depan Siswa Sekolah Rakyat",jenis:"",jadwal:"November (2)",tahun:"2026",cluster:"Prioritas Presiden",jurnal:"",media:"",webLAN:"",webUnit:"",igLAN:"",igUnit:"",ytLAN:"",ytUnit:"",ket:""},
+  {no:50,unit:"SKMP",judul:"Persepsi masyarakat terhadap peran opini publik/agenda kebijakan pemerintah",jenis:"",jadwal:"November (3)",tahun:"2026",cluster:"Prioritas Presiden",jurnal:"",media:"",webLAN:"",webUnit:"",igLAN:"",igUnit:"",ytLAN:"",ytUnit:"",ket:""},
+  {no:51,unit:"SKPP",judul:"Penguatan kebijakan ekonomi hijau dalam mendukung hilirisasi berkelanjutan",jenis:"",jadwal:"November (4)",tahun:"2026",cluster:"Prioritas Presiden",jurnal:"",media:"link",webLAN:"",webUnit:"",igLAN:"",igUnit:"Link",ytLAN:"",ytUnit:"",ket:"Sudah dilakukan ekspose kegiatan dan saat ini sedang disusun PB"},
+  {no:52,unit:"SKTAN",judul:"Learning agility ASN dalam mendukung Pendidikan vokasi, peningkatan kualitas guru dan kesesuaian kurikulum dunia kerja",jenis:"",jadwal:"Desember (1)",tahun:"2026",cluster:"Prioritas Presiden",jurnal:"",media:"",webLAN:"",webUnit:"",igLAN:"",igUnit:"",ytLAN:"",ytUnit:"",ket:"Sedang dilakukan penyusunan instrumen"},
+  {no:53,unit:"SKPP",judul:"Survei Tata Kelola dan Kualitas Pelayanan Program Bantuan Sosial",jenis:"",jadwal:"Desember (1)",tahun:"",cluster:"",jurnal:"",media:"",webLAN:"",webUnit:"",igLAN:"",igUnit:"",ytLAN:"",ytUnit:"",ket:""},
+  {no:54,unit:"DSPK2AN",judul:"Analisis Pemantauan dan Solusi atas Program Prioritas Nasional",jenis:"",jadwal:"Desember (2)",tahun:"2026",cluster:"Prioritas Presiden",jurnal:"",media:"",webLAN:"",webUnit:"",igLAN:"",igUnit:"",ytLAN:"",ytUnit:"",ket:""},
+  {no:55,unit:"SKPP",judul:"Survei Integrasi Pelayanan Publik",jenis:"",jadwal:"Desember (2)",tahun:"",cluster:"",jurnal:"",media:"",webLAN:"",webUnit:"",igLAN:"",igUnit:"",ytLAN:"",ytUnit:"",ket:""},
+  {no:56,unit:"DSPK2AN",judul:"Survei Indonesia Leadership Outlook 2027",jenis:"Laporan",jadwal:"Desember (3)",tahun:"2026",cluster:"Tata Kelola & Manajemen ASN",jurnal:"",media:"",webLAN:"",webUnit:"",igLAN:"",igUnit:"",ytLAN:"",ytUnit:"",ket:""}
 ];
 
 /* ══════════════════════════════════════════════════════════
@@ -1489,7 +1654,7 @@ function syncNavUnit(val){
 async function syncDataFromGAS(){
   const icon = document.getElementById('refresh-icon');
   if(icon) icon.classList.add('fa-spin');
-  await loadFromGAS();
+  await syncDataFromSheet(true);
   if(icon) setTimeout(()=>icon.classList.remove('fa-spin'), 600);
 }
 
@@ -1571,7 +1736,8 @@ function renderKPIs(){
   const belum=data.filter(d=>getStatus(d)==='belum').length;
   const pct=total?Math.round(selesai/total*100):0;
   const pctBelum=total?Math.round(belum/total*100):0;
-  const units2026=[...new Set(data.filter(d=>d.tahun==='2026').map(d=>getPrimaryUnit(d.unit)))].length;
+  const selectedUnit = (document.getElementById('f-unit') && document.getElementById('f-unit').value) || '';
+  const units2026 = selectedUnit ? 1 : 9;
 
   const kpis=[
     {icon:'fa-file-lines',    value:total,     label:'Total Publikasi', sub:'Semua tahun & unit',         color:'#2563eb', ibg:'#eff6ff', delta:null},
@@ -2099,6 +2265,7 @@ populateDropdowns();
 filteredData=[...RAW];
 renderKPIs();
 renderCharts();
+renderRoadmap(filteredData);
 renderTable();
 </script>
 </body>
