@@ -1580,8 +1580,15 @@ function getStatus(d){
 
 function getMonthNum(j){ if(!j) return 13; for(let i=0;i<MONTH_ORDER.length;i++){ if(j.toLowerCase().includes(MONTH_ORDER[i].toLowerCase())) return i; } return 13; }
 function getWeekNum(j){ if(!j) return 0; const m=j.match(/\((\d)\)/); return m?parseInt(m[1]):0; }
-function getPrimaryUnit(u){ if(!u) return "Unknown"; const p=u.split("|"); return p.length>1?"MULTI":p[0].trim(); }
-function getAllUnits(u){ if(!u) return []; return u.split("|").map(x=>x.trim()); }
+function getPrimaryUnit(u){
+  if(!u) return "Unknown";
+  const p = u.split(/[,|]/).map(x=>x.trim()).filter(Boolean);
+  return p.length > 1 ? "MULTI" : (p[0] || "Unknown");
+}
+function getAllUnits(u){
+  if(!u) return [];
+  return u.split(/[,|]/).map(x=>x.trim()).filter(Boolean);
+}
 function getChannelCount(d){ return CHANNEL_DEFS.filter(c=>hasLink(d[c.field])).length; }
 
 function statusBadge(st){
@@ -1602,7 +1609,7 @@ function applyFilters(){
         cluster=document.getElementById('f-cluster').value, status=document.getElementById('f-status').value;
   filteredData = RAW.filter(d=>{
     if(year    && d.tahun!==year) return false;
-    if(unit    && !d.unit.includes(unit)) return false;
+    if(unit    && !getAllUnits(d.unit).includes(unit)) return false;
     if(cluster && d.cluster!==cluster) return false;
     if(status  && status==='overdue' && !isOverdue(d)) return false;
     if(status  && status!=='overdue' && getStatus(d)!==status) return false;
@@ -1619,7 +1626,9 @@ function resetFilters(){
    DROPDOWNS & NAV UNIT SYNC
    ══════════════════════════════════════════════════════════ */
 function populateDropdowns(){
-  const units=[...new Set(RAW.flatMap(d=>getAllUnits(d.unit)))].sort();
+  const units=[...new Set(RAW.flatMap(d=>getAllUnits(d.unit)))]
+    .filter(u => u && !u.includes(',') && !u.includes('|') && u !== 'MULTI' && u !== 'Unknown')
+    .sort();
   const clusters=[...new Set(RAW.map(d=>d.cluster).filter(Boolean))].sort();
   ['f-unit','r-unit'].forEach(id=>{ const el=document.getElementById(id); if(!el) return; el.innerHTML = '<option value="">Semua Unit</option>'; units.forEach(u=>{ const o=document.createElement('option'); o.value=u; o.textContent=u; el.appendChild(o); }); });
   ['f-cluster','r-cluster'].forEach(id=>{ const el=document.getElementById(id); if(!el) return; el.innerHTML = '<option value="">Semua Cluster</option>'; clusters.forEach(c=>{ const o=document.createElement('option'); o.value=c; o.textContent=c; el.appendChild(o); }); });
@@ -1629,7 +1638,7 @@ function populateDropdowns(){
   if(navUnit){
     navUnit.innerHTML = `<option value="">Semua Unit Kerja (${RAW.length})</option>`;
     units.forEach(u=>{
-      const cnt = RAW.filter(d => d.unit.includes(u)).length;
+      const cnt = RAW.filter(d => getAllUnits(d.unit).includes(u)).length;
       const opt = document.createElement('option');
       opt.value = u;
       opt.textContent = `${u} (${cnt})`;
@@ -1644,7 +1653,7 @@ function syncNavUnit(val){
   if(!val){
     filteredData = [...RAW];
   } else {
-    filteredData = RAW.filter(d => d.unit.includes(val));
+    filteredData = RAW.filter(d => getAllUnits(d.unit).includes(val));
   }
   renderKPIs();
   renderCharts();
@@ -2139,7 +2148,7 @@ function renderTable(){
   const unit=document.getElementById('r-unit').value,cluster=document.getElementById('r-cluster').value,status=document.getElementById('r-status').value,year=document.getElementById('r-year').value;
   let data=RAW.filter(d=>{
     if(year&&d.tahun!==year) return false;
-    if(unit&&!d.unit.includes(unit)) return false;
+    if(unit&&!getAllUnits(d.unit).includes(unit)) return false;
     if(cluster&&d.cluster!==cluster) return false;
     if(status&&status==='overdue'&&!isOverdue(d)) return false;
     if(status&&status!=='overdue'&&getStatus(d)!==status) return false;

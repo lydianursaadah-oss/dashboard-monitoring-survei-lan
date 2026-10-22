@@ -824,7 +824,7 @@ function renderStats(){
 
 /* ══ DROPDOWNS ══ */
 function populateFilters(){
-  const units=[...new Set(DB.flatMap(d=>d.unit.split('|').map(u=>u.trim())))].sort();
+  const units=[...new Set(DB.flatMap(d=>d.unit.split(/[,|]/).map(u=>u.trim()).filter(Boolean)))].filter(u=>u && !u.includes(',') && !u.includes('|')).sort();
   const clusters=[...new Set(DB.map(d=>d.cluster).filter(Boolean))].sort();
   ['s-unit'].forEach(id=>{ const el=document.getElementById(id); el.innerHTML='<option value="">Semua Unit</option>'; units.forEach(u=>{ const o=document.createElement('option'); o.value=u; o.textContent=u; el.appendChild(o); }); });
   ['s-cluster'].forEach(id=>{ const el=document.getElementById(id); el.innerHTML='<option value="">Semua Cluster</option>'; clusters.forEach(c=>{ const o=document.createElement('option'); o.value=c; o.textContent=c; el.appendChild(o); }); });
