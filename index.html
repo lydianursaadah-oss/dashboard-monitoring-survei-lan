@@ -60,10 +60,10 @@
 
     /* ═══════════════════ HEADER ═══════════════════ */
     header {
-      background: #0f172a;
-      border-bottom: 1px solid #1e293b;
+      background: #ffffff;
+      border-bottom: 1px solid var(--border);
       position: sticky; top: 0; z-index: 100;
-      box-shadow: 0 4px 20px rgba(0,0,0,.15);
+      box-shadow: 0 1px 4px rgba(15,23,42,.06);
     }
     .header-inner {
       display: flex; align-items: center; justify-content: space-between;
@@ -71,7 +71,7 @@
     }
     .logo-group { display: flex; align-items: center; gap: 14px; }
     .logo-badge {
-      height: 42px;
+      height: 44px;
       width: auto;
       object-fit: contain;
       flex-shrink: 0;
@@ -79,37 +79,38 @@
       cursor: pointer;
     }
     .logo-title-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-    .logo-title { font-size: 16px; font-weight: 800; color: #f8fafc; letter-spacing: -.2px; }
+    .logo-title { font-size: 16px; font-weight: 800; color: var(--text1); letter-spacing: -.2px; }
     .badge-ta {
-      background: #d97706; color: #ffffff;
+      background: #fef3c7; color: #b45309; border: 1px solid #fde68a;
       font-size: 10px; font-weight: 700; padding: 2px 8px;
       border-radius: 20px; letter-spacing: .5px; display: inline-block;
     }
-    .logo-sub { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+    .logo-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
     .header-right { display: flex; align-items: center; gap: 10px; }
     
     /* Top action buttons */
     .btn-refresh {
-      background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.16);
-      color: #f8fafc; width: 34px; height: 34px; border-radius: 8px;
+      background: #f8fafc; border: 1px solid var(--border);
+      color: var(--text2); width: 34px; height: 34px; border-radius: 8px;
       display: flex; align-items: center; justify-content: center;
       cursor: pointer; font-size: 13px; transition: all .2s; outline: none;
     }
-    .btn-refresh:hover { background: rgba(255,255,255,.16); color: #38bdf8; }
+    .btn-refresh:hover { background: #f1f5f9; color: var(--accent); border-color: var(--accent); }
     .btn-add-agenda {
       background: #2563eb; border: none; color: #ffffff;
       padding: 7px 16px; border-radius: 8px; font-size: 13px; font-weight: 600;
       cursor: pointer; display: flex; align-items: center; gap: 7px;
       transition: all .18s; font-family: inherit;
+      box-shadow: 0 2px 6px rgba(37,99,235,.25);
     }
     .btn-add-agenda:hover { background: #1d4ed8; }
 
     /* ═══════════════════ SUBNAV TOOLBAR ═══════════════════ */
     .subnav-bar {
-      background: #0f172a;
-      border-top: 1px solid rgba(255,255,255,.07);
+      background: #ffffff;
+      border-top: 1px solid var(--border);
       border-bottom: 1px solid var(--border);
-      padding: 6px 28px;
+      padding: 8px 28px;
     }
     .subnav-inner {
       display: flex; align-items: center; justify-content: space-between;
@@ -119,30 +120,31 @@
       display: flex; align-items: center; gap: 9px;
     }
     .fokus-unit-label {
-      color: #fbbf24; font-size: 12px; font-weight: 700;
+      color: #d97706; font-size: 12px; font-weight: 700;
       display: flex; align-items: center; gap: 6px; white-space: nowrap;
     }
     .fokus-unit-select {
-      background: #1e293b; border: 1px solid #334155; color: #f8fafc;
+      background: #f8fafc; border: 1px solid var(--border); color: var(--text1);
       padding: 6px 14px; border-radius: 20px; font-size: 12px; font-family: inherit;
       cursor: pointer; outline: none; font-weight: 500;
       transition: border-color .18s;
     }
-    .fokus-unit-select:focus { border-color: #38bdf8; }
+    .fokus-unit-select:focus { border-color: #2563eb; }
     
     .nav-tabs-custom {
       display: flex; align-items: center; gap: 6px; flex-wrap: nowrap;
     }
     .nav-tab {
-      padding: 7px 16px; font-size: 12.5px; font-weight: 500; color: #94a3b8;
+      padding: 7px 16px; font-size: 12.5px; font-weight: 500; color: var(--text2);
       border-radius: 20px; cursor: pointer; white-space: nowrap;
       transition: all .18s; display: flex; align-items: center; gap: 7px;
-      user-select: none; border: none; background: transparent;
+      user-select: none; border: 1px solid transparent; background: transparent;
     }
-    .nav-tab:hover { color: #f8fafc; background: rgba(255,255,255,.06); }
+    .nav-tab:hover { color: var(--text1); background: #f1f5f9; }
     .nav-tab.active {
       color: #ffffff; background: #2563eb; font-weight: 600;
-      box-shadow: 0 2px 8px rgba(37,99,235,.35);
+      box-shadow: 0 2px 8px rgba(37,99,235,.25);
+      border-color: #2563eb;
     }
     .nav-tab i { font-size: 12px; }
 
@@ -917,7 +919,6 @@ loadFromGAS();
         <option value="selesai">Selesai</option>
         <option value="belum">Belum Selesai</option>
         <option value="overdue">⚠️ Melewati Deadline</option>
-        <option value="planned">Dalam Perencanaan</option>
       </select>
       <button class="filter-reset" onclick="resetFilters()"><i class="fa-solid fa-rotate-left"></i> Reset</button>
     </div>
@@ -1140,7 +1141,6 @@ loadFromGAS();
         <option value="selesai">Selesai</option>
         <option value="belum">Belum Selesai</option>
         <option value="overdue">⚠️ Melewati Deadline</option>
-        <option value="planned">Dalam Perencanaan</option>
       </select>
       <select id="r-year" onchange="renderTable()">
         <option value="">Semua Tahun</option>
@@ -1409,7 +1409,9 @@ function getStatus(d){
   const k = (d.ket||"").toLowerCase().trim();
   if(k.startsWith("selesai")) return "selesai";
   if(k.includes("belum selesai") || k.startsWith("belum")) return "belum";
-  return "planned";
+  // 2025 records with published channel links count as selesai
+  if(d.tahun === "2025" && getChannelCount(d) > 0 && !k.includes("belum")) return "selesai";
+  return "belum";
 }
 
 function getMonthNum(j){ if(!j) return 13; for(let i=0;i<MONTH_ORDER.length;i++){ if(j.toLowerCase().includes(MONTH_ORDER[i].toLowerCase())) return i; } return 13; }
@@ -1420,8 +1422,7 @@ function getChannelCount(d){ return CHANNEL_DEFS.filter(c=>hasLink(d[c.field])).
 
 function statusBadge(st){
   if(st==="selesai") return `<span class="badge badge-green"><i class="fa-solid fa-check" style="font-size:9px"></i> Selesai</span>`;
-  if(st==="belum")   return `<span class="badge badge-red"><i class="fa-solid fa-clock" style="font-size:9px"></i> Belum Selesai</span>`;
-  return `<span class="badge badge-gray"><i class="fa-solid fa-hourglass" style="font-size:9px"></i> Perencanaan</span>`;
+  return `<span class="badge badge-red"><i class="fa-solid fa-clock" style="font-size:9px"></i> Belum Selesai</span>`;
 }
 
 function svgIcon(id){ return `<svg><use href="#${id}"/></svg>`; }
@@ -1627,14 +1628,13 @@ function renderCharts(){
   destroyChart('status');
   const selesai=data.filter(d=>getStatus(d)==='selesai').length;
   const belum=data.filter(d=>getStatus(d)==='belum').length;
-  const planned=data.filter(d=>getStatus(d)==='planned').length;
-  const statusColors=['#22c55e','#ef4444','#cbd5e1'];
+  const statusColors=['#22c55e','#ef4444'];
   charts['status']=new Chart(document.getElementById('chart-status-donut'),{
     type:'doughnut',
-    data:{labels:['Selesai','Belum Selesai','Perencanaan'],datasets:[{data:[selesai,belum,planned],backgroundColor:statusColors,borderWidth:2,borderColor:'#fff',hoverOffset:5}]},
+    data:{labels:['Selesai','Belum Selesai'],datasets:[{data:[selesai,belum],backgroundColor:statusColors,borderWidth:2,borderColor:'#fff',hoverOffset:5}]},
     options:{cutout:'72%',maintainAspectRatio:false,plugins:{legend:{display:false},datalabels:{display:false},tooltip:CHART_TOOLTIP}}
   });
-  document.getElementById('donut-legend').innerHTML=[['Selesai',selesai,'#22c55e'],['Belum Selesai',belum,'#ef4444'],['Perencanaan',planned,'#cbd5e1']].map(([l,v,c])=>
+  document.getElementById('donut-legend').innerHTML=[['Selesai',selesai,'#22c55e'],['Belum Selesai',belum,'#ef4444']].map(([l,v,c])=>
     `<div class="donut-legend-item"><div class="donut-legend-dot" style="background:${c}"></div><div class="donut-legend-label">${l}</div><div class="donut-legend-value">${v}</div><div class="donut-legend-pct">${data.length?Math.round(v/data.length*100):0}%</div></div>`
   ).join('');
 
@@ -1642,16 +1642,15 @@ function renderCharts(){
   destroyChart('monthly');
   const data2026=data.filter(d=>d.tahun==='2026'&&d.jadwal);
   const monthCounts={};
-  MONTH_ORDER.forEach(m=>monthCounts[m]={selesai:0,belum:0,planned:0});
+  MONTH_ORDER.forEach(m=>monthCounts[m]={selesai:0,belum:0});
   data2026.forEach(d=>{ const m=MONTH_ORDER.find(mo=>d.jadwal.toLowerCase().includes(mo.toLowerCase())); if(m) monthCounts[m][getStatus(d)]++; });
   charts['monthly']=new Chart(document.getElementById('chart-monthly'),{
     type:'bar',
     data:{
       labels:MONTH_ORDER.map(m=>m.slice(0,3)),
       datasets:[
-        {label:'Selesai',  data:MONTH_ORDER.map(m=>monthCounts[m].selesai), backgroundColor:'rgba(34,197,94,.75)', borderRadius:3,borderSkipped:false},
-        {label:'Belum',    data:MONTH_ORDER.map(m=>monthCounts[m].belum),   backgroundColor:'rgba(239,68,68,.75)', borderRadius:3,borderSkipped:false},
-        {label:'Rencana',  data:MONTH_ORDER.map(m=>monthCounts[m].planned), backgroundColor:'rgba(148,163,184,.5)', borderRadius:3,borderSkipped:false},
+        {label:'Selesai',       data:MONTH_ORDER.map(m=>monthCounts[m].selesai), backgroundColor:'rgba(34,197,94,.85)', borderRadius:3,borderSkipped:false},
+        {label:'Belum Selesai', data:MONTH_ORDER.map(m=>monthCounts[m].belum),   backgroundColor:'rgba(239,68,68,.85)', borderRadius:3,borderSkipped:false},
       ]
     },
     options:{...baseOpts(),scales:{x:{stacked:true,ticks:{color:TICK_COLOR,font:TICK_FONT},grid:{color:CHART_GRID}},y:{stacked:true,beginAtZero:true,ticks:{color:TICK_COLOR,font:TICK_FONT,stepSize:1},grid:{color:CHART_GRID}}},plugins:{legend:{display:true,position:'top',labels:LEGEND_LABEL},datalabels:{display:false},tooltip:CHART_TOOLTIP}}
@@ -1867,7 +1866,7 @@ function renderCumulativeChart(data){
    ══════════════════════════════════════════════════════════ */
 function renderUnitsPage(data){
   const allUnits=[...new Set(RAW.flatMap(d=>getAllUnits(d.unit)))].sort();
-  const uStats=allUnits.map(u=>{ const ud=data.filter(d=>d.unit.includes(u)); return {unit:u,total:ud.length,selesai:ud.filter(d=>getStatus(d)==='selesai').length,belum:ud.filter(d=>getStatus(d)==='belum').length,planned:ud.filter(d=>getStatus(d)==='planned').length}; }).filter(u=>u.total>0).sort((a,b)=>b.total-a.total);
+  const uStats=allUnits.map(u=>{ const ud=data.filter(d=>d.unit.includes(u)); return {unit:u,total:ud.length,selesai:ud.filter(d=>getStatus(d)==='selesai').length,belum:ud.filter(d=>getStatus(d)==='belum').length}; }).filter(u=>u.total>0).sort((a,b)=>b.total-a.total);
 
   document.getElementById('unit-completion-list').innerHTML=uStats.map(u=>{ const pct=u.total?Math.round(u.selesai/u.total*100):0; const uc=UNIT_COLORS[u.unit]||UNIT_COLORS['MULTI'];
     return `<div class="progress-item">

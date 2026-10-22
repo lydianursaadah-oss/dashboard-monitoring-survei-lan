@@ -367,7 +367,6 @@
               <option value="">Semua Status</option>
               <option value="selesai">Selesai</option>
               <option value="belum">Belum Selesai</option>
-              <option value="planned">Perencanaan</option>
             </select>
             <select id="s-year" onchange="renderDataTable()">
               <option value="">Semua Tahun</option>
@@ -507,9 +506,8 @@
                 <div class="form-group">
                   <label>Status Publikasi</label>
                   <select class="form-control" id="f-status">
-                    <option value="planned">Dalam Perencanaan</option>
-                    <option value="selesai">Selesai</option>
                     <option value="belum">Belum Selesai</option>
+                    <option value="selesai">Selesai</option>
                   </select>
                 </div>
 
@@ -780,12 +778,12 @@ function getStatus(d){
   const k=(d.ket||'').toLowerCase().trim();
   if(k.startsWith('selesai')) return 'selesai';
   if(k.includes('belum selesai')||k.startsWith('belum')) return 'belum';
-  return 'planned';
+  if(d.tahun==='2025' && chCount(d)>0 && !k.includes('belum')) return 'selesai';
+  return 'belum';
 }
 function statusBadge(s){
   if(s==='selesai') return '<span class="badge badge-green">✓ Selesai</span>';
-  if(s==='belum')   return '<span class="badge badge-red">⏱ Belum</span>';
-  return '<span class="badge badge-gray">— Rencana</span>';
+  return '<span class="badge badge-red">⏱ Belum Selesai</span>';
 }
 function chBadge(n){ return n===0?`<span style="color:#dc2626;font-weight:700">${n}</span>`:n<3?`<span style="color:#d97706;font-weight:700">${n}</span>`:`<span style="color:#16a34a;font-weight:700">${n}</span>`; }
 function nextNo(){ return DB.length ? Math.max(...DB.map(d=>d.no))+1 : 1; }
@@ -817,12 +815,10 @@ function clearLog(){ localStorage.removeItem(LS_LOG); renderLog(); showToast('Lo
 function renderStats(){
   const s=DB.filter(d=>getStatus(d)==='selesai').length;
   const b=DB.filter(d=>getStatus(d)==='belum').length;
-  const p=DB.filter(d=>getStatus(d)==='planned').length;
   document.getElementById('stat-row').innerHTML=`
     <div class="stat-card" style="--c:#2563eb"><div class="stat-val">${DB.length}</div><div class="stat-label">Total Publikasi</div></div>
     <div class="stat-card" style="--c:#16a34a"><div class="stat-val">${s}</div><div class="stat-label">Selesai</div></div>
     <div class="stat-card" style="--c:#dc2626"><div class="stat-val">${b}</div><div class="stat-label">Belum Selesai</div></div>
-    <div class="stat-card" style="--c:#94a3b8"><div class="stat-val">${p}</div><div class="stat-label">Perencanaan</div></div>
   `;
 }
 
@@ -884,11 +880,10 @@ function buildKet(status, ket){
 }
 function parseKetStatus(ket){
   const k=(ket||'').trim();
-  if(!k) return {status:'planned',ketRest:''};
+  if(!k) return {status:'belum',ketRest:''};
   const lines=k.split('\n'); const first=lines[0].toLowerCase();
   if(first.startsWith('selesai')&&!first.includes('belum')) return {status:'selesai', ketRest:lines.slice(1).join('\n').trim()};
-  if(first.includes('belum selesai')||first.startsWith('belum')) return {status:'belum', ketRest:lines.slice(1).join('\n').trim()};
-  return {status:'planned', ketRest:k};
+  return {status:'belum', ketRest:k};
 }
 
 /* ══ ADD / EDIT ══ */
@@ -904,7 +899,7 @@ function resetForm(){
   document.getElementById('f-id').value='';
   document.getElementById('form-title').innerHTML='<i class="fa-solid fa-plus-circle" style="color:var(--accent);margin-right:8px"></i>Tambah Publikasi';
   ['f-unit','f-jenis','f-judul','f-cluster','f-tahun','f-bulan','f-minggu','f-jurnal','f-media','f-webLAN','f-webUnit','f-igLAN','f-igUnit','f-ytLAN','f-ytUnit','f-ket'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
-  document.getElementById('f-status').value='planned';
+  document.getElementById('f-status').value='belum';
 }
 
 function editRecord(no){
