@@ -60,60 +60,90 @@
 
     /* ═══════════════════ HEADER ═══════════════════ */
     header {
-      background: #ffffff;
-      border-bottom: 1px solid var(--border);
-      padding: 0 28px;
+      background: #0f172a;
+      border-bottom: 1px solid #1e293b;
       position: sticky; top: 0; z-index: 100;
-      box-shadow: 0 1px 4px rgba(15,23,42,.06);
+      box-shadow: 0 4px 20px rgba(0,0,0,.15);
     }
     .header-inner {
       display: flex; align-items: center; justify-content: space-between;
-      max-width: 1600px; margin: 0 auto; height: 64px;
+      max-width: 1600px; margin: 0 auto; height: 68px; padding: 0 28px;
     }
     .logo-group { display: flex; align-items: center; gap: 14px; }
     .logo-badge {
-      height: 48px;
+      height: 42px;
       width: auto;
       object-fit: contain;
       flex-shrink: 0;
       display: block;
+      cursor: pointer;
     }
-    .logo-title { font-size: 15px; font-weight: 700; color: var(--text1); }
-    .logo-sub { font-size: 11px; color: var(--text3); }
-    .header-right { display: flex; align-items: center; gap: 16px; }
-    .live-badge {
-      display: flex; align-items: center; gap: 6px;
-      font-size: 11px; color: var(--success); font-weight: 600;
-      background: var(--success-bg); border: 1px solid #bbf7d0;
-      padding: 4px 10px; border-radius: 20px;
+    .logo-title-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .logo-title { font-size: 16px; font-weight: 800; color: #f8fafc; letter-spacing: -.2px; }
+    .badge-ta {
+      background: #d97706; color: #ffffff;
+      font-size: 10px; font-weight: 700; padding: 2px 8px;
+      border-radius: 20px; letter-spacing: .5px; display: inline-block;
     }
-    .live-dot {
-      width: 7px; height: 7px; border-radius: 50%; background: var(--success);
-      animation: pulse 2s infinite;
+    .logo-sub { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+    .header-right { display: flex; align-items: center; gap: 10px; }
+    
+    /* Top action buttons */
+    .btn-refresh {
+      background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.16);
+      color: #f8fafc; width: 34px; height: 34px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; font-size: 13px; transition: all .2s; outline: none;
     }
-    @keyframes pulse {
-      0%,100% { opacity:1; box-shadow:0 0 0 0 rgba(22,163,74,.35); }
-      50%      { opacity:.8; box-shadow:0 0 0 5px rgba(22,163,74,0); }
+    .btn-refresh:hover { background: rgba(255,255,255,.16); color: #38bdf8; }
+    .btn-add-agenda {
+      background: #2563eb; border: none; color: #ffffff;
+      padding: 7px 16px; border-radius: 8px; font-size: 13px; font-weight: 600;
+      cursor: pointer; display: flex; align-items: center; gap: 7px;
+      transition: all .18s; font-family: inherit;
     }
-    .header-date { font-size: 12px; color: var(--text3); }
+    .btn-add-agenda:hover { background: #1d4ed8; }
 
-    /* ═══════════════════ NAV TABS ═══════════════════ */
-    .nav-tabs {
-      background: #fff;
+    /* ═══════════════════ SUBNAV TOOLBAR ═══════════════════ */
+    .subnav-bar {
+      background: #0f172a;
+      border-top: 1px solid rgba(255,255,255,.07);
       border-bottom: 1px solid var(--border);
-      padding: 0 28px;
+      padding: 6px 28px;
     }
-    .nav-tabs-inner {
-      display: flex; max-width: 1600px; margin: 0 auto;
+    .subnav-inner {
+      display: flex; align-items: center; justify-content: space-between;
+      max-width: 1600px; margin: 0 auto; gap: 14px; flex-wrap: wrap;
+    }
+    .fokus-unit-group {
+      display: flex; align-items: center; gap: 9px;
+    }
+    .fokus-unit-label {
+      color: #fbbf24; font-size: 12px; font-weight: 700;
+      display: flex; align-items: center; gap: 6px; white-space: nowrap;
+    }
+    .fokus-unit-select {
+      background: #1e293b; border: 1px solid #334155; color: #f8fafc;
+      padding: 6px 14px; border-radius: 20px; font-size: 12px; font-family: inherit;
+      cursor: pointer; outline: none; font-weight: 500;
+      transition: border-color .18s;
+    }
+    .fokus-unit-select:focus { border-color: #38bdf8; }
+    
+    .nav-tabs-custom {
+      display: flex; align-items: center; gap: 6px; flex-wrap: nowrap;
     }
     .nav-tab {
-      padding: 13px 18px; font-size: 13px; font-weight: 500; color: var(--text2);
-      border-bottom: 2px solid transparent; cursor: pointer; white-space: nowrap;
+      padding: 7px 16px; font-size: 12.5px; font-weight: 500; color: #94a3b8;
+      border-radius: 20px; cursor: pointer; white-space: nowrap;
       transition: all .18s; display: flex; align-items: center; gap: 7px;
-      user-select: none;
+      user-select: none; border: none; background: transparent;
     }
-    .nav-tab:hover { color: var(--text1); }
-    .nav-tab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+    .nav-tab:hover { color: #f8fafc; background: rgba(255,255,255,.06); }
+    .nav-tab.active {
+      color: #ffffff; background: #2563eb; font-weight: 600;
+      box-shadow: 0 2px 8px rgba(37,99,235,.35);
+    }
     .nav-tab i { font-size: 12px; }
 
     /* ═══════════════════ MAIN ═══════════════════ */
@@ -146,11 +176,11 @@
     }
     .filter-reset:hover { color: var(--text1); border-color: var(--accent); background: var(--accent-bg); }
 
-    /* ═══════════════════ KPI CARDS ═══════════════════ */
+    /* ═══════════════════ KPI CARDS (4 CARDS ONLY) ═══════════════════ */
     .kpi-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
-      gap: 14px; margin-bottom: 20px;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px; margin-bottom: 20px;
     }
     .kpi-card {
       background: #fff; border: 1px solid var(--border);
@@ -351,6 +381,112 @@
     .heatmap-cell:hover { opacity: .7; }
     .heatmap-legend { display: flex; align-items: center; gap: 6px; margin-top: 10px; font-size: 10px; color: var(--text3); }
     .heatmap-legend-cell { width: 12px; height: 12px; border-radius: 2px; }
+
+    /* ═══════════════════ ROADMAP ═══════════════════ */
+    .roadmap-wrapper {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 24px;
+    }
+    .roadmap-header {
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 14px; margin-bottom: 22px;
+      padding-bottom: 16px; border-bottom: 1px solid var(--border);
+    }
+    .roadmap-heading { font-size: 18px; font-weight: 800; color: #0f172a; letter-spacing: -.3px; }
+    .roadmap-subheading { font-size: 12px; color: #64748b; margin-top: 3px; }
+    .roadmap-legend {
+      display: flex; align-items: center; gap: 16px;
+      font-size: 11px; font-weight: 600; color: #475569; flex-wrap: wrap;
+    }
+    .legend-item { display: inline-flex; align-items: center; gap: 6px; }
+    .dot-selesai { width: 9px; height: 9px; border-radius: 50%; background: #22c55e; display: inline-block; }
+    .dot-proses  { width: 9px; height: 9px; border-radius: 50%; background: #f59e0b; display: inline-block; }
+    .dot-belum   { width: 9px; height: 9px; border-radius: 50%; background: #94a3b8; display: inline-block; }
+    .dot-overdue { width: 9px; height: 9px; border-radius: 50%; background: #ef4444; display: inline-block; }
+
+    .roadmap-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+    }
+    .roadmap-month-card {
+      border-radius: 12px; overflow: hidden;
+      border: 1px solid var(--border);
+      background: #ffffff;
+      display: flex; flex-direction: column;
+      box-shadow: 0 1px 4px rgba(15,23,42,.05);
+    }
+    .roadmap-month-header {
+      background: #1e293b; color: #fff;
+      padding: 12px 16px; display: flex; align-items: center; justify-content: space-between;
+    }
+    .roadmap-month-title { font-size: 13.5px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+    .roadmap-month-count {
+      background: rgba(255,255,255,.15); color: #fff; border-radius: 20px;
+      padding: 2px 10px; font-size: 11px; font-weight: 600;
+    }
+    .roadmap-month-body { background: #f8fafc; padding: 12px; display: flex; flex-direction: column; gap: 10px; flex: 1; }
+    .roadmap-pub-card {
+      border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px 14px;
+      background: #ffffff; cursor: pointer; transition: all .18s;
+      position: relative;
+    }
+    .roadmap-pub-card:hover {
+      border-color: #2563eb;
+      box-shadow: 0 4px 14px rgba(37,99,235,.12);
+      transform: translateY(-1px);
+    }
+    .roadmap-pub-card.overdue {
+      border-left: 3.5px solid #ef4444 !important;
+      background: #fffcfc;
+    }
+    .roadmap-pub-top { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
+    .roadmap-unit-badge {
+      font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 14px;
+      text-transform: uppercase; letter-spacing: .3px;
+    }
+    .roadmap-status-badge {
+      font-size: 10px; font-weight: 700; padding: 2px 9px; border-radius: 20px; white-space: nowrap;
+    }
+    .rsb-selesai { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+    .rsb-proses  { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
+    .rsb-data    { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+    .rsb-belum   { background: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; }
+    .rsb-overdue { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+    
+    .roadmap-pub-title {
+      font-size: 12.5px; font-weight: 600; color: #0f172a; line-height: 1.45;
+      margin-bottom: 8px;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .roadmap-pub-footer { display: flex; align-items: center; justify-content: space-between; font-size: 11px; margin-top: 4px; }
+    .roadmap-week-info { font-size: 11px; color: #b45309; font-weight: 500; display: flex; align-items: center; gap: 5px; }
+    .roadmap-update-btn { font-size: 11.5px; font-weight: 600; color: #2563eb; cursor: pointer; display: flex; align-items: center; gap: 3px; }
+    .roadmap-update-btn:hover { text-decoration: underline; color: #1d4ed8; }
+    .badge-overdue-tag {
+      font-size: 9.5px; font-weight: 700; color: #b91c1c; background: #fee2e2;
+      border: 1px solid #fca5a5; border-radius: 4px; padding: 2px 6px;
+      display: inline-flex; align-items: center; gap: 3px;
+    }
+    .roadmap-links { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 6px; }
+    .roadmap-link-chip {
+      font-size: 9.5px; font-weight: 600; padding: 2px 7px; border-radius: 10px;
+      background: #dbeafe; color: #1d4ed8; border: 1px solid #bfdbfe; text-decoration: none;
+    }
+    @media(max-width:768px){
+      .roadmap-grid { grid-template-columns: 1fr !important; }
+      .kpi-grid { grid-template-columns: repeat(2, 1fr) !important; }
+      .subnav-inner { flex-direction: column; align-items: flex-start; }
+      .nav-tabs-custom { width: 100%; overflow-x: auto; padding-bottom: 4px; }
+    }
+    @media(min-width:769px) and (max-width:1100px){
+      .roadmap-grid { grid-template-columns: 1fr 1fr !important; }
+      .kpi-grid { grid-template-columns: repeat(2, 1fr) !important; }
+    }
 
     /* ═══════════════════ MODAL ═══════════════════ */
     .modal-overlay {
@@ -553,25 +689,51 @@
 </head>
 <body>
 
-<!-- ══════════════════════════ HEADER ══════════════════════════ -->
+<!-- ══════════════════════════ HEADER & TOOLBAR ══════════════════════════ -->
 <header>
   <div class="header-inner">
     <div class="logo-group">
-      <img src="logo-lan.png" alt="Logo LAN RI" class="logo-badge" />
+      <img src="favicon.png" alt="Logo LAN RI" class="logo-badge" title="Klik 5x untuk akses Admin" />
       <div>
-        <div class="logo-title">Monitoring Publikasi Survei LAN RI</div>
-        <div class="logo-sub">Lembaga Administrasi Negara · Sistem Monitoring Publikasi</div>
+        <div class="logo-title-row">
+          <span class="logo-title">Monitoring Survei LAN RI</span>
+          <span class="badge-ta">TA 2026</span>
+        </div>
+        <div class="logo-sub">Pusat Rekapitulasi & Diseminasi Publikasi Survei Strategis</div>
       </div>
     </div>
     <div class="header-right">
-      <div class="live-badge"><div class="live-dot"></div> Live</div>
-      <div class="header-date" id="header-date"></div>
       <!-- Google Sheets Sync Badge -->
       <div class="gs-badge disconnected" id="gs-badge" onclick="openGasModal()" title="Pengaturan Sinkronisasi Google Sheets">
         <div class="gs-dot"></div>
-        <span class="gs-label" id="gs-label">Google Sheet</span>
-        <i class="fa-solid fa-gear" style="font-size:10px;opacity:.7"></i>
+        <span class="gs-label" id="gs-label">Terhubung Google Sheet</span>
+        <i class="fa-solid fa-gear" style="font-size:11px;opacity:.8;margin-left:3px"></i>
       </div>
+      <!-- Refresh Button -->
+      <button class="btn-refresh" onclick="syncDataFromGAS()" title="Sinkronkan data dari Google Sheet">
+        <i class="fa-solid fa-rotate" id="refresh-icon"></i>
+      </button>
+      <!-- Tambah Agenda Button -->
+      <button class="btn-add-agenda" onclick="openAddAgendaModal()">
+        <i class="fa-solid fa-circle-plus"></i> Tambah Agenda
+      </button>
+    </div>
+  </div>
+
+  <!-- Subnav Toolbar: Fokus Unit & Navigation Tabs -->
+  <div class="subnav-bar">
+    <div class="subnav-inner">
+      <div class="fokus-unit-group">
+        <span class="fokus-unit-label"><i class="fa-solid fa-sliders"></i> Fokus Unit:</span>
+        <select id="nav-unit-select" class="fokus-unit-select" onchange="syncNavUnit(this.value)">
+          <option value="">Semua Unit Kerja (56)</option>
+        </select>
+      </div>
+      <nav class="nav-tabs-custom">
+        <div class="nav-tab" data-tab="overview"><i class="fa-regular fa-clock"></i> Ringkasan & Analisis</div>
+        <div class="nav-tab active" data-tab="timeline"><i class="fa-regular fa-calendar"></i> Jadwal Rilis 2026</div>
+        <div class="nav-tab" data-tab="records"><i class="fa-solid fa-sliders"></i> Data & Update Progress</div>
+      </nav>
     </div>
   </div>
 </header>
@@ -732,23 +894,11 @@ loadFromGAS();
 })();
 </script>
 
-<!-- ══════════════════════════ NAV TABS ══════════════════════════ -->
-<nav class="nav-tabs">
-  <div class="nav-tabs-inner">
-    <div class="nav-tab active" data-tab="overview"><i class="fa-solid fa-chart-pie"></i> Overview</div>
-    <div class="nav-tab" data-tab="timeline"><i class="fa-solid fa-calendar-days"></i> Timeline & Jadwal</div>
-    <div class="nav-tab" data-tab="units"><i class="fa-solid fa-sitemap"></i> Unit & Cluster</div>
-    <div class="nav-tab" data-tab="channels"><i class="fa-solid fa-satellite-dish"></i> Channel Publikasi</div>
-    <div class="nav-tab" data-tab="alerts"><i class="fa-solid fa-triangle-exclamation"></i> Risiko & Flags</div>
-    <div class="nav-tab" data-tab="records"><i class="fa-solid fa-table"></i> Data Records</div>
-  </div>
-</nav>
-
 <!-- ══════════════════════════ MAIN ══════════════════════════ -->
 <div class="main">
 
-  <!-- ═══════════════════ PAGE: OVERVIEW ═══════════════════ -->
-  <div class="page active" id="page-overview">
+  <!-- ═══════════════════ PAGE: OVERVIEW (RINGKASAN & ANALISIS) ═══════════════════ -->
+  <div class="page" id="page-overview">
 
     <div class="filter-bar">
       <label><i class="fa-solid fa-sliders" style="margin-right:5px;color:var(--accent)"></i>Filter:</label>
@@ -766,6 +916,7 @@ loadFromGAS();
         <option value="">Semua Status</option>
         <option value="selesai">Selesai</option>
         <option value="belum">Belum Selesai</option>
+        <option value="overdue">⚠️ Melewati Deadline</option>
         <option value="planned">Dalam Perencanaan</option>
       </select>
       <button class="filter-reset" onclick="resetFilters()"><i class="fa-solid fa-rotate-left"></i> Reset</button>
@@ -844,26 +995,27 @@ loadFromGAS();
     </div>
   </div>
 
-  <!-- ═══════════════════ PAGE: TIMELINE ═══════════════════ -->
-  <div class="page" id="page-timeline">
-    <div class="grid-1-2">
-      <div class="card">
-        <div class="card-header">
-          <span class="card-title"><i class="fa-solid fa-chart-gantt"></i> Ringkasan Mingguan</span>
+  <!-- ═══════════════════ PAGE: TIMELINE (ROADMAP) ═══════════════════ -->
+  <div class="page active" id="page-timeline">
+    <div class="roadmap-wrapper">
+      <!-- Roadmap header -->
+      <div class="roadmap-header">
+        <div>
+          <h2 class="roadmap-heading">Roadmap Publikasi Survei 2026</h2>
+          <div class="roadmap-subheading">Jadwal target rilis per bulan dan minggu (1-4)</div>
         </div>
-        <div class="card-body">
-          <div class="chart-wrap" style="height:380px"><canvas id="chart-weekly"></canvas></div>
+        <div class="roadmap-legend">
+          <span class="legend-item"><span class="legend-dot dot-selesai"></span> Selesai Publikasi</span>
+          <span class="legend-item"><span class="legend-dot dot-proses"></span> Dalam Proses</span>
+          <span class="legend-item"><span class="legend-dot dot-belum"></span> Belum Dimulai</span>
+          <span class="legend-item"><span class="legend-dot dot-overdue"></span> Melewati Deadline</span>
         </div>
       </div>
-      <div class="card" style="overflow:auto;max-height:500px">
-        <div class="card-header">
-          <span class="card-title"><i class="fa-solid fa-calendar-check"></i> Timeline Jadwal Publikasi</span>
-          <span class="card-badge" id="timeline-count">—</span>
-        </div>
-        <div class="card-body" id="timeline-list"></div>
-      </div>
+      <!-- Roadmap grid -->
+      <div id="roadmap-grid" class="roadmap-grid"></div>
     </div>
-    <div class="card">
+    <!-- Cumulative chart below -->
+    <div class="card" style="margin-top:20px">
       <div class="card-header">
         <span class="card-title"><i class="fa-solid fa-chart-line"></i> Tren Kumulatif Selesai vs Belum Selesai per Bulan</span>
       </div>
@@ -987,6 +1139,7 @@ loadFromGAS();
         <option value="">Semua Status</option>
         <option value="selesai">Selesai</option>
         <option value="belum">Belum Selesai</option>
+        <option value="overdue">⚠️ Melewati Deadline</option>
         <option value="planned">Dalam Perencanaan</option>
       </select>
       <select id="r-year" onchange="renderTable()">
@@ -1022,10 +1175,11 @@ loadFromGAS();
 
 </div><!-- .main -->
 
-<!-- ═══════════════════ MODAL ═══════════════════ -->
+<!-- ═══════════════════ MODAL DETAIL ═══════════════════ -->
 <div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
   <div class="modal" id="modal-content">
     <div class="modal-close" onclick="closeModal()"><i class="fa-solid fa-xmark"></i></div>
+    <div id="modal-overdue-alert" style="display:none"></div>
     <h2 id="modal-title"></h2>
     <div class="modal-meta" id="modal-meta"></div>
     <div class="modal-section">
@@ -1036,6 +1190,71 @@ loadFromGAS();
       <h4><i class="fa-solid fa-file-lines"></i> Keterangan</h4>
       <div class="modal-keterangan" id="modal-ket"></div>
     </div>
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+      <a href="admin.html" class="roadmap-update-btn" style="font-size:12px"><i class="fa-solid fa-pen-to-square"></i> Buka Editor Admin Panel &rarr;</a>
+      <button onclick="closeModal()" style="padding:7px 16px;border-radius:8px;background:var(--bg3);border:1px solid var(--border);color:var(--text2);font-size:12px;cursor:pointer">Tutup</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ MODAL: TAMBAH AGENDA ═══════════════════ -->
+<div class="modal-overlay" id="add-agenda-modal" onclick="if(event.target===this)closeAddAgendaModal()">
+  <div class="modal" style="max-width:580px">
+    <div class="modal-close" onclick="closeAddAgendaModal()"><i class="fa-solid fa-xmark"></i></div>
+    <h2 style="display:flex;align-items:center;gap:8px;font-size:16px;font-weight:800;color:var(--text1)">
+      <i class="fa-solid fa-calendar-plus" style="color:var(--accent)"></i> Tambah Agenda Publikasi
+    </h2>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:18px">Tambahkan target publikasi survei/riset baru ke dalam sistem</div>
+    <form id="add-agenda-form" onsubmit="saveNewAgenda(event)">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+        <div>
+          <label style="font-size:11px;font-weight:600;color:var(--text2);display:block;margin-bottom:5px">Unit Kerja *</label>
+          <select id="new-unit" required style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--border);font-family:inherit;font-size:12px">
+            <option value="">Pilih Unit...</option>
+            <option value="SKPP">SKPP</option>
+            <option value="DAPKK">DAPKK</option>
+            <option value="SKMP">SKMP</option>
+            <option value="SKTAN">SKTAN</option>
+            <option value="STIA BDG">STIA BDG</option>
+            <option value="STIA JKT">STIA JKT</option>
+            <option value="STIA MKS">STIA MKS</option>
+            <option value="DSPK2AN">DSPK2AN</option>
+            <option value="SKMK">SKMK</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:600;color:var(--text2);display:block;margin-bottom:5px">Tahun *</label>
+          <input type="number" id="new-tahun" value="2026" required style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--border);font-family:inherit;font-size:12px"/>
+        </div>
+      </div>
+      <div style="margin-bottom:12px">
+        <label style="font-size:11px;font-weight:600;color:var(--text2);display:block;margin-bottom:5px">Judul Publikasi / Survei *</label>
+        <textarea id="new-judul" required rows="2" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--border);font-family:inherit;font-size:12px;resize:vertical" placeholder="Masukkan judul lengkap survei..."></textarea>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+        <div>
+          <label style="font-size:11px;font-weight:600;color:var(--text2);display:block;margin-bottom:5px">Jadwal Publikasi</label>
+          <input type="text" id="new-jadwal" placeholder="Contoh: Mei (1) atau Juni (2)" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--border);font-family:inherit;font-size:12px"/>
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:600;color:var(--text2);display:block;margin-bottom:5px">Cluster Kebijakan</label>
+          <select id="new-cluster" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--border);font-family:inherit;font-size:12px">
+            <option value="Prioritas Presiden">Prioritas Presiden</option>
+            <option value="Tata Kelola & Manajemen ASN">Tata Kelola & Manajemen ASN</option>
+            <option value="Pelayanan Publik">Pelayanan Publik</option>
+            <option value="Digitalisasi">Digitalisasi</option>
+          </select>
+        </div>
+      </div>
+      <div style="margin-bottom:16px">
+        <label style="font-size:11px;font-weight:600;color:var(--text2);display:block;margin-bottom:5px">Keterangan / Status</label>
+        <input type="text" id="new-ket" placeholder="Contoh: Sedang pengumpulan data, Belum Selesai, dll." style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--border);font-family:inherit;font-size:12px"/>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:8px">
+        <button type="button" onclick="closeAddAgendaModal()" style="padding:8px 14px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);border-radius:8px;font-size:12px;cursor:pointer">Batal</button>
+        <button type="submit" style="padding:8px 18px;border:none;background:var(--accent);color:#fff;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer">Simpan Agenda</button>
+      </div>
+    </form>
   </div>
 </div>
 
@@ -1220,7 +1439,8 @@ function applyFilters(){
     if(year    && d.tahun!==year) return false;
     if(unit    && !d.unit.includes(unit)) return false;
     if(cluster && d.cluster!==cluster) return false;
-    if(status  && getStatus(d)!==status) return false;
+    if(status  && status==='overdue' && !isOverdue(d)) return false;
+    if(status  && status!=='overdue' && getStatus(d)!==status) return false;
     return true;
   });
   renderKPIs(); renderCharts();
@@ -1231,33 +1451,133 @@ function resetFilters(){
 }
 
 /* ══════════════════════════════════════════════════════════
-   DROPDOWNS
+   DROPDOWNS & NAV UNIT SYNC
    ══════════════════════════════════════════════════════════ */
 function populateDropdowns(){
   const units=[...new Set(RAW.flatMap(d=>getAllUnits(d.unit)))].sort();
   const clusters=[...new Set(RAW.map(d=>d.cluster).filter(Boolean))].sort();
-  ['f-unit','r-unit'].forEach(id=>{ const el=document.getElementById(id); if(!el) return; units.forEach(u=>{ const o=document.createElement('option'); o.value=u; o.textContent=u; el.appendChild(o); }); });
-  ['f-cluster','r-cluster'].forEach(id=>{ const el=document.getElementById(id); if(!el) return; clusters.forEach(c=>{ const o=document.createElement('option'); o.value=c; o.textContent=c; el.appendChild(o); }); });
+  ['f-unit','r-unit'].forEach(id=>{ const el=document.getElementById(id); if(!el) return; el.innerHTML = '<option value="">Semua Unit</option>'; units.forEach(u=>{ const o=document.createElement('option'); o.value=u; o.textContent=u; el.appendChild(o); }); });
+  ['f-cluster','r-cluster'].forEach(id=>{ const el=document.getElementById(id); if(!el) return; el.innerHTML = '<option value="">Semua Cluster</option>'; clusters.forEach(c=>{ const o=document.createElement('option'); o.value=c; o.textContent=c; el.appendChild(o); }); });
+
+  // Populate top navbar unit select
+  const navUnit = document.getElementById('nav-unit-select');
+  if(navUnit){
+    navUnit.innerHTML = `<option value="">Semua Unit Kerja (${RAW.length})</option>`;
+    units.forEach(u=>{
+      const cnt = RAW.filter(d => d.unit.includes(u)).length;
+      const opt = document.createElement('option');
+      opt.value = u;
+      opt.textContent = `${u} (${cnt})`;
+      navUnit.appendChild(opt);
+    });
+  }
+}
+
+function syncNavUnit(val){
+  const fUnit = document.getElementById('f-unit');
+  if(fUnit) fUnit.value = val;
+  if(!val){
+    filteredData = [...RAW];
+  } else {
+    filteredData = RAW.filter(d => d.unit.includes(val));
+  }
+  renderKPIs();
+  renderCharts();
+  renderTable();
+}
+
+async function syncDataFromGAS(){
+  const icon = document.getElementById('refresh-icon');
+  if(icon) icon.classList.add('fa-spin');
+  await loadFromGAS();
+  if(icon) setTimeout(()=>icon.classList.remove('fa-spin'), 600);
+}
+
+function openAddAgendaModal(){
+  document.getElementById('add-agenda-modal').classList.add('open');
+}
+function closeAddAgendaModal(){
+  document.getElementById('add-agenda-modal').classList.remove('open');
+}
+function saveNewAgenda(e){
+  e.preventDefault();
+  const unit = document.getElementById('new-unit').value;
+  const tahun = document.getElementById('new-tahun').value || '2026';
+  const judul = document.getElementById('new-judul').value.trim();
+  const jadwal = document.getElementById('new-jadwal').value.trim();
+  const cluster = document.getElementById('new-cluster').value;
+  const ket = document.getElementById('new-ket').value.trim();
+
+  const newNo = RAW.length > 0 ? Math.max(...RAW.map(d=>d.no||0)) + 1 : 1;
+  const newItem = {
+    no: newNo,
+    unit: unit,
+    judul: judul,
+    jenis: 'Survei',
+    jadwal: jadwal,
+    tahun: tahun,
+    cluster: cluster,
+    jurnal: '', media: '', webLAN: '', webUnit: '', igLAN: '', igUnit: '', ytLAN: '', ytUnit: '',
+    ket: ket
+  };
+
+  RAW.push(newItem);
+  try {
+    localStorage.setItem('lan_pub_data', JSON.stringify(RAW));
+  } catch(err){ console.warn(err); }
+
+  filteredData = [...RAW];
+  populateDropdowns();
+  renderKPIs();
+  renderCharts();
+  renderTable();
+  closeAddAgendaModal();
+  document.getElementById('add-agenda-form').reset();
+  alert('Agenda baru berhasil ditambahkan!');
 }
 
 /* ══════════════════════════════════════════════════════════
-   KPI CARDS
+   OVERDUE DEADLINE CHECKER
+   ══════════════════════════════════════════════════════════ */
+function isOverdue(d){
+  if(getStatus(d)==='selesai') return false;
+  if(!d.jadwal) return false;
+  const now = new Date();
+  const curYear = Math.max(now.getFullYear(), 2026);
+  const curMonth = now.getFullYear() >= 2026 ? now.getMonth() : 9; // 0-indexed (Jan=0 .. Okt=9)
+  const curDay = now.getDate();
+  const curWeek = now.getFullYear() >= 2026 ? Math.min(4, Math.ceil(curDay / 7)) : 4;
+
+  const yr = parseInt(d.tahun) || 2026;
+  const mn = getMonthNum(d.jadwal); // 0-indexed (Jan=0 .. Okt=9 .. Des=11)
+  const wk = getWeekNum(d.jadwal) || 1;
+
+  if(mn > 11) return false;
+  if(yr < curYear) return true;
+  if(yr > curYear) return false;
+
+  // Same year:
+  if(mn < curMonth) return true;
+  if(mn === curMonth && wk < curWeek) return true;
+  return false;
+}
+
+/* ══════════════════════════════════════════════════════════
+   KPI CARDS (ONLY 4 CARDS: TOTAL, SELESAI, BELUM, UNIT 2026)
    ══════════════════════════════════════════════════════════ */
 function renderKPIs(){
   const data=filteredData, total=data.length;
   const selesai=data.filter(d=>getStatus(d)==='selesai').length;
   const belum=data.filter(d=>getStatus(d)==='belum').length;
-  const planned=data.filter(d=>getStatus(d)==='planned').length;
-  const noChannel=data.filter(d=>getChannelCount(d)===0).length;
   const pct=total?Math.round(selesai/total*100):0;
+  const pctBelum=total?Math.round(belum/total*100):0;
   const units2026=[...new Set(data.filter(d=>d.tahun==='2026').map(d=>getPrimaryUnit(d.unit)))].length;
+
   const kpis=[
-    {icon:'fa-file-lines', value:total,    label:'Total Publikasi',     sub:'Semua tahun & unit',        color:'#2563eb', ibg:'#eff6ff', delta:null},
-    {icon:'fa-circle-check',value:selesai, label:'Selesai',             sub:`${pct}% completion rate`,   color:'#16a34a', ibg:'#f0fdf4', delta:{cls:'delta-good',text:`${pct}%`}},
-    {icon:'fa-hourglass-half',value:belum, label:'Belum Selesai',       sub:'Memerlukan tindak lanjut',  color:'#dc2626', ibg:'#fef2f2', delta:{cls:'delta-bad',text:`${total?Math.round(belum/total*100):0}%`}},
-    {icon:'fa-calendar',   value:planned,  label:'Dalam Perencanaan',   sub:'Tanpa jadwal/keterangan',   color:'#64748b', ibg:'#f1f5f9', delta:null},
-    {icon:'fa-link-slash', value:noChannel,label:'Tanpa Channel',       sub:'Belum ada link publikasi',  color:'#d97706', ibg:'#fffbeb', delta:{cls:'delta-warn',text:`${total?Math.round(noChannel/total*100):0}%`}},
-    {icon:'fa-building',   value:units2026,label:'Unit Aktif 2026',     sub:'Unit dengan publikasi 2026',color:'#7c3aed', ibg:'#f5f3ff', delta:null},
+    {icon:'fa-file-lines',    value:total,     label:'Total Publikasi', sub:'Semua tahun & unit',         color:'#2563eb', ibg:'#eff6ff', delta:null},
+    {icon:'fa-circle-check',  value:selesai,   label:'Selesai',         sub:`${pct}% completion rate`,    color:'#16a34a', ibg:'#f0fdf4', delta:{cls:'delta-good',text:`${pct}%`}},
+    {icon:'fa-hourglass-half',value:belum,     label:'Belum Selesai',   sub:'Memerlukan tindak lanjut',   color:'#dc2626', ibg:'#fef2f2', delta:{cls:'delta-bad', text:`${pctBelum}%`}},
+    {icon:'fa-building',      value:units2026, label:'Unit Aktif 2026', sub:'Unit dengan publikasi 2026', color:'#7c3aed', ibg:'#f5f3ff', delta:null},
   ];
   document.getElementById('kpi-grid').innerHTML=kpis.map(k=>`
     <div class="kpi-card" style="--accent-color:${k.color}">
@@ -1437,26 +1757,82 @@ function renderHeatmap(data){
 }
 
 /* ══════════════════════════════════════════════════════════
-   TIMELINE
+   ROADMAP (JADWAL RILIS 2026)
    ══════════════════════════════════════════════════════════ */
-function renderTimeline(data){
-  const scheduled=data.filter(d=>d.jadwal).sort((a,b)=>{ const ma=getMonthNum(a.jadwal),mb=getMonthNum(b.jadwal); return ma!==mb?ma-mb:getWeekNum(a.jadwal)-getWeekNum(b.jadwal); });
-  document.getElementById('timeline-count').textContent=`${scheduled.length} item`;
+function renderTimeline(data){ renderRoadmap(data); } // alias kept for callers
+
+function renderRoadmap(data){
+  // Only 2026 scheduled items grouped by month
+  const scheduled=data.filter(d=>d.jadwal&&d.tahun==='2026')
+    .sort((a,b)=>{ const ma=getMonthNum(a.jadwal),mb=getMonthNum(b.jadwal); return ma!==mb?ma-mb:getWeekNum(a.jadwal)-getWeekNum(b.jadwal); });
+
   const byMonth={};
-  scheduled.forEach(d=>{ const m=MONTH_ORDER.find(mo=>d.jadwal.toLowerCase().includes(mo.toLowerCase()))||'Lainnya'; if(!byMonth[m]) byMonth[m]=[]; byMonth[m].push(d); });
-  document.getElementById('timeline-list').innerHTML=Object.entries(byMonth).map(([month,items])=>`
-    <div class="timeline-month">
-      <div class="timeline-month-header">${month}<span class="timeline-month-count">${items.length}</span></div>
-      <div class="timeline-items">
-        ${items.map(d=>{ const st=getStatus(d); const lc=st==='selesai'?'#22c55e':st==='belum'?'#ef4444':'#cbd5e1';
-          return `<div class="timeline-item" style="border-left-color:${lc}" onclick="openModal(${d.no-1})">
-            <div class="timeline-week">Mgg ${getWeekNum(d.jadwal)}</div>
-            <div class="timeline-unit">${getPrimaryUnit(d.unit)}</div>
-            <div class="timeline-title">${d.judul}</div>
-            ${statusBadge(st)}
-          </div>`; }).join('')}
+  MONTH_ORDER.forEach(m=>{ const found=scheduled.filter(d=>d.jadwal.toLowerCase().includes(m.toLowerCase())); if(found.length) byMonth[m]=found; });
+
+  function statusLabel(d){
+    const st=getStatus(d);
+    if(isOverdue(d)) return {cls:'rsb-overdue', text:'⚠️ Melewati Deadline'};
+    if(st==='selesai') return {cls:'rsb-selesai', text:'Selesai Publikasi'};
+    if(st==='belum'){
+      if((d.ket||'').toLowerCase().includes('pengumpulan data')) return {cls:'rsb-data', text:'Pengumpulan Data'};
+      return {cls:'rsb-proses', text:'Dalam Proses'};
+    }
+    return {cls:'rsb-belum', text:'Belum Dimulai'};
+  }
+
+  function renderLinks(d){
+    const links=[];
+    ['webLAN','webUnit','media','jurnal','igLAN','igUnit','ytLAN','ytUnit'].forEach(f=>{
+      if(hasLink(d[f])&&d[f]!=='-'){
+        const parts=d[f].split('|');
+        parts.forEach((p,i)=>{ if(p.trim()&&p.trim()!=='-') links.push({label:`Link${parts.length>1?' '+(i+1):''}`,href:p.trim().startsWith('http')?p.trim():'#'}); });
+      }
+    });
+    if(!links.length) return '';
+    return `<div class="roadmap-links">${links.slice(0,3).map(l=>`<a class="roadmap-link-chip" href="${l.href}" target="_blank" onclick="event.stopPropagation()">${l.label}</a>`).join('')}${links.length>3?`<span class="roadmap-link-chip">+${links.length-3}</span>`:''}</div>`;
+  }
+
+  const grid=document.getElementById('roadmap-grid');
+  if(!grid) return;
+
+  if(!Object.keys(byMonth).length){
+    grid.innerHTML='<div class="empty-state" style="grid-column:1/-1"><i class="fa-solid fa-calendar-xmark"></i>Tidak ada jadwal ditemukan untuk unit kerja yang dipilih</div>';
+    return;
+  }
+
+  grid.innerHTML=Object.entries(byMonth).map(([month,items])=>{
+    const overdueCount=items.filter(d=>isOverdue(d)).length;
+    return `
+    <div class="roadmap-month-card">
+      <div class="roadmap-month-header">
+        <div class="roadmap-month-title">
+          <i class="fa-solid fa-calendar-days" style="font-size:12px;opacity:.8"></i>
+          ${month} 2026
+          ${overdueCount>0?`<span style="background:#ef4444;color:#fff;border-radius:10px;padding:2px 8px;font-size:10px;font-weight:700;margin-left:6px"><i class="fa-solid fa-triangle-exclamation"></i> ${overdueCount} terlambat</span>`:''}
+        </div>
+        <span class="roadmap-month-count">${items.length} agenda</span>
       </div>
-    </div>`).join('')||'<div class="empty-state"><i class="fa-solid fa-calendar-xmark"></i>Tidak ada jadwal</div>';
+      <div class="roadmap-month-body">
+        ${items.map(d=>{
+          const sl=statusLabel(d), od=isOverdue(d);
+          const uc=UNIT_COLORS[getPrimaryUnit(d.unit)]||UNIT_COLORS['MULTI'];
+          return `<div class="roadmap-pub-card${od?' overdue':''}" onclick="openModal(${d.no-1})">
+            <div class="roadmap-pub-top">
+              <span class="roadmap-unit-badge" style="background:${uc.bg};color:${uc.text};border:1px solid ${uc.border}">${d.unit}</span>
+              <span class="roadmap-status-badge ${sl.cls}">${sl.text}</span>
+            </div>
+            <div class="roadmap-pub-title">${d.judul}</div>
+            ${renderLinks(d)}
+            <div class="roadmap-pub-footer">
+              <span class="roadmap-week-info"><i class="fa-regular fa-clock" style="color:#d97706"></i> ${month} (${getWeekNum(d.jadwal)||1})</span>
+              ${od?'<span class="badge-overdue-tag"><i class="fa-solid fa-triangle-exclamation"></i> Melewati Target</span>':''}
+              <span class="roadmap-update-btn">Update &gt;</span>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }).join('');
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -1602,23 +1978,31 @@ function renderTable(){
     if(year&&d.tahun!==year) return false;
     if(unit&&!d.unit.includes(unit)) return false;
     if(cluster&&d.cluster!==cluster) return false;
-    if(status&&getStatus(d)!==status) return false;
+    if(status&&status==='overdue'&&!isOverdue(d)) return false;
+    if(status&&status!=='overdue'&&getStatus(d)!==status) return false;
     if(search&&!(d.judul.toLowerCase().includes(search)||d.unit.toLowerCase().includes(search)||(d.cluster||'').toLowerCase().includes(search))) return false;
     return true;
   }).sort((a,b)=>{ let va=a[sortState.key]||'',vb=b[sortState.key]||''; if(sortState.key==='no'){va=+va||0;vb=+vb||0;} if(sortState.key==='status'){va=getStatus(a);vb=getStatus(b);} return (va<vb?-1:va>vb?1:0)*sortState.dir; });
   document.getElementById('table-count-label').textContent=`${data.length} records`;
   const pu=u=>UNIT_COLORS[getPrimaryUnit(u)]||UNIT_COLORS['MULTI'];
-  document.getElementById('main-tbody').innerHTML=data.map(d=>{ const st=getStatus(d),ch=getChannelCount(d),uc=pu(d.unit),cc=CLUSTER_COLORS[d.cluster]; const chColor=ch===0?'#dc2626':ch<3?'#d97706':'#16a34a';
-    return `<tr>
+  document.getElementById('main-tbody').innerHTML=data.map(d=>{
+    const st=getStatus(d),ch=getChannelCount(d),uc=pu(d.unit),cc=CLUSTER_COLORS[d.cluster],od=isOverdue(d);
+    const chColor=ch===0?'#dc2626':ch<3?'#d97706':'#16a34a';
+    return `<tr style="${od?'background:#fff9f9;':''}">
       <td style="color:var(--text3);font-size:11px">${d.no}</td>
       <td><span class="badge" style="background:${uc.bg};color:${uc.text};border-color:${uc.bg}">${getPrimaryUnit(d.unit)}</span></td>
       <td class="title-cell"><span title="${d.judul}">${d.judul}</span></td>
       <td style="color:var(--text2);font-size:11px">${d.jenis||'—'}</td>
-      <td style="white-space:nowrap;font-size:11px;color:var(--text2)">${d.jadwal||'—'}</td>
+      <td style="white-space:nowrap;font-size:11px;color:${od?'#b91c1c':'var(--text2)'};font-weight:${od?'700':'400'}">
+        ${d.jadwal||'—'}${od?' <i class="fa-solid fa-triangle-exclamation" title="Target publikasi terlewat" style="color:#ef4444"></i>':''}
+      </td>
       <td style="text-align:center;font-size:11px;color:var(--text2)">${d.tahun||'—'}</td>
       <td>${d.cluster&&cc?`<span class="badge" style="background:${cc.bg};color:${cc.text};border-color:${cc.bg};font-size:9px">${d.cluster}</span>`:'—'}</td>
       <td style="text-align:center"><span style="color:${chColor};font-weight:700;font-size:13px">${ch}</span></td>
-      <td>${statusBadge(st)}</td>
+      <td>
+        ${statusBadge(st)}
+        ${od ? `<div style="margin-top:3px"><span class="badge" style="background:#fee2e2;color:#b91c1c;border:1px solid #fecaca;font-size:9.5px;font-weight:700;display:inline-flex;align-items:center;gap:3px;padding:2px 6px"><i class="fa-solid fa-triangle-exclamation"></i> Lewat Deadline</span></div>` : ''}
+      </td>
       <td><button onclick="openModal(${d.no-1})" style="background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:7px;padding:4px 11px;font-size:11px;cursor:pointer;transition:all .18s;font-family:Inter" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text2)'"><i class="fa-solid fa-expand"></i></button></td>
     </tr>`; }).join('')||'<tr><td colspan="10" style="padding:40px;text-align:center;color:var(--text3)">Tidak ada data ditemukan</td></tr>';
 }
@@ -1633,6 +2017,23 @@ function openModal(idx){
   document.getElementById('modal-title').textContent=d.judul;
   const uc=UNIT_COLORS[getPrimaryUnit(d.unit)]||UNIT_COLORS['MULTI'];
   const cc=CLUSTER_COLORS[d.cluster];
+  const od=isOverdue(d);
+  const odAlert=document.getElementById('modal-overdue-alert');
+  if(odAlert){
+    if(od){
+      odAlert.style.display='block';
+      odAlert.innerHTML=`
+        <div style="background:#fee2e2;border:1px solid #fca5a5;color:#991b1b;border-radius:10px;padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;gap:12px;font-size:12px">
+          <i class="fa-solid fa-triangle-exclamation" style="font-size:20px;color:#dc2626;flex-shrink:0"></i>
+          <div>
+            <strong style="font-size:13px">Perhatian: Melewati Tenggat Waktu!</strong><br/>
+            Publikasi ini ditargetkan pada <strong>${d.jadwal} ${d.tahun}</strong> dan saat ini belum berstatus selesai.
+          </div>
+        </div>`;
+    } else {
+      odAlert.style.display='none';
+    }
+  }
   const meta=[
     {l:'No',v:d.no,bg:'#f1f5f9',tc:'#475569'},
     {l:'Unit',v:d.unit,bg:uc.bg,tc:uc.text},
@@ -1660,6 +2061,8 @@ document.querySelectorAll('.nav-tab').forEach(tab=>{
     const id=tab.dataset.tab;
     document.getElementById(`page-${id}`)?.classList.add('active');
     if(id==='records') renderTable();
+    if(id==='timeline') renderRoadmap(filteredData);
+    if(id==='overview') renderCharts();
   });
 });
 
@@ -1667,7 +2070,8 @@ document.querySelectorAll('.nav-tab').forEach(tab=>{
    INIT — load from localStorage (admin edits), fallback to RAW
    ══════════════════════════════════════════════════════════ */
 Chart.register(ChartDataLabels);
-document.getElementById('header-date').textContent=new Date().toLocaleDateString('id-ID',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+const hd = document.getElementById('header-date');
+if(hd) hd.textContent = new Date().toLocaleDateString('id-ID',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
 
 // Load data: validate quality before using localStorage
 // If GAS data is bad (all ket empty = all "planned"), restore defaults
