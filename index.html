@@ -1687,13 +1687,13 @@ setInterval(() => {
         <i class="fa-solid fa-bars"></i>
       </button>
       <div style="display:flex;align-items:center;gap:10px">
-        <span class="sindisa-top-title">PORTAL KEPALA DEPUTI — SINDISA LAN RI</span>
+        <span class="sindisa-top-title">Sistem Monitoring Publikasi Survei LAN RI</span>
       </div>
     </div>
     <div class="sindisa-topbar-right">
       <div class="sindisa-user-greet" onclick="toggleUserDropdown(event)">
         <img src="favicon.png" class="sindisa-user-pic" alt="Avatar"/>
-        <span id="sindisa-header-username">Hi, PUJIATMO SUBARKAH</span>
+        <span id="sindisa-header-username">Hi, User</span>
         <i class="fa-solid fa-caret-down" style="font-size:11px;opacity:.8"></i>
       </div>
       <button class="sindisa-exit-btn" onclick="exitDeputiPortal()" title="Kembali ke Dashboard Publik">
@@ -1706,8 +1706,8 @@ setInterval(() => {
     <!-- SINDISA SIDEBAR -->
     <aside class="sindisa-sidebar" id="sindisa-sidebar">
       <div class="sindisa-brand">
-        <img src="favicon.png" alt="SINDISA" class="sindisa-logo-icon"/>
-        <span class="sindisa-brand-text">SINDISA</span>
+        <img src="favicon.png" alt="SIPANTAU" class="sindisa-logo-icon"/>
+        <span class="sindisa-brand-text">SIPANTAU</span>
       </div>
 
       <div class="sindisa-section-title">DASHBOARD</div>
@@ -1752,7 +1752,7 @@ setInterval(() => {
       <!-- WELCOME CARD -->
       <div class="sindisa-welcome-card">
         <div>
-          <span id="sindisa-welcome-name">Selamat Datang PUJIATMO SUBARKAH</span>
+          <span id="sindisa-welcome-name">Selamat Datang</span>
           <div style="font-size:12px;font-weight:500;color:#64748b;margin-top:2px">
             Portal Pemantauan & Persetujuan Survei Lembaga Administrasi Negara Republik Indonesia
           </div>
@@ -2982,8 +2982,10 @@ function handleUserLogin(e) {
   const role = document.getElementById('login-role').value;
   const username = document.getElementById('login-username').value.trim();
 
+  // Format display name dynamically from username
+  const formattedName = username ? username.toUpperCase() : (role === 'deputi' ? 'KEPALA DEPUTI' : 'ADMIN');
   let userObj = {
-    name: role === 'deputi' ? 'PUJIATMO SUBARKAH' : 'ADMIN PENGELOLA',
+    name: formattedName,
     title: role === 'deputi' ? 'Kepala Deputi Bidang Kajian Kebijakan' : 'Admin Publikasi & Data',
     role: role,
     username: username,
@@ -3171,11 +3173,9 @@ function renderKpiListContainer(items) {
    ══════════════════════════════════════════════════════════ */
 // Default Pengumuman list as shown in Sindisa screenshot
 let DEPUTI_PENGUMUMAN = [
-  { id: 1, title: "Syarat Ujian Tertutup Doktoral & Kelayakan Policy Paper LAN", date: "29 Jul 2026", desc: "Ketentuan final naskah akademik kebijakan sebelum persetujuan publikasi nasional." },
-  { id: 2, title: "PENGUMUMAN MAINTENANCE SISTEM SINDISA LAN RI", date: "20 Feb 2026", desc: "Pembaruan server rutin sinkronisasi database survei dan portal monitoring." },
-  { id: 3, title: "Pembukaan Pendaftaran Seminar Disertasi periode Ujian Februari 2026", date: "19 Jan 2026", desc: "Jadwal sidang review hasil kajian unit kerja bersama Kepala Deputi." },
-  { id: 4, title: "Monitoring dan Evaluasi Kemajuan Studi - Semester Ganjil 2025/2026", date: "19 Nov 2025", desc: "Evaluasi capaian 56 publikasi survei seluruh unit kerja LAN RI." },
-  { id: 5, title: "Referensi Jurnal SCOPUS dan Akreditasi Nasional Tahun 2024-2026", date: "20 Oct 2025", desc: "Panduan submisi publikasi riset kolaboratif STIA dan Pusat Kajian." },
+  { id: 1, title: "Arahan Penyelesaian Tahapan Publikasi Survei TA 2026", date: "27 Okt 2026", desc: "Seluruh unit kerja diharapkan mempercepat penyusunan instrumen dan pengolahan data sebelum batas waktu Q4." },
+  { id: 2, title: "Pemberitahuan Sinkronisasi Database Survei LAN RI (SIPANTAU)", date: "22 Okt 2026", desc: "Sistem telah terhubung langsung dengan Google Spreadsheet Analis/Survei 2026 untuk monitoring real-time." },
+  { id: 3, title: "Jadwal Review Draft Policy Brief & Policy Paper Triwulan IV", date: "15 Okt 2026", desc: "Agenda pemaparan hasil pengolahan data survei bersama Kepala Deputi dan Tim Peneliti unit kerja." }
 ];
 
 // Deputi Approval Submissions Store
@@ -3202,11 +3202,11 @@ function openDeputiPortal(targetTab) {
   view.classList.add('active');
   document.body.style.overflow = 'hidden';
 
-  const user = getCurrentUser() || { name: 'PUJIATMO SUBARKAH' };
+  const user = getCurrentUser() || { name: 'KEPALA DEPUTI' };
   const greetEl = document.getElementById('sindisa-header-username');
   const welEl = document.getElementById('sindisa-welcome-name');
   if(greetEl) greetEl.textContent = 'Hi, ' + user.name;
-  if(welEl) welEl.textContent = 'Selamat Datang ' + user.name;
+  if(welEl) welEl.textContent = 'Selamat Datang, ' + user.name;
 
   renderSindisaPengumuman();
   renderSindisaPenulisan();
@@ -3542,6 +3542,16 @@ function openTambahPengumumanModal() {
 }
 
 renderAuthNav();
+(function(){
+  try {
+    const u = localStorage.getItem('lan_current_user');
+    if(u && u.includes('PUJIATMO')) {
+      const parsed = JSON.parse(u);
+      parsed.name = (parsed.username || 'DEPUTI').toUpperCase();
+      localStorage.setItem('lan_current_user', JSON.stringify(parsed));
+    }
+  } catch(e){}
+})();
 populateDropdowns();
 filteredData=[...RAW];
 renderKPIs();
