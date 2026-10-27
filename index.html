@@ -1073,42 +1073,14 @@
         </div>
       </div>
 
-      <div class="sipantau-login-alert" id="sipantau-login-alert" style="display:none"></div>
+      <div class="sipantau-login-alert" id="sipantau-login-alert" style="display:none;margin-bottom:12px;padding:9px 12px;border-radius:8px;background:#fef2f2;border:1px solid #fecaca;color:#dc2626;font-size:11.5px;font-weight:600;align-items:center;gap:7px"></div>
 
       <form onsubmit="handleLandingLogin(event)">
-        <div class="sipantau-form-group">
-          <label class="sipantau-form-label">Peran / Unit Kerja</label>
-          <select id="landing-role" class="sipantau-form-input" onchange="applyLandingRolePresets(this.value)">
-            <optgroup label="Pimpinan & Pengambil Keputusan">
-              <option value="kepala_lan">Kepala LAN RI (Persetujuan & ACC)</option>
-              <option value="deputi" selected>Kepala Deputi (Dashboard, ACC, Pengumuman)</option>
-            </optgroup>
-            <optgroup label="Unit Pengelola & Publikasi">
-              <option value="admin_dspk2an">Admin DSPK2AN (Dashboard, Usulan, Monitoring)</option>
-              <option value="humas">Humas LAN RI (Monitoring & Jadwal Publikasi)</option>
-            </optgroup>
-            <optgroup label="Unit Kerja Pelaksana Survei">
-              <option value="unit_skpp">SKPP (Pusat Kajian Kebijakan)</option>
-              <option value="unit_dapkk">DAPKK (Aparatur & Kelembagaan)</option>
-              <option value="unit_skmp">SKMP (Manajemen Publik)</option>
-              <option value="unit_sktan">SKTAN (Tata Administrasi Negara)</option>
-              <option value="unit_stia_jkt">STIA LAN Jakarta</option>
-              <option value="unit_stia_mks">STIA LAN Makassar</option>
-              <option value="unit_stia_bdg">STIA LAN Bandung</option>
-              <option value="unit_skmk">SKMK (Krisis & Mitigasi)</option>
-            </optgroup>
-          </select>
-          <div class="sipantau-role-pill" id="landing-role-hint">
-            <i class="fa-solid fa-key" style="font-size:10px"></i>
-            <span><strong>Akses:</strong> Dashboard, Persetujuan ACC, &amp; Pengumuman</span>
-          </div>
-        </div>
-
         <div class="sipantau-form-group">
           <label class="sipantau-form-label">Username</label>
           <div style="position:relative">
             <i class="fa-solid fa-user" style="position:absolute;left:12px;top:11px;color:#94a3b8;font-size:12px"></i>
-            <input type="text" id="landing-username" value="deputi" required class="sipantau-form-input" style="padding-left:34px"/>
+            <input type="text" id="landing-username" placeholder="Contoh: deputi, kepala.lan, skpp..." required class="sipantau-form-input" style="padding-left:34px" autocomplete="username"/>
           </div>
         </div>
 
@@ -1116,7 +1088,7 @@
           <label class="sipantau-form-label">Password</label>
           <div style="position:relative">
             <i class="fa-solid fa-lock" style="position:absolute;left:12px;top:11px;color:#94a3b8;font-size:12px"></i>
-            <input type="password" id="landing-password" value="deputi2026" required class="sipantau-form-input" style="padding-left:34px"/>
+            <input type="password" id="landing-password" placeholder="Masukkan kata sandi akun..." required class="sipantau-form-input" style="padding-left:34px" autocomplete="current-password"/>
           </div>
         </div>
 
@@ -1124,10 +1096,10 @@
           <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
             <input type="checkbox" checked /> Ingat sesi
           </label>
-          <span style="color:#1e40af;font-weight:600"><i class="fa-solid fa-shield-halved"></i> LAN RI SSO</span>
+          <span id="users-sync-status" style="color:#16a34a;font-weight:600;font-size:11px"><i class="fa-solid fa-database"></i> Sheet Users Aktif</span>
         </div>
 
-        <button type="submit" class="sipantau-btn-login">
+        <button type="submit" class="sipantau-btn-login" id="btn-landing-submit">
           <i class="fa-solid fa-right-to-bracket" style="margin-right:6px"></i> Masuk ke SIPANTAU
         </button>
         <button type="button" class="sipantau-btn-public" onclick="hideLandingLogin()">
@@ -2098,48 +2070,35 @@ setInterval(() => {
     <!-- SINDISA MAIN CONTENT -->
     <main class="sindisa-content">
       <!-- WELCOME CARD -->
-      <div class="sindisa-welcome-card">
+      <div class="sindisa-welcome-card" style="margin-bottom:16px;padding:14px 18px">
         <div>
-          <span id="sindisa-welcome-name">Selamat Datang</span>
-          <div style="font-size:12px;font-weight:500;color:#64748b;margin-top:2px">
-            Portal Pemantauan & Persetujuan Publikasi Lembaga Administrasi Negara Republik Indonesia
+          <span id="sindisa-welcome-name" style="font-size:15px">Selamat Datang</span>
+          <div id="sindisa-welcome-sub" style="font-size:12px;font-weight:500;color:#64748b;margin-top:2px">
+            Portal Pemantauan &amp; Publikasi Survei Lembaga Administrasi Negara Republik Indonesia
           </div>
         </div>
-        <div style="display:flex;gap:8px">
-          <button onclick="openTab('proposal')" style="padding:7px 14px;background:#1e40af;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer">
+        <div style="display:flex;gap:8px" id="sindisa-welcome-actions">
+          <button id="btn-welcome-acc" onclick="openTab('proposal')" style="padding:7px 14px;background:#1e40af;color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer">
             <i class="fa-solid fa-bell" style="margin-right:5px"></i> Perlu ACC (<span id="sindisa-pending-num">3</span>)
+          </button>
+          <button id="btn-welcome-usulan" onclick="openTab('aktivitas')" style="display:none;padding:7px 14px;background:#16a34a;color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer">
+            <i class="fa-solid fa-plus-circle" style="margin-right:5px"></i> Ajukan Publikasi / Aktivitas
           </button>
         </div>
       </div>
 
+      <!-- TAB PANEL 0: DASHBOARD RINGKAS & RAPI -->
+      <div class="sindisa-panel-box" id="sindisa-panel-dashboard" style="display:block;padding:0;border:none;box-shadow:none;background:transparent">
 
-
-      
-      <!-- TAB PANEL 0: DASHBOARD INTERAKTIF SIPANTAU LENGKAP BISA DIFILTER -->
-      <div class="sindisa-panel-box" id="sindisa-panel-dashboard" style="display:block;padding:20px;border:none;box-shadow:none;background:transparent">
-        
-        <!-- HEADER DASHBOARD & SINKRONISASI -->
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:10px">
-          <div>
-            <h2 style="font-size:19px;font-weight:800;color:#1e293b;display:flex;align-items:center;gap:8px">
-              <i class="fa-solid fa-chart-pie" style="color:#1e40af"></i> Dashboard Interaktif Publikasi LAN RI
-            </h2>
-            <p style="font-size:12.5px;color:#64748b;margin-top:2px">Sistem Monitoring dan Evaluasi Capaian Publikasi Seluruh Unit Kerja</p>
-          </div>
-          <button onclick="syncDataFromGAS()" style="padding:8px 16px;background:#1e40af;color:#fff;border:none;border-radius:8px;font-size:12.5px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:7px;box-shadow:0 2px 6px rgba(30,64,175,.25)">
-            <i class="fa-solid fa-rotate" id="portal-refresh-icon"></i> Sinkronkan Google Sheet Live
-          </button>
-        </div>
-
-        <!-- FILTER BAR INTERAKTIF DI DALAM DASHBOARD -->
-        <div class="filter-bar" style="margin-bottom:20px">
-          <label><i class="fa-solid fa-sliders" style="margin-right:5px;color:var(--accent)"></i>Filter Data:</label>
+        <!-- TOOLBAR FILTER RINGKAS -->
+        <div class="filter-bar" style="margin-bottom:16px;padding:10px 14px;background:#fff;border:1px solid #e2e8f0;border-radius:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <label style="font-size:12px;font-weight:700;color:#334155"><i class="fa-solid fa-sliders" style="margin-right:5px;color:var(--accent)"></i>Filter:</label>
           <select id="p-year" onchange="applyPortalFilters()">
             <option value="">Semua Tahun</option>
             <option value="2025">2025</option>
             <option value="2026">2026</option>
           </select>
-          <div class="filter-divider"></div>
+          <div class="filter-divider" id="p-unit-divider"></div>
           <select id="p-unit" onchange="applyPortalFilters()"><option value="">Semua Unit Kerja</option></select>
           <div class="filter-divider"></div>
           <select id="p-cluster" onchange="applyPortalFilters()"><option value="">Semua Cluster</option></select>
@@ -2149,114 +2108,74 @@ setInterval(() => {
             <option value="selesai">Selesai</option>
             <option value="belum">Belum Selesai</option>
             <option value="overdue">⚠️ Melewati Deadline</option>
-            <optgroup label="Tahapan (Belum Selesai)">
-              <option value="tahap:Persiapan">Tahap 1: Persiapan</option>
-              <option value="tahap:Penyusunan instrumen">Tahap 2: Penyusunan Instrumen</option>
-              <option value="tahap:Pengumpulan data">Tahap 3: Pengumpulan Data</option>
-              <option value="tahap:Pengolahan data">Tahap 4: Pengolahan Data</option>
-              <option value="tahap:Penyusunan laporan">Tahap 5: Penyusunan Laporan</option>
-              <option value="tahap:Publikasi">Tahap 6: Publikasi</option>
-            </optgroup>
           </select>
-          <button class="filter-reset" onclick="resetPortalFilters()"><i class="fa-solid fa-rotate-left"></i> Reset Filter</button>
+          <button class="filter-reset" onclick="resetPortalFilters()"><i class="fa-solid fa-rotate-left"></i> Reset</button>
+          <button onclick="syncDataFromGAS()" style="margin-left:auto;padding:6px 12px;background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe;border-radius:7px;font-size:11.5px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px">
+            <i class="fa-solid fa-rotate" id="portal-refresh-icon"></i> Sync Sheet
+          </button>
         </div>
 
-        <!-- 4 KPI CARDS UTAMA (INTERAKTIF & BISA DIKLIK) -->
-        <div class="kpi-grid" id="portal-kpi-grid" style="margin-bottom:22px"></div>
+        <!-- BARIS 1: 4 KPI CARDS RINGKAS -->
+        <div class="kpi-grid" id="portal-kpi-grid" style="margin-bottom:16px"></div>
 
-        <!-- WIDGET REMINDER TELAT & PENILAIAN KINERJA -->
-        <div class="grid-2" style="margin-bottom:22px">
-          <!-- REMINDER TELAT -->
-          <div class="card" style="border-left:4px solid #dc2626">
-            <div class="card-header" style="display:flex;align-items:center;justify-content:space-between">
-              <span class="card-title" style="color:#b91c1c">
-                <i class="fa-solid fa-triangle-exclamation" style="color:#dc2626;margin-right:6px"></i>
-                Reminder Publikasi Melewati Jadwal (Perlu Tindak Lanjut)
+        <!-- BARIS 2: PROGRES SURVEI AKTIF (KIRI) & STATUS + CHANNEL RINGKAS (KANAN) -->
+        <div class="grid-2" style="margin-bottom:16px;grid-template-columns:1.35fr 1fr;align-items:stretch">
+          <!-- KIRI: DAFTAR SURVEI PERLU TINDAK LANJUT / PROGRES UNIT -->
+          <div class="card" style="margin-bottom:0;display:flex;flex-direction:column">
+            <div class="card-header" style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px">
+              <span class="card-title" id="portal-active-list-title">
+                <i class="fa-solid fa-list-check" style="color:#1e40af;margin-right:6px"></i>
+                Daftar Progres &amp; Pengingat Jadwal Survei
               </span>
               <span class="badge badge-red" id="portal-reminder-count">0 Terlambat</span>
             </div>
-            <div class="card-body" style="padding:14px;max-height:280px;overflow-y:auto" id="portal-reminder-list"></div>
+            <div class="card-body" style="padding:12px 14px;max-height:330px;overflow-y:auto;flex:1" id="portal-reminder-list"></div>
           </div>
 
-          <!-- PENILAIAN KINERJA CAPAIAN UNIT -->
-          <div class="card" style="border-left:4px solid #1e40af">
-            <div class="card-header" style="display:flex;align-items:center;justify-content:space-between">
-              <span class="card-title" style="color:#1e40af">
-                <i class="fa-solid fa-award" style="color:#1e40af;margin-right:6px"></i>
-                Penilaian Kinerja Capaian Publikasi per Unit Kerja
-              </span>
-              <span class="badge" style="background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe;font-weight:700">Skor & Predikat</span>
+          <!-- KANAN: STATUS DONUT & KANAL PUBLIKASI RINGKAS -->
+          <div class="card" style="margin-bottom:0;display:flex;flex-direction:column">
+            <div class="card-header" style="padding:12px 16px">
+              <span class="card-title"><i class="fa-solid fa-circle-half-stroke"></i> Proporsi Status &amp; Jangkauan Kanal</span>
             </div>
-            <div class="card-body" style="padding:14px;max-height:280px;overflow-y:auto" id="portal-performance-list"></div>
-          </div>
-        </div>
-
-        <!-- ROW GRAFIK 1: STATUS DONUT, PUBLIKASI PER BULAN, JANGKAUAN CHANNEL -->
-        <div class="grid-3" style="margin-bottom:22px">
-          <div class="card">
-            <div class="card-header"><span class="card-title"><i class="fa-solid fa-circle-half-stroke"></i> Status Publikasi</span></div>
-            <div class="card-body">
-              <div class="chart-wrap" style="height:150px"><canvas id="portal-chart-status-donut"></canvas></div>
-              <div class="donut-legend" id="portal-donut-legend" style="margin-top:14px"></div>
-            </div>
-          </div>
-          <div class="card">
-            <div class="card-header"><span class="card-title"><i class="fa-solid fa-chart-bar"></i> Publikasi per Bulan (2026)</span></div>
-            <div class="card-body">
-              <div class="chart-wrap" style="height:220px"><canvas id="portal-chart-monthly"></canvas></div>
-            </div>
-          </div>
-          <div class="card">
-            <div class="card-header"><span class="card-title"><i class="fa-solid fa-bullhorn"></i> Jangkauan Channel</span></div>
-            <div class="card-body">
-              <div class="channel-grid" id="portal-channel-grid"></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- ROW GRAFIK 2: PUBLIKASI PER UNIT & CLUSTER KEBIJAKAN -->
-        <div class="grid-2" style="margin-bottom:22px">
-          <div class="card">
-            <div class="card-header"><span class="card-title"><i class="fa-solid fa-building"></i> Publikasi per Unit</span></div>
-            <div class="card-body">
-              <div class="chart-wrap" style="height:280px"><canvas id="portal-chart-unit-bar"></canvas></div>
-            </div>
-          </div>
-          <div class="card">
-            <div class="card-header"><span class="card-title"><i class="fa-solid fa-tags"></i> Publikasi per Cluster Kebijakan</span></div>
-            <div class="card-body">
-              <div class="chart-wrap" style="height:280px"><canvas id="portal-chart-cluster-bar"></canvas></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- ROW GRAFIK 3: JENIS PUBLIKASI & DISTRIBUSI JADWAL MINGGUAN -->
-        <div class="grid-2" style="margin-bottom:22px">
-          <div class="card">
-            <div class="card-header"><span class="card-title"><i class="fa-solid fa-layer-group"></i> Jenis Publikasi</span></div>
-            <div class="card-body">
-              <div class="chart-wrap" style="height:220px"><canvas id="portal-chart-type"></canvas></div>
-            </div>
-          </div>
-          <div class="card">
-            <div class="card-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
-              <span class="card-title"><i class="fa-solid fa-grip"></i> Distribusi Jadwal per Minggu</span>
-              <div style="display:flex;align-items:center;gap:6px">
-                <button class="filter-reset" onclick="changePortalHeatmapYear(-1)" style="padding:3px 9px;font-size:11px" title="Periode Tahun Sebelumnya"><i class="fa-solid fa-chevron-left"></i> Prev</button>
-                <span id="portal-heatmap-year-badge" style="font-size:11.5px;font-weight:800;padding:3px 10px;background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe;border-radius:14px">Tahun 2026</span>
-                <button class="filter-reset" onclick="changePortalHeatmapYear(1)" style="padding:3px 9px;font-size:11px" title="Periode Tahun Berikutnya">Next <i class="fa-solid fa-chevron-right"></i></button>
+            <div class="card-body" style="padding:14px 16px">
+              <div style="display:grid;grid-template-columns:130px 1fr;gap:14px;align-items:center;padding-bottom:12px;border-bottom:1px solid #f1f5f9">
+                <div class="chart-wrap" style="height:115px"><canvas id="portal-chart-status-donut"></canvas></div>
+                <div class="donut-legend" id="portal-donut-legend" style="margin-top:0"></div>
+              </div>
+              <div style="margin-top:12px">
+                <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:8px">Distribusi Kanal Publikasi</div>
+                <div class="channel-grid" id="portal-channel-grid" style="grid-template-columns:repeat(2,1fr);gap:8px"></div>
               </div>
             </div>
-            <div class="card-body" id="portal-heatmap-container"></div>
           </div>
         </div>
 
-        <!-- TABEL ROADMAP JADWAL RILIS SURVEI 2026 -->
-        <div class="card">
-          <div class="card-header"><span class="card-title"><i class="fa-solid fa-calendar-days"></i> Roadmap Publikasi Survei 2026</span></div>
-          <div class="card-body">
-            <div id="portal-roadmap-grid" class="roadmap-grid"></div>
+        <!-- BARIS 3: 2 GRAFIK RINGKAS (BULANAN & CLUSTER/UNIT) -->
+        <div class="grid-2" style="margin-bottom:16px">
+          <div class="card" style="margin-bottom:0">
+            <div class="card-header" style="padding:12px 16px"><span class="card-title"><i class="fa-solid fa-chart-bar"></i> Jadwal Publikasi per Bulan (2026)</span></div>
+            <div class="card-body" style="padding:14px">
+              <div class="chart-wrap" style="height:200px"><canvas id="portal-chart-monthly"></canvas></div>
+            </div>
           </div>
+          <div class="card" style="margin-bottom:0">
+            <div class="card-header" style="padding:12px 16px"><span class="card-title"><i class="fa-solid fa-tags"></i> Publikasi per Cluster Kebijakan</span></div>
+            <div class="card-body" style="padding:14px">
+              <div class="chart-wrap" style="height:200px"><canvas id="portal-chart-cluster-bar"></canvas></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PANEL KINERJA ANTAR UNIT (HANYA TAMPIL UNTUK PIMPINAN / ADMIN, DISEMBUNYIKAN UNTUK UNIT KERJA) -->
+        <div class="card" id="portal-all-units-card" style="margin-bottom:0">
+          <div class="card-header" style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px">
+            <span class="card-title" style="color:#1e40af">
+              <i class="fa-solid fa-award" style="color:#1e40af;margin-right:6px"></i>
+              Capaian Kinerja Publikasi per Unit Kerja
+            </span>
+            <span class="badge" style="background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe;font-weight:700">Skor &amp; Predikat</span>
+          </div>
+          <div class="card-body" style="padding:12px 14px;max-height:240px;overflow-y:auto" id="portal-performance-list"></div>
         </div>
 
       </div><!-- /sindisa-panel-dashboard -->
@@ -2265,7 +2184,7 @@ setInterval(() => {
       <div class="sindisa-panel-box" id="sindisa-panel-pengumuman">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;border-bottom:1px solid #f1f5f9;padding-bottom:10px">
           <h4 style="font-size:15px;font-weight:800;color:#1e293b">Papan Informasi & Memo Kebijakan Deputi</h4>
-          <button onclick="openTambahPengumumanModal()" style="padding:6px 12px;background:#1e40af;color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer;font-weight:600">
+          <button id="btn-tambah-memo" onclick="openTambahPengumumanModal()" style="padding:6px 12px;background:#1e40af;color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer;font-weight:600">
             <i class="fa-solid fa-plus"></i> Tambah Memo Baru
           </button>
         </div>
@@ -2274,14 +2193,272 @@ setInterval(() => {
         </div>
       </div>
 
-      <!-- TAB PANEL 2: PENULISAN & INSTRUMEN -->
+      <!-- KOMPONEN FORM MASUKAN AKTIFITAS GAYA SINDISA (Ditempel otomatis ke Tab Usulan / Progres) -->
+      <style>
+        .sindisa-act-card {
+          background: #ffffff;
+          border: 1px solid #e2e8f0;
+          border-radius: 16px;
+          padding: 22px 24px;
+          margin-bottom: 22px;
+          box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03);
+        }
+        .sindisa-act-grid {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 18px;
+          margin-bottom: 18px;
+        }
+        @media (max-width: 960px) {
+          .sindisa-act-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 560px) {
+          .sindisa-act-grid { grid-template-columns: 1fr; }
+        }
+        .sindisa-act-field label {
+          display: block;
+          font-size: 13px;
+          font-weight: 700;
+          color: #1e293b;
+          margin-bottom: 8px;
+        }
+        .sindisa-act-select, .sindisa-act-input {
+          width: 100%;
+          padding: 10px 14px;
+          border: 1px solid #e2e8f0;
+          border-radius: 10px;
+          background: #ffffff;
+          font-size: 13px;
+          color: #475569;
+          font-family: inherit;
+          outline: none;
+          transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .sindisa-act-select:focus, .sindisa-act-input:focus {
+          border-color: #3b82f6;
+          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        .sindisa-editor-wrap {
+          border: 1px solid #cbd5e1;
+          border-radius: 4px;
+          overflow: hidden;
+          background: #ffffff;
+        }
+        .sindisa-editor-toolbar {
+          background: #f8fafc;
+          border-bottom: 1px solid #cbd5e1;
+          padding: 6px 10px;
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+          user-select: none;
+        }
+        .sindisa-toolbar-row {
+          display: flex;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 2px;
+        }
+        .sindisa-tb-btn {
+          width: 28px;
+          height: 26px;
+          border: 1px solid transparent;
+          background: transparent;
+          border-radius: 3px;
+          color: #475569;
+          font-size: 12.5px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: all 0.12s;
+        }
+        .sindisa-tb-btn:hover {
+          background: #e2e8f0;
+          border-color: #cbd5e1;
+          color: #0f172a;
+        }
+        .sindisa-tb-sep {
+          width: 1px;
+          height: 18px;
+          background: #cbd5e1;
+          margin: 0 5px;
+        }
+        .sindisa-tb-select {
+          height: 26px;
+          padding: 0 8px;
+          border: 1px solid #cbd5e1;
+          border-radius: 3px;
+          background: #ffffff;
+          font-size: 11.5px;
+          color: #334155;
+          font-family: inherit;
+          cursor: pointer;
+        }
+        .sindisa-editor-body {
+          min-height: 170px;
+          max-height: 340px;
+          overflow-y: auto;
+          padding: 14px 16px;
+          font-size: 13.5px;
+          line-height: 1.65;
+          color: #1e293b;
+          outline: none;
+        }
+        .sindisa-editor-body:empty:before {
+          content: attr(data-placeholder);
+          color: #94a3b8;
+          pointer-events: none;
+        }
+      </style>
+
+      <!-- TAB PANEL BARU KHUSUS: AJUKAN PUBLIKASI / MASUKAN AKTIFITAS (GAYA SINDISA) -->
+      <div class="sindisa-panel-box" id="sindisa-panel-aktivitas" style="display:none;background:transparent;border:none;box-shadow:none;padding:0">
+        <div id="sindisa-shared-activity-card" class="sindisa-act-card" style="margin-bottom:0">
+          <div style="margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #f1f5f9">
+            <h4 style="font-size:15px;font-weight:800;color:#1e293b;margin-bottom:3px">Form Pengajuan Publikasi &amp; Masukan Aktivitas Survei</h4>
+            <p style="font-size:12px;color:#64748b">Pilih topik survei (atau ajukan topik baru), tahapan, metode konsultasi, dan tuliskan detail aktivitas untuk dikirim ke Kepala Deputi</p>
+          </div>
+          <form onsubmit="submitSindisaActivityForm(event)">
+            <div class="sindisa-act-grid">
+              <div class="sindisa-act-field">
+                <label for="act-topik-select">Topik</label>
+                <select id="act-topik-select" class="sindisa-act-select" onchange="handleActTopikChange(this.value)" required>
+                  <option value="">Pilih</option>
+                </select>
+                <select id="act-unit-custom" class="sindisa-act-select" style="display:none;margin-top:8px">
+                  <option value="DSPK2AN">Unit: DSPK2AN</option>
+                  <option value="SKPP">Unit: SKPP</option>
+                  <option value="DAPKK">Unit: DAPKK</option>
+                  <option value="SKMP">Unit: SKMP</option>
+                  <option value="SKTAN">Unit: SKTAN</option>
+                  <option value="STIA BDG">Unit: STIA BDG</option>
+                  <option value="STIA JKT">Unit: STIA JKT</option>
+                  <option value="STIA MKS">Unit: STIA MKS</option>
+                  <option value="SKMK">Unit: SKMK</option>
+                </select>
+                <input type="text" id="act-topik-custom" class="sindisa-act-input" placeholder="Ketik judul usulan topik survei baru..." style="display:none;margin-top:8px" />
+              </div>
+              <div class="sindisa-act-field">
+                <label for="act-jenis-select">Jenis</label>
+                <select id="act-jenis-select" class="sindisa-act-select" required>
+                  <option value="">Pilih</option>
+                  <option value="1">1. Persiapan &amp; Pengajuan TOR</option>
+                  <option value="2">2. Penyusunan Instrumen Survei</option>
+                  <option value="3">3. Pengumpulan Data Lapangan</option>
+                  <option value="4">4. Pengolahan &amp; Analisis Data</option>
+                  <option value="5">5. Penyusunan Laporan / Policy Brief</option>
+                  <option value="6">6. Publikasi Media &amp; Kanal Resmi</option>
+                  <option value="7">7. Laporan Akhir (Selesai)</option>
+                </select>
+              </div>
+              <div class="sindisa-act-field">
+                <label for="act-metode-select">Metode Bimbingan</label>
+                <select id="act-metode-select" class="sindisa-act-select" required>
+                  <option value="">Pilih</option>
+                  <option value="Review Dokumen / Draft">Review Dokumen / Draft</option>
+                  <option value="Paparan / Ekspos Tatap Muka">Paparan / Ekspos Tatap Muka</option>
+                  <option value="Diskusi Daring (Zoom)">Diskusi Daring (Zoom)</option>
+                  <option value="Konsultasi Substansi Tertulis">Konsultasi Substansi Tertulis</option>
+                  <option value="Laporan Progres Berkala">Laporan Progres Berkala</option>
+                </select>
+              </div>
+              <div class="sindisa-act-field">
+                <label for="act-penerima-select">Penerima Pesan</label>
+                <select id="act-penerima-select" class="sindisa-act-select" required>
+                  <option value="Kepala Deputi Kajian Kebijakan & Inovasi">Kepala Deputi Kajian Kebijakan &amp; Inovasi</option>
+                  <option value="Kepala LAN RI">Kepala LAN RI</option>
+                  <option value="Admin DSPK2AN (Tim Monitoring)">Admin DSPK2AN (Tim Monitoring)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="sindisa-act-field" style="margin-bottom:14px">
+              <label>Masukan Aktifitas</label>
+              <div class="sindisa-editor-wrap">
+                <div class="sindisa-editor-toolbar">
+                  <!-- BARIS 1 TOOLBAR PERSIS SINDISA -->
+                  <div class="sindisa-toolbar-row">
+                    <button type="button" class="sindisa-tb-btn" onclick="execActCmd('cut')" title="Cut"><i class="fa-solid fa-scissors"></i></button>
+                    <button type="button" class="sindisa-tb-btn" onclick="execActCmd('copy')" title="Copy"><i class="fa-regular fa-copy"></i></button>
+                    <button type="button" class="sindisa-tb-btn" onclick="execActCmd('paste')" title="Paste"><i class="fa-regular fa-paste"></i></button>
+                    <button type="button" class="sindisa-tb-btn" onclick="execActCmd('removeFormat')" title="Paste as plain text"><i class="fa-regular fa-file-lines"></i></button>
+                    <div class="sindisa-tb-sep"></div>
+                    <button type="button" class="sindisa-tb-btn" onclick="execActCmd('undo')" title="Undo"><i class="fa-solid fa-rotate-left"></i></button>
+                    <button type="button" class="sindisa-tb-btn" onclick="execActCmd('redo')" title="Redo"><i class="fa-solid fa-rotate-right"></i></button>
+                    <div class="sindisa-tb-sep"></div>
+                    <button type="button" class="sindisa-tb-btn" onclick="execActCmd('selectAll')" title="Check"><i class="fa-solid fa-spell-check"></i></button>
+                    <div class="sindisa-tb-sep"></div>
+                    <button type="button" class="sindisa-tb-btn" onclick="insertActLink()" title="Insert Link"><i class="fa-solid fa-link"></i></button>
+                    <button type="button" class="sindisa-tb-btn" onclick="execActCmd('unlink')" title="Unlink"><i class="fa-solid fa-link-slash"></i></button>
+                    <button type="button" class="sindisa-tb-btn" onclick="insertActFlag()" title="Highlight / Flag"><i class="fa-solid fa-flag"></i></button>
+                    <div class="sindisa-tb-sep"></div>
+                    <button type="button" class="sindisa-tb-btn" onclick="insertActLink('Lampirkan URL Gambar / Bukti Dokumentasi:')" title="Image / Dokumentasi"><i class="fa-regular fa-image"></i></button>
+                    <button type="button" class="sindisa-tb-btn" onclick="insertActTable()" title="Insert Table"><i class="fa-solid fa-table"></i></button>
+                    <button type="button" class="sindisa-tb-btn" onclick="execActCmd('insertHorizontalRule')" title="Horizontal Line"><i class="fa-solid fa-minus"></i></button>
+                    <button type="button" class="sindisa-tb-btn" onclick="insertActSymbol()" title="Special Character"><strong style="font-family:serif;font-size:13px">&Omega;</strong></button>
+                    <div class="sindisa-tb-sep"></div>
+                    <button type="button" class="sindisa-tb-btn" onclick="toggleActEditorFullscreen()" title="Maximize"><i class="fa-solid fa-expand"></i></button>
+                  </div>
+                  <!-- BARIS 2 TOOLBAR PERSIS SINDISA -->
+                  <div class="sindisa-toolbar-row">
+                    <button type="button" class="sindisa-tb-btn" onclick="execActCmd('bold')" title="Bold"><strong>B</strong></button>
+                    <button type="button" class="sindisa-tb-btn" onclick="execActCmd('italic')" title="Italic"><em>I</em></button>
+                    <button type="button" class="sindisa-tb-btn" onclick="execActCmd('strikeThrough')" title="Strikethrough"><s>S</s></button>
+                    <button type="button" class="sindisa-tb-btn" onclick="execActCmd('removeFormat')" title="Remove Format"><span style="font-weight:700;font-size:11px">T<sub>x</sub></span></button>
+                    <div class="sindisa-tb-sep"></div>
+                    <button type="button" class="sindisa-tb-btn" onclick="execActCmd('insertOrderedList')" title="Numbered List"><i class="fa-solid fa-list-ol"></i></button>
+                    <button type="button" class="sindisa-tb-btn" onclick="execActCmd('insertUnorderedList')" title="Bulleted List"><i class="fa-solid fa-list-ul"></i></button>
+                    <button type="button" class="sindisa-tb-btn" onclick="execActCmd('outdent')" title="Decrease Indent"><i class="fa-solid fa-outdent"></i></button>
+                    <button type="button" class="sindisa-tb-btn" onclick="execActCmd('indent')" title="Increase Indent"><i class="fa-solid fa-indent"></i></button>
+                    <button type="button" class="sindisa-tb-btn" onclick="execActCmd('formatBlock', 'blockquote')" title="Block Quote"><i class="fa-solid fa-quote-left"></i></button>
+                    <div class="sindisa-tb-sep"></div>
+                    <select class="sindisa-tb-select" onchange="if(this.value){execActCmd('formatBlock', this.value);this.value='';}">
+                      <option value="">Styles</option>
+                      <option value="p">Normal</option>
+                      <option value="h4">Subjudul Ringkasan</option>
+                      <option value="blockquote">Catatan Penting</option>
+                    </select>
+                    <select class="sindisa-tb-select" style="margin-left:4px" onchange="if(this.value){execActCmd('formatBlock', this.value);this.value='';}">
+                      <option value="">Format</option>
+                      <option value="p">Paragraph</option>
+                      <option value="h3">Heading 1</option>
+                      <option value="h4">Heading 2</option>
+                      <option value="pre">Formatted / Data</option>
+                    </select>
+                    <div class="sindisa-tb-sep"></div>
+                    <button type="button" class="sindisa-tb-btn" onclick="alert('Tips Pengisian Aktivitas:\n1. Pilih Topik Survei atau + Usulan Topik Baru.\n2. Pilih Jenis/Tahapan dan Metode Bimbingan.\n3. Ketik laporan progres, temuan kunci, atau lampirkan link Google Drive/Instrumen lalu klik Simpan Aktivitas.')" title="Help"><i class="fa-solid fa-question"></i></button>
+                  </div>
+                </div>
+                <div id="sindisa-editor-area" class="sindisa-editor-body" contenteditable="true" data-placeholder="Tuliskan detail masukan aktifitas, progres penyusunan instrumen/pengumpulan data, ringkasan hasil, atau lampirkan tautan dokumen draft untuk direview Kepala Deputi..."></div>
+              </div>
+            </div>
+
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+              <div style="font-size:11.5px;color:#64748b">
+                <i class="fa-solid fa-circle-info" style="color:#3b82f6"></i> Setelah dikirim, usulan/aktivitas dapat dipantau pada menu <strong>Status ACC Deputi</strong>.
+              </div>
+              <div style="display:flex;gap:8px">
+                <button type="button" onclick="resetSindisaActivityForm()" style="padding:9px 16px;border:1px solid #cbd5e1;background:#f8fafc;color:#475569;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer">
+                  Bersihkan
+                </button>
+                <button type="submit" style="padding:9px 20px;border:none;background:#1e40af;color:#ffffff;border-radius:8px;font-size:12.5px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px">
+                  <i class="fa-solid fa-paper-plane"></i> Simpan &amp; Kirim Aktivitas
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- TAB PANEL 2: PENULISAN & INSTRUMEN (PROGRES SURVEI) -->
       <div class="sindisa-panel-box" id="sindisa-panel-penulisan" style="display:none">
-        <h4 style="font-size:15px;font-weight:800;color:#1e293b;margin-bottom:6px">Status Penyusunan Instrumen & Data Survei</h4>
-        <p style="font-size:12px;color:#64748b;margin-bottom:18px">Daftar survei yang sedang dalam tahap penyusunan instrumen dan pengumpulan data</p>
+        <h4 style="font-size:15px;font-weight:800;color:#1e293b;margin-bottom:4px">Daftar Progres Penyusunan Instrumen &amp; Pelaksanaan Survei</h4>
+        <p style="font-size:12px;color:#64748b;margin-bottom:14px">Status tahapan survei yang sedang berjalan beserta catatan bimbingan/review terakhir</p>
         <div class="table-wrap">
           <table class="acc-table">
             <thead>
-              <tr><th>No</th><th>Unit</th><th>Judul Survei</th><th>Tahapan</th><th>Jadwal</th><th>Keterangan</th><th>Aksi Deputi</th></tr>
+              <tr><th>No</th><th>Unit</th><th>Judul Survei</th><th>Tahapan</th><th>Jadwal</th><th>Catatan / Aktivitas Terakhir</th><th>Aksi</th></tr>
             </thead>
             <tbody id="sindisa-penulisan-tbody"></tbody>
           </table>
@@ -2304,7 +2481,7 @@ setInterval(() => {
 
       <!-- TAB PANEL 4: REVIEW & UJIAN POLICY -->
       <div class="sindisa-panel-box" id="sindisa-panel-seminar" style="display:none">
-        <h4 style="font-size:15px;font-weight:800;color:#1e293b;margin-bottom:6px">Review Draft & Instrumen Kebijakan</h4>
+        <h4 style="font-size:15px;font-weight:800;color:#1e293b;margin-bottom:6px">Review Draft &amp; Instrumen Kebijakan</h4>
         <p style="font-size:12px;color:#64748b;margin-bottom:18px">Agenda pembahasan dan review hasil riset bersama Kepala Deputi</p>
         <div id="sindisa-seminar-list"></div>
       </div>
@@ -2313,17 +2490,17 @@ setInterval(() => {
       <div class="sindisa-panel-box" id="sindisa-panel-proposal" style="display:none">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">
           <div>
-            <h4 style="font-size:15px;font-weight:800;color:#1e293b">Persetujuan & Pengajuan Survei (ACC Deputi)</h4>
-            <p style="font-size:12px;color:#64748b">Beri persetujuan (ACC), catatan revisi, atau disposisi langsung untuk unit kerja</p>
+            <h4 id="proposal-panel-title" style="font-size:15px;font-weight:800;color:#1e293b">Persetujuan &amp; Pengajuan Survei (ACC Deputi)</h4>
+            <p id="proposal-panel-sub" style="font-size:12px;color:#64748b">Beri persetujuan (ACC), catatan revisi, atau disposisi langsung untuk unit kerja</p>
           </div>
-          <button onclick="openAjukanDisposisiModal()" style="padding:8px 14px;background:#16a34a;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer">
+          <button id="btn-proposal-add" onclick="openAjukanDisposisiModal()" style="padding:8px 14px;background:#16a34a;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer">
             <i class="fa-solid fa-plus-circle"></i> Beri Disposisi Baru
           </button>
         </div>
         <div class="table-wrap">
           <table class="acc-table">
             <thead>
-              <tr><th>Tanggal</th><th>Unit Pengusul</th><th>Judul / Draft Survei</th><th>Tahap Saat Ini</th><th>Status ACC</th><th style="min-width:180px">Tindakan Kepala Deputi</th></tr>
+              <tr><th>Tanggal</th><th>Unit Pengusul</th><th>Judul / Draft Survei</th><th>Tahap Saat Ini</th><th>Status ACC</th><th id="proposal-th-action" style="min-width:180px">Tindakan Kepala Deputi</th></tr>
             </thead>
             <tbody id="sindisa-acc-tbody"></tbody>
           </table>
@@ -2380,12 +2557,12 @@ setInterval(() => {
   </div>
 </div>
 
-<!-- MODAL: TAMBAH DISPOSISI / PENGAJUAN BARU OLEH DEPUTI -->
+<!-- MODAL: TAMBAH DISPOSISI / PENGAJUAN BARU OLEH DEPUTI / UNIT KERJA -->
 <div class="modal-overlay" id="ajukan-disposisi-modal" onclick="if(event.target===this)closeAjukanDisposisiModal()">
   <div class="modal" style="max-width:560px;text-align:left">
     <div class="modal-close" onclick="closeAjukanDisposisiModal()"><i class="fa-solid fa-xmark"></i></div>
-    <h3 style="font-size:16px;font-weight:800;color:#1e293b;margin-bottom:4px">Disposisi & Pengajuan Topik Survei Baru</h3>
-    <p style="font-size:12px;color:#64748b;margin-bottom:16px">Beri penugasan survei strategis dari Kepala Deputi kepada unit kerja</p>
+    <h3 id="disp-modal-title" style="font-size:16px;font-weight:800;color:#1e293b;margin-bottom:4px">Disposisi & Pengajuan Topik Survei Baru</h3>
+    <p id="disp-modal-sub" style="font-size:12px;color:#64748b;margin-bottom:16px">Beri penugasan survei strategis dari Kepala Deputi kepada unit kerja</p>
     <form onsubmit="submitDisposisiBaru(event)">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
         <div>
@@ -2413,8 +2590,8 @@ setInterval(() => {
         </div>
       </div>
       <div style="margin-bottom:12px">
-        <label style="font-size:11.5px;font-weight:700;color:#334155;display:block;margin-bottom:5px">Judul Topik / Survei yang Ditugaskan *</label>
-        <textarea id="disp-judul" required rows="2" placeholder="Masukkan arahan judul survei..." style="width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:7px;font-size:12px;font-family:inherit"></textarea>
+        <label id="disp-judul-label" style="font-size:11.5px;font-weight:700;color:#334155;display:block;margin-bottom:5px">Judul Topik / Survei yang Ditugaskan *</label>
+        <textarea id="disp-judul" required rows="2" placeholder="Masukkan judul topik survei..." style="width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:7px;font-size:12px;font-family:inherit"></textarea>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
         <div>
@@ -2430,12 +2607,12 @@ setInterval(() => {
         </div>
       </div>
       <div style="margin-bottom:16px">
-        <label style="font-size:11.5px;font-weight:700;color:#334155;display:block;margin-bottom:5px">Arahan Khusus Deputi</label>
-        <textarea id="disp-notes" rows="2" placeholder="Catatan penting untuk unit kerja..." style="width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:7px;font-size:12px;font-family:inherit"></textarea>
+        <label id="disp-notes-label" style="font-size:11.5px;font-weight:700;color:#334155;display:block;margin-bottom:5px">Arahan Khusus Deputi</label>
+        <textarea id="disp-notes" rows="2" placeholder="Catatan penting..." style="width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:7px;font-size:12px;font-family:inherit"></textarea>
       </div>
       <div style="display:flex;justify-content:flex-end;gap:8px">
         <button type="button" onclick="closeAjukanDisposisiModal()" style="padding:8px 14px;border:1px solid #cbd5e1;background:#f8fafc;border-radius:7px;font-size:12px;cursor:pointer">Batal</button>
-        <button type="submit" style="padding:8px 18px;border:none;background:#16a34a;color:#fff;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer">Kirim Disposisi</button>
+        <button id="disp-submit-btn" type="submit" style="padding:8px 18px;border:none;background:#16a34a;color:#fff;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer">Kirim Disposisi</button>
       </div>
     </form>
   </div>
@@ -3921,12 +4098,12 @@ const ROLE_CONFIGS = {
     title: "Kepala LAN RI",
     subtitle: "Pimpinan Lembaga Administrasi Negara",
     menus: [
-      { id: "dashboard", icon: "fa-chart-pie",         label: "Dashboard",                 action: "openTab('dashboard')" },
-      { id: "pengumuman",icon: "fa-bullhorn",          label: "Pengumuman",                action: "openTab('pengumuman')" },
-      { id: "penulisan", icon: "fa-pen-ruler",         label: "Penulisan & Instrumen",     action: "openTab('penulisan')" },
-      { id: "publikasi", icon: "fa-newspaper",         label: "Publikasi",                 action: "openTab('publikasi')" },
-      { id: "review",    icon: "fa-clipboard-question",label: "Review",                    action: "openTab('seminar')" },
-      { id: "proposal",  icon: "fa-clipboard-check",   label: "Topik Proposal / ACC",      badge: true, action: "openTab('proposal')" }
+      { id: "dashboard",  icon: "fa-chart-pie",          label: "Dashboard Eksekutif",        action: "openTab('dashboard')" },
+      { id: "pengumuman", icon: "fa-bullhorn",           label: "Pengumuman",                 action: "openTab('pengumuman')" },
+      { id: "proposal",   icon: "fa-clipboard-check",    label: "Persetujuan / ACC",          badge: true, action: "openTab('proposal')" },
+      { id: "penulisan",  icon: "fa-bars-progress",      label: "Monitoring Progres",         action: "openTab('penulisan')" },
+      { id: "review",     icon: "fa-clipboard-question", label: "Agenda Review",              action: "openTab('seminar')" },
+      { id: "publikasi",  icon: "fa-newspaper",          label: "Hasil Publikasi",            action: "openTab('publikasi')" }
     ],
     defaultTab: "dashboard"
   },
@@ -3934,12 +4111,12 @@ const ROLE_CONFIGS = {
     title: "Kepala Deputi",
     subtitle: "Deputi Kajian Kebijakan & Inovasi",
     menus: [
-      { id: "dashboard", icon: "fa-chart-pie",         label: "Dashboard",                 action: "openTab('dashboard')" },
-      { id: "pengumuman",icon: "fa-bullhorn",          label: "Pengumuman",                action: "openTab('pengumuman')" },
-      { id: "penulisan", icon: "fa-pen-ruler",         label: "Penulisan & Instrumen",     action: "openTab('penulisan')" },
-      { id: "publikasi", icon: "fa-newspaper",         label: "Publikasi",                 action: "openTab('publikasi')" },
-      { id: "review",    icon: "fa-clipboard-question",label: "Review",                    action: "openTab('seminar')" },
-      { id: "proposal",  icon: "fa-clipboard-check",   label: "Topik Proposal / ACC",      badge: true, action: "openTab('proposal')" }
+      { id: "dashboard",  icon: "fa-chart-pie",          label: "Dashboard Deputi",           action: "openTab('dashboard')" },
+      { id: "pengumuman", icon: "fa-bullhorn",           label: "Pengumuman",                 action: "openTab('pengumuman')" },
+      { id: "proposal",   icon: "fa-clipboard-check",    label: "Persetujuan / ACC",          badge: true, action: "openTab('proposal')" },
+      { id: "penulisan",  icon: "fa-bars-progress",      label: "Monitoring Progres",         action: "openTab('penulisan')" },
+      { id: "review",     icon: "fa-clipboard-question", label: "Agenda Review",              action: "openTab('seminar')" },
+      { id: "publikasi",  icon: "fa-newspaper",          label: "Hasil Publikasi",            action: "openTab('publikasi')" }
     ],
     defaultTab: "dashboard"
   },
@@ -3947,13 +4124,12 @@ const ROLE_CONFIGS = {
     title: "Admin DSPK2AN",
     subtitle: "Pusat Kajian Kebijakan Administrasi Negara",
     menus: [
-      { id: "dashboard", icon: "fa-chart-pie",         label: "Dashboard",                 action: "openTab('dashboard')" },
-      { id: "pengumuman",icon: "fa-bullhorn",          label: "Pengumuman",                action: "openTab('pengumuman')" },
-      { id: "penulisan", icon: "fa-pen-ruler",         label: "Penulisan & Instrumen",     action: "openTab('penulisan')" },
-      { id: "publikasi", icon: "fa-newspaper",         label: "Publikasi",                 action: "openTab('publikasi')" },
-      { id: "review",    icon: "fa-clipboard-question",label: "Review",                    action: "openTab('seminar')" },
-      { id: "proposal",  icon: "fa-clipboard-check",   label: "Topik Proposal / ACC",      badge: true, action: "openTab('proposal')" },
-      { id: "usulan",    icon: "fa-file-circle-plus",  label: "Usulan Publikasi",          action: "openAjukanDisposisiModal()" }
+      { id: "dashboard",  icon: "fa-chart-pie",          label: "Dashboard Monitoring",       action: "openTab('dashboard')" },
+      { id: "pengumuman", icon: "fa-bullhorn",           label: "Pengumuman",                 action: "openTab('pengumuman')" },
+      { id: "proposal",   icon: "fa-inbox",              label: "Pengajuan Masuk & Balasan",  badge: true, action: "openTab('proposal')" },
+      { id: "penulisan",  icon: "fa-bars-progress",      label: "Monitoring Progres",         action: "openTab('penulisan')" },
+      { id: "review",     icon: "fa-clipboard-question", label: "Agenda Review",              action: "openTab('seminar')" },
+      { id: "publikasi",  icon: "fa-newspaper",          label: "Hasil Publikasi",            action: "openTab('publikasi')" }
     ],
     defaultTab: "dashboard"
   },
@@ -3961,12 +4137,11 @@ const ROLE_CONFIGS = {
     title: "Humas LAN RI",
     subtitle: "Biro Humas & Publikasi",
     menus: [
-      { id: "dashboard", icon: "fa-chart-pie",         label: "Dashboard",                 action: "openTab('dashboard')" },
-      { id: "pengumuman",icon: "fa-bullhorn",          label: "Pengumuman",                action: "openTab('pengumuman')" },
-      { id: "penulisan", icon: "fa-pen-ruler",         label: "Penulisan & Instrumen",     action: "openTab('penulisan')" },
-      { id: "publikasi", icon: "fa-newspaper",         label: "Publikasi",                 action: "openTab('publikasi')" },
-      { id: "review",    icon: "fa-clipboard-question",label: "Review",                    action: "openTab('seminar')" },
-      { id: "proposal",  icon: "fa-clipboard-check",   label: "Topik Proposal / ACC",      badge: true, action: "openTab('proposal')" }
+      { id: "dashboard",  icon: "fa-chart-pie",          label: "Dashboard Publikasi",        action: "openTab('dashboard')" },
+      { id: "pengumuman", icon: "fa-bullhorn",           label: "Pengumuman",                 action: "openTab('pengumuman')" },
+      { id: "proposal",   icon: "fa-clipboard-check",    label: "Status ACC Deputi",          badge: true, action: "openTab('proposal')" },
+      { id: "penulisan",  icon: "fa-bars-progress",      label: "Monitoring Progres",         action: "openTab('penulisan')" },
+      { id: "publikasi",  icon: "fa-newspaper",          label: "Hasil Publikasi",            action: "openTab('publikasi')" }
     ],
     defaultTab: "dashboard"
   },
@@ -3974,13 +4149,12 @@ const ROLE_CONFIGS = {
     title: "Unit Kerja Pelaksana",
     subtitle: "Pelaksana Publikasi Survei",
     menus: [
-      { id: "dashboard", icon: "fa-chart-pie",         label: "Dashboard",                 action: "openTab('dashboard')" },
-      { id: "pengumuman",icon: "fa-bullhorn",          label: "Pengumuman",                action: "openTab('pengumuman')" },
-      { id: "penulisan", icon: "fa-pen-ruler",         label: "Penulisan & Instrumen",     action: "openTab('penulisan')" },
-      { id: "publikasi", icon: "fa-newspaper",         label: "Publikasi",                 action: "openTab('publikasi')" },
-      { id: "review",    icon: "fa-clipboard-question",label: "Review",                    action: "openTab('seminar')" },
-      { id: "proposal",  icon: "fa-clipboard-check",   label: "Topik Proposal / ACC",      badge: true, action: "openTab('proposal')" },
-      { id: "usulan",    icon: "fa-file-circle-plus",  label: "Usulan Publikasi",          action: "openAjukanDisposisiModal()" }
+      { id: "dashboard",  icon: "fa-chart-pie",       label: "Dashboard Unit",             action: "openTab('dashboard')" },
+      { id: "pengumuman", icon: "fa-bullhorn",        label: "Pengumuman",                 action: "openTab('pengumuman')" },
+      { id: "aktivitas",  icon: "fa-file-pen",        label: "Ajukan Publikasi / Aktivitas", action: "openTab('aktivitas')" },
+      { id: "proposal",   icon: "fa-clipboard-check", label: "Status ACC Deputi",          action: "openTab('proposal')" },
+      { id: "penulisan",  icon: "fa-bars-progress",   label: "Progres Survei",             action: "openTab('penulisan')" },
+      { id: "publikasi",  icon: "fa-newspaper",       label: "Hasil Publikasi",            action: "openTab('publikasi')" }
     ],
     defaultTab: "dashboard"
   }
@@ -3992,35 +4166,79 @@ function getRoleConfig(roleKey) {
   return ROLE_CONFIGS.deputi;
 }
 
-function applyLandingRolePresets(role) {
-  const uInput = document.getElementById('landing-username');
-  const pInput = document.getElementById('landing-password');
-  const hintEl = document.getElementById('landing-role-hint');
-  if(!uInput || !pInput) return;
+/* ── Database Akun Terhubung Langsung ke Sheet 'users' ── */
+const DEFAULT_USERS_DB = [
+  { username: "kepala.lan",    password: "lan2026",     role: "kepala_lan",    nama: "Kepala LAN RI",       jabatan: "Pimpinan Lembaga Administrasi Negara", unit: "LAN RI" },
+  { username: "deputi",        password: "deputi2026",  role: "deputi",        nama: "Kepala Deputi",       jabatan: "Deputi Kajian Kebijakan & Inovasi",    unit: "DEPUTI" },
+  { username: "admin.dspk2an", password: "dspk2an2026", role: "admin_dspk2an", nama: "Admin DSPK2AN",       jabatan: "Pengelola Survei & Publikasi DSPK2AN", unit: "DSPK2AN" },
+  { username: "humas.lan",     password: "humas2026",   role: "humas",         nama: "Humas LAN RI",        jabatan: "Biro Humas & Publikasi",               unit: "HUMAS" },
+  { username: "skpp",          password: "skpp2026",    role: "unit_skpp",     nama: "Admin SKPP",          jabatan: "Pusat Kajian Kebijakan",               unit: "SKPP" },
+  { username: "dapkk",         password: "dapkk2026",   role: "unit_dapkk",    nama: "Admin DAPKK",         jabatan: "Aparatur & Kelembagaan",               unit: "DAPKK" },
+  { username: "skmp",          password: "skmp2026",    role: "unit_skmp",     nama: "Admin SKMP",          jabatan: "Manajemen Publik",                     unit: "SKMP" },
+  { username: "sktan",         password: "sktan2026",   role: "unit_sktan",    nama: "Admin SKTAN",         jabatan: "Tata Administrasi Negara",             unit: "SKTAN" },
+  { username: "stia.jkt",      password: "stia2026",    role: "unit_stia_jkt", nama: "Admin STIA Jakarta",  jabatan: "Politeknik STIA LAN Jakarta",          unit: "STIA JKT" },
+  { username: "stia.mks",      password: "stia2026",    role: "unit_stia_mks", nama: "Admin STIA Makassar", jabatan: "Politeknik STIA LAN Makassar",         unit: "STIA MKS" },
+  { username: "stia.bdg",      password: "stia2026",    role: "unit_stia_bdg", nama: "Admin STIA Bandung",  jabatan: "Politeknik STIA LAN Bandung",          unit: "STIA BDG" },
+  { username: "skmk",          password: "skmk2026",    role: "unit_skmk",     nama: "Admin SKMK",          jabatan: "Krisis & Mitigasi",                    unit: "SKMK" }
+];
 
-  const presets = {
-    kepala_lan: { u: "kepala.lan", p: "lan2026", hint: "Persetujuan (ACC) & Riwayat ACC" },
-    deputi: { u: "deputi", p: "deputi2026", hint: "Dashboard, Persetujuan ACC, & Pengumuman" },
-    admin_dspk2an: { u: "admin.dspk2an", p: "dspk2an2026", hint: "Dashboard, Usulan Publikasi, & Monitoring" },
-    humas: { u: "humas.lan", p: "humas2026", hint: "Monitoring Publikasi & Jadwal Rilis" },
-    unit_skpp: { u: "skpp", p: "skpp2026", hint: "Dashboard & Usulan Publikasi Unit" },
-    unit_dapkk: { u: "dapkk", p: "dapkk2026", hint: "Dashboard & Usulan Publikasi Unit" },
-    unit_skmp: { u: "skmp", p: "skmp2026", hint: "Dashboard & Usulan Publikasi Unit" },
-    unit_sktan: { u: "sktan", p: "sktan2026", hint: "Dashboard & Usulan Publikasi Unit" },
-    unit_stia_jkt: { u: "stia.jkt", p: "stia2026", hint: "Dashboard & Usulan Publikasi Unit" },
-    unit_stia_mks: { u: "stia.mks", p: "stia2026", hint: "Dashboard & Usulan Publikasi Unit" },
-    unit_stia_bdg: { u: "stia.bdg", p: "stia2026", hint: "Dashboard & Usulan Publikasi Unit" },
-    unit_skmk: { u: "skmk", p: "skmk2026", hint: "Dashboard & Usulan Publikasi Unit" }
-  };
-
-  if(presets[role]) {
-    uInput.value = presets[role].u;
-    pInput.value = presets[role].p;
-    if(hintEl) {
-      hintEl.innerHTML = `<i class="fa-solid fa-key" style="font-size:10px"></i><span><strong>Akses:</strong> ${presets[role].hint}</span>`;
-    }
+let USERS_DB = [...DEFAULT_USERS_DB];
+try {
+  const cachedUsers = localStorage.getItem('lan_users_db');
+  if (cachedUsers) {
+    const parsed = JSON.parse(cachedUsers);
+    if (Array.isArray(parsed) && parsed.length > 0) USERS_DB = parsed;
   }
+} catch(e) {}
+
+async function syncUsersFromSheet() {
+  const statusEl = document.getElementById('users-sync-status');
+  try {
+    const sheetId = getSheetId();
+    const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=users&_t=${Date.now()}`;
+    const res = await fetch(url, { cache: 'no-store' });
+    if (res.ok) {
+      const csvText = await res.text();
+      const rows = parseCSV(csvText);
+      if (rows.length > 1) {
+        const header = rows[0].map(h => (h || '').trim().toLowerCase());
+        const uIdx = header.indexOf('username') >= 0 ? header.indexOf('username') : 0;
+        const pIdx = header.indexOf('password') >= 0 ? header.indexOf('password') : 1;
+        const rIdx = header.indexOf('role') >= 0 ? header.indexOf('role') : 2;
+        const nIdx = header.indexOf('nama') >= 0 ? header.indexOf('nama') : 3;
+        const jIdx = header.indexOf('jabatan') >= 0 ? header.indexOf('jabatan') : 4;
+        const unitIdx = header.indexOf('unit') >= 0 ? header.indexOf('unit') : 5;
+
+        const parsedUsers = rows.slice(1)
+          .filter(r => r[uIdx] && r[uIdx].trim() !== '')
+          .map(r => ({
+            username: (r[uIdx] || '').trim(),
+            password: (r[pIdx] || '').trim(),
+            role:     (r[rIdx] || 'deputi').trim(),
+            nama:     (r[nIdx] || r[uIdx] || '').trim(),
+            jabatan:  (r[jIdx] || '').trim(),
+            unit:     (r[unitIdx] || '').trim()
+          }));
+
+        if (parsedUsers.length > 0) {
+          USERS_DB = parsedUsers;
+          try { localStorage.setItem('lan_users_db', JSON.stringify(USERS_DB)); } catch(e) {}
+          if (statusEl) {
+            statusEl.style.color = '#16a34a';
+            statusEl.innerHTML = `<i class="fa-solid fa-circle-check"></i> ${USERS_DB.length} Akun Tersinkron`;
+          }
+          return true;
+        }
+      }
+    }
+  } catch(e) {
+    console.warn('[USERS SYNC] Menggunakan cache akun lokal:', e);
+  }
+  return false;
 }
+
+// Sinkronkan daftar akun dari sheet 'users' saat halaman dimuat
+syncUsersFromSheet();
 
 /* ── Login Image Slider Controls ── */
 let currentLoginSlide = 0;
@@ -4052,31 +4270,59 @@ setInterval(() => {
   }
 }, 4800);
 
-function handleLandingLogin(e) {
-  e.preventDefault();
-  const role = document.getElementById('landing-role').value;
-  const username = document.getElementById('landing-username').value.trim();
-  const cfg = getRoleConfig(role);
+function showLoginError(msg) {
+  const alertEl = document.getElementById('sipantau-login-alert');
+  if (!alertEl) return;
+  alertEl.style.display = 'flex';
+  alertEl.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> <span>${msg}</span>`;
+}
 
-  let formattedName = username ? username.toUpperCase() : cfg.title.toUpperCase();
+async function handleLandingLogin(e) {
+  e.preventDefault();
+  const alertEl = document.getElementById('sipantau-login-alert');
+  if (alertEl) alertEl.style.display = 'none';
+
+  const username = document.getElementById('landing-username').value.trim();
+  const password = document.getElementById('landing-password').value;
+  const btn = document.getElementById('btn-landing-submit');
+
+  let matched = USERS_DB.find(u => u.username.toLowerCase() === username.toLowerCase() && u.password === password);
+
+  // Jika belum cocok di memori lokal, coba tarik ulang dari sheet 'users' barangkali baru diupdate
+  if (!matched) {
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memverifikasi Akun...'; }
+    await syncUsersFromSheet();
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-right-to-bracket" style="margin-right:6px"></i> Masuk ke SIPANTAU'; }
+    matched = USERS_DB.find(u => u.username.toLowerCase() === username.toLowerCase() && u.password === password);
+  }
+
+  if (!matched) {
+    showLoginError('Username atau password salah. Pastikan sesuai dengan sheet "users".');
+    return;
+  }
+
+  const cfg = getRoleConfig(matched.role);
   const userObj = {
-    name: formattedName,
-    title: cfg.title,
-    subtitle: cfg.subtitle,
-    role: role,
-    username: username,
+    name: matched.nama || cfg.title,
+    title: matched.jabatan || cfg.title,
+    subtitle: matched.unit || cfg.subtitle,
+    role: matched.role,
+    unit: matched.unit,
+    username: matched.username,
     avatar: 'favicon.png',
     loginTime: new Date().toISOString()
   };
 
   setCurrentUser(userObj);
   hideLandingLogin();
-  openDeputiPortal("dashboard");
+  openDeputiPortal(cfg.defaultTab || "dashboard");
 }
 
 function showLandingLogin() {
   const landing = document.getElementById('sipantau-login-landing');
   if(landing) landing.style.display = 'flex';
+  const alertEl = document.getElementById('sipantau-login-alert');
+  if(alertEl) alertEl.style.display = 'none';
   document.body.style.overflow = 'hidden';
 }
 
@@ -4094,7 +4340,7 @@ function renderSidebarForRole(user) {
   const pendingCount = getApprovals().filter(i => i.status === 'Menunggu ACC').length;
 
   const modeEl = document.getElementById('sipantau-sidebar-mode');
-  if(modeEl && cfg) modeEl.textContent = cfg.title;
+  if(modeEl && cfg) modeEl.textContent = user && user.name ? `${user.name} (${user.unit || cfg.title})` : cfg.title;
 
   // Render the full vertical sidebar menu for SIPANTAU
   menuContainer.innerHTML = cfg.menus.map((m, idx) => {
@@ -4121,11 +4367,19 @@ let portalFilteredData = [...RAW];
 let portalHeatmapYear = 2026;
 let portalCharts = {};
 
+function isUnitUser(user) {
+  return !!(user && user.role && user.role.startsWith('unit_') && user.unit);
+}
+
 function initPortalDropdowns() {
+  const user = getCurrentUser();
+  const unitLocked = isUnitUser(user);
   const units = [...new Set(RAW.flatMap(d=>getAllUnits(d.unit)))].filter(u => u && !u.includes(',') && !u.includes('|') && u !== 'MULTI' && u !== 'Unknown').sort();
   const clusters = [...new Set(RAW.map(d=>d.cluster).filter(Boolean))].sort();
 
   const uSelect = document.getElementById('p-unit');
+  const uDivider = document.getElementById('p-unit-divider');
+  const allUnitsCard = document.getElementById('portal-all-units-card');
   if(uSelect) {
     uSelect.innerHTML = '<option value="">Semua Unit Kerja</option>';
     units.forEach(u => {
@@ -4133,6 +4387,16 @@ function initPortalDropdowns() {
       o.value = u; o.textContent = u;
       uSelect.appendChild(o);
     });
+    if(unitLocked) {
+      uSelect.value = user.unit;
+      uSelect.style.display = 'none';
+      if(uDivider) uDivider.style.display = 'none';
+      if(allUnitsCard) allUnitsCard.style.display = 'none';
+    } else {
+      uSelect.style.display = '';
+      if(uDivider) uDivider.style.display = '';
+      if(allUnitsCard) allUnitsCard.style.display = '';
+    }
   }
 
   const cSelect = document.getElementById('p-cluster');
@@ -4147,8 +4411,10 @@ function initPortalDropdowns() {
 }
 
 function applyPortalFilters() {
+  const user = getCurrentUser();
+  const unitLocked = isUnitUser(user);
   const year = document.getElementById('p-year') ? document.getElementById('p-year').value : '';
-  const unit = document.getElementById('p-unit') ? document.getElementById('p-unit').value : '';
+  const unit = unitLocked ? user.unit : (document.getElementById('p-unit') ? document.getElementById('p-unit').value : '');
   const cluster = document.getElementById('p-cluster') ? document.getElementById('p-cluster').value : '';
   const status = document.getElementById('p-status') ? document.getElementById('p-status').value : '';
 
@@ -4169,31 +4435,39 @@ function applyPortalFilters() {
 }
 
 function resetPortalFilters() {
+  const user = getCurrentUser();
+  const unitLocked = isUnitUser(user);
   ['p-year','p-unit','p-cluster','p-status'].forEach(id => {
     const el = document.getElementById(id);
-    if(el) el.value = '';
+    if(el) el.value = (id === 'p-unit' && unitLocked) ? user.unit : '';
   });
-  portalFilteredData = [...RAW];
-  renderPortalKPIs();
-  renderPortalCharts();
-  renderPortalRoadmap();
-  renderPortalReminderAndPerformance();
+  applyPortalFilters();
 }
 
 function renderPortalKPIs() {
+  const user = getCurrentUser();
+  const unitLocked = isUnitUser(user);
   const data = portalFilteredData, total = data.length;
   const selesai = data.filter(d=>getStatus(d)==='selesai').length;
   const belum = data.filter(d=>getStatus(d)==='belum').length;
   const pct = total ? Math.round(selesai/total*100) : 0;
   const pctBelum = total ? Math.round(belum/total*100) : 0;
-  const selectedUnit = (document.getElementById('p-unit') && document.getElementById('p-unit').value) || '';
-  const units2026 = selectedUnit ? 1 : 9;
+
+  let fourthKpi;
+  if(unitLocked) {
+    const predikat = pct >= 85 ? 'Sangat Baik (A)' : pct >= 65 ? 'Baik (B)' : pct >= 40 ? 'Cukup (C)' : 'Perlu Percepatan';
+    fourthKpi = {type:'total', icon:'fa-award', value:`${pct}%`, label:`Capaian ${user.unit}`, sub:`Predikat: ${predikat}`, color:'#7c3aed', ibg:'#f5f3ff', delta:null};
+  } else {
+    const selectedUnit = (document.getElementById('p-unit') && document.getElementById('p-unit').value) || '';
+    const units2026 = selectedUnit ? 1 : 9;
+    fourthKpi = {type:'unit', icon:'fa-building', value:units2026, label:'Unit Aktif 2026', sub:'Unit dengan publikasi 2026 · Klik list', color:'#7c3aed', ibg:'#f5f3ff', delta:null};
+  }
 
   const kpis = [
-    {type:'total',   icon:'fa-file-lines',    value:total,     label:'Total Publikasi', sub:'Semua tahun & unit · Klik lihat list',         color:'#1e40af', ibg:'#eff6ff', delta:null},
-    {type:'selesai', icon:'fa-circle-check',  value:selesai,   label:'Selesai',         sub:`${pct}% selesai · Klik lihat list`,           color:'#16a34a', ibg:'#f0fdf4', delta:{cls:'delta-good',text:`${pct}%`}},
-    {type:'belum',   icon:'fa-hourglass-half',value:belum,     label:'Belum Selesai',   sub:`${belum} survei berjalan · Klik lihat list`, color:'#dc2626', ibg:'#fef2f2', delta:{cls:'delta-bad', text:`${pctBelum}%`}},
-    {type:'unit',    icon:'fa-building',      value:units2026, label:'Unit Aktif 2026', sub:'Unit dengan publikasi 2026 · Klik list',     color:'#7c3aed', ibg:'#f5f3ff', delta:null},
+    {type:'total',   icon:'fa-file-lines',    value:total,     label:unitLocked ? `Total Survei ${user.unit}` : 'Total Publikasi', sub:'Klik untuk lihat daftar survei', color:'#1e40af', ibg:'#eff6ff', delta:null},
+    {type:'selesai', icon:'fa-circle-check',  value:selesai,   label:'Selesai Publikasi', sub:`${pct}% selesai · Klik lihat list`, color:'#16a34a', ibg:'#f0fdf4', delta:{cls:'delta-good',text:`${pct}%`}},
+    {type:'belum',   icon:'fa-hourglass-half',value:belum,     label:'Dalam Proses',   sub:`${belum} survei berjalan · Klik lihat list`, color:'#dc2626', ibg:'#fef2f2', delta:{cls:'delta-bad', text:`${pctBelum}%`}},
+    fourthKpi,
   ];
 
   const grid = document.getElementById('portal-kpi-grid');
@@ -4458,34 +4732,58 @@ function renderPortalRoadmap() {
 
 function renderPortalReminderAndPerformance() {
   const data = portalFilteredData;
+  const user = getCurrentUser();
+  const unitLocked = isUnitUser(user);
 
-  // 1. Reminder Overdue
+  // 1. Daftar Progres & Pengingat Jadwal Survei
   const overdueItems = data.filter(d => isOverdue(d));
+  const inProgressItems = data.filter(d => !isOverdue(d) && getStatus(d) === 'belum');
   const reminderList = document.getElementById('portal-reminder-list');
   const countBadge = document.getElementById('portal-reminder-count');
-  if(countBadge) countBadge.textContent = overdueItems.length + ' Terlambat';
+  const titleEl = document.getElementById('portal-active-list-title');
+
+  if(titleEl) {
+    titleEl.innerHTML = unitLocked
+      ? `<i class="fa-solid fa-list-check" style="color:#1e40af;margin-right:6px"></i>Progres &amp; Jadwal Survei ${user.unit}`
+      : `<i class="fa-solid fa-triangle-exclamation" style="color:#dc2626;margin-right:6px"></i>Pengingat Jadwal &amp; Survei Berjalan`;
+  }
+
+  if(countBadge) {
+    if(overdueItems.length > 0) {
+      countBadge.className = 'badge badge-red';
+      countBadge.textContent = overdueItems.length + ' Melewati Jadwal';
+    } else {
+      countBadge.className = 'badge badge-green';
+      countBadge.textContent = inProgressItems.length + ' Dalam Proses';
+    }
+  }
 
   if(reminderList) {
-    if(!overdueItems.length) {
-      reminderList.innerHTML = '<div style="padding:24px;text-align:center;color:#16a34a;font-size:12.5px;font-weight:600"><i class="fa-solid fa-circle-check" style="font-size:24px;display:block;margin-bottom:6px"></i>Seluruh publikasi saat ini tepat waktu sesuai jadwal!</div>';
+    const combined = [...overdueItems, ...inProgressItems];
+    const listToShow = combined.length ? combined : data;
+
+    if(!listToShow.length) {
+      reminderList.innerHTML = '<div style="padding:24px;text-align:center;color:#64748b;font-size:12.5px">Tidak ada data survei untuk filter ini.</div>';
     } else {
-      reminderList.innerHTML = overdueItems.map(d => {
-        const stage = getStageInfo(d);
+      reminderList.innerHTML = listToShow.map(d => {
+        const od = isOverdue(d);
+        const st = getStatus(d);
         const uc = UNIT_COLORS[getPrimaryUnit(d.unit)] || UNIT_COLORS['MULTI'];
         const idx = RAW.findIndex(x => x.no === d.no);
         return `
-          <div style="padding:10px 12px;border-radius:8px;border:1px solid #fecaca;background:#fff5f5;margin-bottom:8px;cursor:pointer;transition:all .18s" onclick="openModal(${idx})">
+          <div style="padding:10px 12px;border-radius:8px;border:1px solid ${od?'#fecaca':'#e2e8f0'};background:${od?'#fff5f5':'#f8fafc'};margin-bottom:8px;cursor:pointer;transition:all .18s" onclick="openModal(${idx})">
             <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
               <span class="badge" style="background:${uc.bg};color:${uc.text};font-weight:700">${d.unit}</span>
-              <span style="font-size:11px;font-weight:700;color:#b91c1c"><i class="fa-solid fa-clock-rotate-left"></i> Target: ${d.jadwal || '-'}</span>
+              <span style="font-size:11px;font-weight:700;color:${od?'#b91c1c':'#475569'}">
+                <i class="fa-regular fa-calendar"></i> ${d.jadwal || d.tahun || '-'}
+              </span>
             </div>
             <div style="font-size:12.5px;font-weight:700;color:#1e293b;margin:4px 0">${d.judul}</div>
             <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;flex-wrap:wrap;gap:6px">
               <div style="display:flex;align-items:center;gap:6px">
-                <span style="font-size:11px;color:#64748b;font-weight:600">Saat ini di:</span>
-                ${renderStageBadge(d)}
+                ${st === 'selesai' ? statusBadge('selesai') : renderStageBadge(d)}
               </div>
-              <span style="font-size:11px;color:#dc2626;font-weight:700">Perlu Penanganan &rarr;</span>
+              <span style="font-size:11px;color:${od?'#dc2626':'#1e40af'};font-weight:700">${od ? 'Perlu Tindak Lanjut &rarr;' : 'Detail &rarr;'}</span>
             </div>
           </div>
         `;
@@ -4493,7 +4791,7 @@ function renderPortalReminderAndPerformance() {
     }
   }
 
-  // 2. Penilaian Kinerja
+  // 2. Penilaian Kinerja Antar Unit
   const perfList = document.getElementById('portal-performance-list');
   if(perfList) {
     const allUnits = [...new Set(RAW.flatMap(d => getAllUnits(d.unit)))].filter(u => u && !u.includes(',') && u!=='MULTI').sort();
@@ -4537,10 +4835,263 @@ function renderPortalReminderAndPerformance() {
   }
 }
 
+function mountSindisaActivityCard(activePanel) {
+  const card = document.getElementById('sindisa-shared-activity-card');
+  if(!card) return;
+  const user = getCurrentUser();
+  const unitLocked = isUnitUser(user);
+
+  const mountTarget = document.getElementById('activity-mount-' + activePanel);
+  if(mountTarget && (activePanel === 'penulisan' || activePanel === 'proposal')) {
+    mountTarget.appendChild(card);
+    // Tampilkan form gaya SINDISA untuk Unit Kerja (atau semua role di tab penulisan/proposal)
+    card.style.display = 'block';
+    populateActTopikDropdown();
+    // Jika di tab proposal dan user adalah Unit Kerja, tombol "+ Ajukan Usulan Baru" akan mengarahkan fokus ke form di atas
+    const btnAddEl = document.getElementById('btn-proposal-add');
+    if(btnAddEl && unitLocked) {
+      btnAddEl.onclick = function() {
+        const sel = document.getElementById('act-topik-select');
+        if(sel) {
+          sel.value = '__NEW__';
+          handleActTopikChange('__NEW__');
+        }
+        card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      };
+    } else if(btnAddEl) {
+      btnAddEl.onclick = openAjukanDisposisiModal;
+    }
+  } else {
+    card.style.display = 'none';
+  }
+}
+
+function populateActTopikDropdown() {
+  const sel = document.getElementById('act-topik-select');
+  if(!sel) return;
+  const currentVal = sel.value;
+  const user = getCurrentUser();
+  const unitLocked = isUnitUser(user);
+  const surveys = RAW.filter(d => !unitLocked || getAllUnits(d.unit).includes(user.unit));
+
+  sel.innerHTML = '<option value="">Pilih</option>' +
+    '<option value="__NEW__" style="font-weight:700;color:#1e40af">+ Ajukan Topik / Usulan Survei Baru...</option>' +
+    surveys.map(d => `<option value="${d.no}">[${d.unit}] ${d.judul}</option>`).join('');
+
+  if(currentVal && Array.from(sel.options).some(o => o.value === currentVal)) {
+    sel.value = currentVal;
+  }
+}
+
+function handleActTopikChange(val) {
+  const customInput = document.getElementById('act-topik-custom');
+  const unitCustom = document.getElementById('act-unit-custom');
+  const jenisSelect = document.getElementById('act-jenis-select');
+  const user = getCurrentUser();
+  const unitLocked = isUnitUser(user);
+  if(!customInput) return;
+
+  if(val === '__NEW__') {
+    customInput.style.display = 'block';
+    customInput.required = true;
+    if(unitCustom) {
+      unitCustom.style.display = unitLocked ? 'none' : 'block';
+    }
+    customInput.focus();
+    if(jenisSelect && !jenisSelect.value) jenisSelect.value = '1';
+  } else {
+    customInput.style.display = 'none';
+    customInput.required = false;
+    if(unitCustom) unitCustom.style.display = 'none';
+    if(val) {
+      const d = RAW.find(x => String(x.no) === String(val));
+      if(d && jenisSelect) {
+        const stg = getStageInfo(d);
+        jenisSelect.value = String(stg.id);
+      }
+    }
+  }
+}
+
+function execActCmd(cmd, val = null) {
+  const editor = document.getElementById('sindisa-editor-area');
+  if(!editor) return;
+  editor.focus();
+  document.execCommand(cmd, false, val);
+}
+
+function insertActLink(promptText) {
+  const url = prompt(promptText || 'Masukkan URL Tautan (Google Drive / Docs / Link Publikasi):', 'https://');
+  if(url && url !== 'https://') {
+    execActCmd('createLink', url);
+  }
+}
+
+function insertActFlag() {
+  execActCmd('insertHTML', '<span style="background:#fef08a;color:#854d0e;padding:2px 6px;border-radius:4px;font-weight:700">⚑ Poin Penting: </span>&nbsp;');
+}
+
+function insertActSymbol() {
+  execActCmd('insertText', '• ');
+}
+
+function insertActTable() {
+  const tblHtml = `
+    <table style="width:100%;border-collapse:collapse;margin:8px 0;font-size:12.5px">
+      <thead>
+        <tr style="background:#f1f5f9">
+          <th style="border:1px solid #cbd5e1;padding:6px 10px;text-align:left">Komponen / Indikator</th>
+          <th style="border:1px solid #cbd5e1;padding:6px 10px;text-align:left">Target</th>
+          <th style="border:1px solid #cbd5e1;padding:6px 10px;text-align:left">Capaian / Keterangan</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="border:1px solid #cbd5e1;padding:6px 10px">Responden / Instrumen</td>
+          <td style="border:1px solid #cbd5e1;padding:6px 10px">100%</td>
+          <td style="border:1px solid #cbd5e1;padding:6px 10px">Dalam proses review</td>
+        </tr>
+      </tbody>
+    </table><p><br></p>`;
+  execActCmd('insertHTML', tblHtml);
+}
+
+function toggleActEditorFullscreen() {
+  const card = document.getElementById('sindisa-shared-activity-card');
+  if(!card) return;
+  if(card.style.position === 'fixed') {
+    card.style.position = '';
+    card.style.inset = '';
+    card.style.zIndex = '';
+    card.style.margin = '';
+    card.style.overflowY = '';
+  } else {
+    card.style.position = 'fixed';
+    card.style.inset = '20px';
+    card.style.zIndex = '9999';
+    card.style.margin = '0';
+    card.style.overflowY = 'auto';
+  }
+}
+
+function resetSindisaActivityForm() {
+  const selTopik = document.getElementById('act-topik-select');
+  const customTopik = document.getElementById('act-topik-custom');
+  const unitCustom = document.getElementById('act-unit-custom');
+  const selJenis = document.getElementById('act-jenis-select');
+  const selMetode = document.getElementById('act-metode-select');
+  const editor = document.getElementById('sindisa-editor-area');
+  if(selTopik) selTopik.value = '';
+  if(customTopik) { customTopik.value = ''; customTopik.style.display = 'none'; customTopik.required = false; }
+  if(unitCustom) unitCustom.style.display = 'none';
+  if(selJenis) selJenis.value = '';
+  if(selMetode) selMetode.value = '';
+  if(editor) editor.innerHTML = '';
+}
+
+function submitSindisaActivityForm(e) {
+  e.preventDefault();
+  const user = getCurrentUser();
+  const unitLocked = isUnitUser(user);
+  const unitCustomEl = document.getElementById('act-unit-custom');
+  const unitName = (unitLocked && user.unit) ? user.unit : (unitCustomEl && unitCustomEl.value ? unitCustomEl.value : 'DSPK2AN');
+
+  const topikVal = document.getElementById('act-topik-select').value;
+  const customJudul = document.getElementById('act-topik-custom').value.trim();
+  const stageId = parseInt(document.getElementById('act-jenis-select').value) || 2;
+  const metode = document.getElementById('act-metode-select').value;
+  const penerima = document.getElementById('act-penerima-select').value;
+  const editor = document.getElementById('sindisa-editor-area');
+  const rawText = editor ? editor.innerText.trim() : '';
+
+  if(!rawText) {
+    alert('Silakan tuliskan detail Masukan Aktifitas terlebih dahulu.');
+    if(editor) editor.focus();
+    return;
+  }
+
+  const stageObj = SURVEY_STAGES.find(s => s.id === stageId) || SURVEY_STAGES[1];
+  const dateStr = new Date().toLocaleDateString('id-ID', {day:'numeric', month:'short', year:'numeric'});
+  const summaryNote = `[${metode} -> ${penerima}] ${rawText}`;
+
+  let targetSurveyNo = null;
+  let targetJudul = '';
+  let targetUnit = unitName;
+
+  if(topikVal === '__NEW__') {
+    if(!customJudul) {
+      alert('Silakan isi judul usulan topik survei baru.');
+      return;
+    }
+    targetSurveyNo = RAW.length > 0 ? Math.max(...RAW.map(d=>d.no||0)) + 1 : 1;
+    targetJudul = customJudul;
+    const newItem = {
+      no: targetSurveyNo,
+      unit: targetUnit,
+      judul: targetJudul,
+      jenis: 'Usulan Survei Unit',
+      jadwal: '2026',
+      tahun: '2026',
+      cluster: 'Tata Kelola & Manajemen ASN',
+      jurnal: '', media: '', webLAN: '', webUnit: '', igLAN: '', igUnit: '', ytLAN: '', ytUnit: '',
+      ket: `Tahap ${stageObj.name} - ${summaryNote}`,
+      tahapan: stageObj.name
+    };
+    RAW.unshift(newItem);
+    filteredData = [...RAW];
+  } else {
+    targetSurveyNo = parseInt(topikVal);
+    const existing = RAW.find(d => d.no === targetSurveyNo);
+    if(existing) {
+      targetJudul = existing.judul;
+      targetUnit = existing.unit;
+      existing.tahapan = stageObj.name;
+      existing.ket = (stageId === 7 ? 'Selesai - ' : `Tahap ${stageObj.name} - `) + summaryNote;
+    }
+  }
+
+  const list = getApprovals();
+  const existingAccIdx = list.findIndex(item => item.surveyNo === targetSurveyNo);
+  const newAccObj = {
+    id: Date.now(),
+    surveyNo: targetSurveyNo,
+    unit: targetUnit,
+    judul: targetJudul,
+    stageId: stageId,
+    stageName: stageObj.name,
+    status: 'Menunggu ACC',
+    date: dateStr,
+    note: summaryNote
+  };
+
+  if(existingAccIdx >= 0) {
+    list[existingAccIdx] = newAccObj;
+  } else {
+    list.unshift(newAccObj);
+  }
+  saveApprovals(list);
+  try { localStorage.setItem('lan_pub_data', JSON.stringify(RAW)); } catch(err){}
+
+  resetSindisaActivityForm();
+  populateActTopikDropdown();
+  renderSindisaAccTable();
+  renderSindisaPenulisan();
+  renderSindisaPublikasi();
+  updatePendingBadges();
+  applyPortalFilters();
+  renderKPIs();
+  renderCharts();
+  renderTable();
+
+  alert(`Masukan aktifitas untuk "${targetJudul}" berhasil dikirim kepada ${penerima}!`);
+  openTab('proposal');
+}
+
 function openTab(tabName) {
   const panelMap = {
     'dashboard': 'dashboard',
     'pengumuman': 'pengumuman',
+    'aktivitas': 'aktivitas',
     'penulisan': 'penulisan',
     'publikasi': 'publikasi',
     'review': 'seminar',
@@ -4550,7 +5101,7 @@ function openTab(tabName) {
   };
   const activePanel = panelMap[tabName] || tabName;
 
-  const panels = ['dashboard', 'pengumuman', 'penulisan', 'publikasi', 'seminar', 'proposal'];
+  const panels = ['dashboard', 'pengumuman', 'aktivitas', 'penulisan', 'publikasi', 'seminar', 'proposal'];
   panels.forEach(p => {
     const el = document.getElementById('sindisa-panel-' + p);
     if(el) el.style.display = (p === activePanel) ? 'block' : 'none';
@@ -4570,6 +5121,19 @@ function openTab(tabName) {
     initPortalDropdowns();
     applyPortalFilters();
   }
+  if(activePanel === 'aktivitas') {
+    populateActTopikDropdown();
+  }
+  if(activePanel === 'penulisan' || activePanel === 'proposal') {
+    const user = getCurrentUser();
+    const unitLocked = isUnitUser(user);
+    const btnAddEl = document.getElementById('btn-proposal-add');
+    if(btnAddEl) {
+      btnAddEl.onclick = unitLocked ? function() { openTab('aktivitas'); } : openAjukanDisposisiModal;
+    }
+    renderSindisaAccTable();
+    renderSindisaPenulisan();
+  }
 }
 
 function switchSindisaTab(tabId) {
@@ -4588,10 +5152,24 @@ function openDeputiPortal(targetTab) {
   document.body.style.overflow = 'hidden';
 
   const user = getCurrentUser() || { name: 'KEPALA DEPUTI', role: 'deputi' };
+  const unitLocked = isUnitUser(user);
   const greetEl = document.getElementById('sindisa-header-username');
   const welEl = document.getElementById('sindisa-welcome-name');
+  const subEl = document.getElementById('sindisa-welcome-sub');
+  const btnAcc = document.getElementById('btn-welcome-acc');
+  const btnUsulan = document.getElementById('btn-welcome-usulan');
+  const btnMemo = document.getElementById('btn-tambah-memo');
+
   if(greetEl) greetEl.textContent = 'Hi, ' + user.name;
   if(welEl) welEl.textContent = 'Selamat Datang, ' + user.name;
+  if(subEl) {
+    subEl.textContent = unitLocked
+      ? `Dashboard Monitoring & Pelaporan Publikasi Survei Unit Kerja ${user.unit} — ${user.title || 'LAN RI'}`
+      : 'Portal Pemantauan & Persetujuan Publikasi Lembaga Administrasi Negara Republik Indonesia';
+  }
+  if(btnAcc) btnAcc.style.display = unitLocked ? 'none' : '';
+  if(btnUsulan) btnUsulan.style.display = unitLocked ? '' : 'none';
+  if(btnMemo) btnMemo.style.display = unitLocked ? 'none' : '';
 
   renderSidebarForRole(user);
   renderSindisaPengumuman();
@@ -4634,10 +5212,12 @@ function renderSindisaPengumuman() {
 function renderSindisaPenulisan() {
   const tbody = document.getElementById('sindisa-penulisan-tbody');
   if(!tbody) return;
-  const inProgress = RAW.filter(d => getStatus(d) === 'belum');
+  const user = getCurrentUser();
+  const unitLocked = isUnitUser(user);
+  const inProgress = RAW.filter(d => getStatus(d) === 'belum' && (!unitLocked || getAllUnits(d.unit).includes(user.unit)));
 
   tbody.innerHTML = inProgress.map((d, i) => {
-    const stage = getStageInfo(d);
+    const idx = RAW.findIndex(x => x.no === d.no);
     return `
       <tr>
         <td>${i+1}</td>
@@ -4647,9 +5227,15 @@ function renderSindisaPenulisan() {
         <td>${d.jadwal || '-'}</td>
         <td style="font-size:11.5px;color:#64748b">${d.ket || '-'}</td>
         <td>
-          <button class="acc-action-btn btn-acc" onclick="openAccDecisionForSurvey(${d.no})">
-            <i class="fa-solid fa-stamp"></i> ACC / Disposisi
-          </button>
+          ${unitLocked ? `
+            <button class="acc-action-btn btn-acc" onclick="openModal(${idx})">
+              <i class="fa-solid fa-eye"></i> Detail
+            </button>
+          ` : `
+            <button class="acc-action-btn btn-acc" onclick="openAccDecisionForSurvey(${d.no})">
+              <i class="fa-solid fa-reply"></i> Balas / Update
+            </button>
+          `}
         </td>
       </tr>
     `;
@@ -4659,7 +5245,9 @@ function renderSindisaPenulisan() {
 function renderSindisaPublikasi() {
   const tbody = document.getElementById('sindisa-publikasi-tbody');
   if(!tbody) return;
-  const selesai = RAW.filter(d => getStatus(d) === 'selesai');
+  const user = getCurrentUser();
+  const unitLocked = isUnitUser(user);
+  const selesai = RAW.filter(d => getStatus(d) === 'selesai' && (!unitLocked || getAllUnits(d.unit).includes(user.unit)));
 
   tbody.innerHTML = selesai.map((d, i) => {
     const ch = getChannelCount(d);
@@ -4673,7 +5261,7 @@ function renderSindisaPublikasi() {
         <td>${statusBadge('selesai')}</td>
       </tr>
     `;
-  }).join('');
+  }).join('') || '<tr><td colspan="6" style="text-align:center;padding:20px;color:#94a3b8">Belum ada publikasi selesai untuk unit ini</td></tr>';
 }
 
 function renderSindisaSeminar() {
@@ -4700,12 +5288,77 @@ function renderSindisaSeminar() {
 function renderSindisaAccTable() {
   const tbody = document.getElementById('sindisa-acc-tbody');
   if(!tbody) return;
-  const list = getApprovals();
+  const user = getCurrentUser();
+  const unitLocked = isUnitUser(user);
+  const isAdminDspk = !!(user && user.role === 'admin_dspk2an');
+
+  const titleEl = document.getElementById('proposal-panel-title');
+  const subEl = document.getElementById('proposal-panel-sub');
+  const btnAddEl = document.getElementById('btn-proposal-add');
+  const thActionEl = document.getElementById('proposal-th-action');
+
+  if(titleEl) {
+    titleEl.textContent = unitLocked
+      ? `Status ACC & Usulan Survei Unit (${user.unit})`
+      : isAdminDspk
+        ? 'Pengajuan Publikasi Masuk & Balasan (Admin DSPK2AN)'
+        : 'Persetujuan & Pengajuan Survei (ACC Deputi)';
+  }
+  if(subEl) {
+    subEl.textContent = unitLocked
+      ? 'Pantau status persetujuan (ACC) dan catatan balasan atas usulan survei unit Anda'
+      : isAdminDspk
+        ? 'Terima pengajuan publikasi/aktivitas dari Unit Kerja dan berikan balasan verifikasi atau catatan revisi'
+        : 'Beri persetujuan (ACC), catatan revisi, atau disposisi langsung untuk unit kerja';
+  }
+  if(btnAddEl) {
+    if(isAdminDspk) {
+      btnAddEl.style.display = 'none';
+    } else {
+      btnAddEl.style.display = '';
+      btnAddEl.innerHTML = unitLocked
+        ? '<i class="fa-solid fa-plus-circle"></i> Ajukan Publikasi / Aktivitas'
+        : '<i class="fa-solid fa-plus-circle"></i> Beri Disposisi Baru';
+    }
+  }
+  if(thActionEl) {
+    thActionEl.textContent = unitLocked ? 'Detail Usulan' : isAdminDspk ? 'Tindakan / Balasan Admin' : 'Tindakan Kepala Deputi';
+  }
+
+  let list = getApprovals();
+  if(unitLocked) {
+    list = list.filter(item => getAllUnits(item.unit).includes(user.unit));
+    // Jika unit ini belum punya riwayat di daftar approval lokal, tampilkan survei unit tersebut dari database utama
+    if(list.length === 0) {
+      const unitSurveys = RAW.filter(d => getAllUnits(d.unit).includes(user.unit));
+      list = unitSurveys.map(d => {
+        const stg = getStageInfo(d);
+        const done = getStatus(d) === 'selesai';
+        return {
+          id: 'raw-' + d.no,
+          surveyNo: d.no,
+          unit: d.unit,
+          judul: d.judul,
+          stageId: stg.id,
+          stageName: stg.name,
+          status: done || stg.id >= 3 ? 'ACC' : 'Menunggu ACC',
+          date: d.jadwal || d.tahun || '2026',
+          note: d.ket || 'Terdaftar dalam program survei unit kerja'
+        };
+      });
+    }
+  }
+
+  if(list.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:#94a3b8">Belum ada pengajuan usulan survei saat ini.</td></tr>';
+    return;
+  }
 
   tbody.innerHTML = list.map(item => {
     let statusClass = 'badge badge-yellow';
     if(item.status === 'ACC') statusClass = 'badge badge-green';
     if(item.status === 'Perlu Revisi') statusClass = 'badge badge-red';
+    const rawIdx = item.surveyNo ? RAW.findIndex(x => x.no === item.surveyNo) : -1;
 
     return `
       <tr>
@@ -4718,12 +5371,18 @@ function renderSindisaAccTable() {
         <td><span class="stage-badge stage-${item.stageId}">Tahap ${item.stageId}: ${item.stageName}</span></td>
         <td><span class="${statusClass}">${item.status}</span></td>
         <td>
-          <button class="acc-action-btn btn-acc" onclick="openAccDecisionItem(${item.id})">
-            <i class="fa-solid fa-check"></i> ACC
-          </button>
-          <button class="acc-action-btn btn-rev" onclick="openAccDecisionItem(${item.id}, 'Perlu Revisi')">
-            <i class="fa-solid fa-pen"></i> Catatan
-          </button>
+          ${unitLocked ? `
+            <button class="acc-action-btn btn-acc" onclick="${rawIdx >= 0 ? `openModal(${rawIdx})` : `alert('Judul: ${item.judul.replace(/'/g, "\\'")}\\nStatus: ${item.status}\\nCatatan: ${(item.note||'-').replace(/'/g, "\\'")}')`}">
+              <i class="fa-solid fa-eye"></i> Lihat Detail
+            </button>
+          ` : `
+            <button class="acc-action-btn btn-acc" onclick="openAccDecisionItem(${typeof item.id === 'number' ? item.id : 0})">
+              <i class="fa-solid fa-check"></i> ${isAdminDspk ? 'Verifikasi / ACC' : 'ACC'}
+            </button>
+            <button class="acc-action-btn btn-rev" onclick="openAccDecisionItem(${typeof item.id === 'number' ? item.id : 0}, 'Perlu Revisi')">
+              <i class="fa-solid fa-reply"></i> ${isAdminDspk ? 'Balas Catatan' : 'Catatan'}
+            </button>
+          `}
         </td>
       </tr>
     `;
@@ -4827,6 +5486,28 @@ function submitAccDecision(e) {
 }
 
 function openAjukanDisposisiModal() {
+  const user = getCurrentUser();
+  const unitLocked = isUnitUser(user);
+  const uSel = document.getElementById('disp-unit');
+  const mTitle = document.getElementById('disp-modal-title');
+  const mSub = document.getElementById('disp-modal-sub');
+  const jLabel = document.getElementById('disp-judul-label');
+  const nLabel = document.getElementById('disp-notes-label');
+  const sBtn = document.getElementById('disp-submit-btn');
+
+  if (uSel) {
+    if (user && user.unit) {
+      const matchOpt = Array.from(uSel.options).find(o => o.value.toUpperCase() === user.unit.toUpperCase());
+      if (matchOpt) uSel.value = matchOpt.value;
+    }
+    uSel.disabled = unitLocked;
+  }
+  if (mTitle) mTitle.textContent = unitLocked ? `Ajukan Usulan Survei Baru (${user.unit})` : 'Disposisi & Pengajuan Topik Survei Baru';
+  if (mSub) mSub.textContent = unitLocked ? 'Ajukan topik survei unit kerja untuk mendapatkan persetujuan (ACC) Kepala Deputi' : 'Beri penugasan survei strategis dari Kepala Deputi kepada unit kerja';
+  if (jLabel) jLabel.textContent = unitLocked ? 'Judul Topik / Survei yang Diajukan *' : 'Judul Topik / Survei yang Ditugaskan *';
+  if (nLabel) nLabel.textContent = unitLocked ? 'Keterangan / Latar Belakang Usulan' : 'Arahan Khusus Deputi';
+  if (sBtn) sBtn.textContent = unitLocked ? 'Kirim Usulan' : 'Kirim Disposisi';
+
   document.getElementById('ajukan-disposisi-modal').classList.add('open');
 }
 function closeAjukanDisposisiModal() {
@@ -4835,7 +5516,9 @@ function closeAjukanDisposisiModal() {
 
 function submitDisposisiBaru(e) {
   e.preventDefault();
-  const unit = document.getElementById('disp-unit').value;
+  const user = getCurrentUser();
+  const unitLocked = isUnitUser(user);
+  const unit = (unitLocked && user.unit) ? user.unit : document.getElementById('disp-unit').value;
   const cluster = document.getElementById('disp-cluster').value;
   const judul = document.getElementById('disp-judul').value.trim();
   const jadwal = document.getElementById('disp-jadwal').value.trim();
@@ -4848,12 +5531,12 @@ function submitDisposisiBaru(e) {
     no: newNo,
     unit: unit,
     judul: judul,
-    jenis: 'Survei Disposisi Deputi',
+    jenis: unitLocked ? 'Usulan Survei Unit' : 'Survei Disposisi Deputi',
     jadwal: jadwal,
     tahun: '2026',
     cluster: cluster,
     jurnal: '', media: '', webLAN: '', webUnit: '', igLAN: '', igUnit: '', ytLAN: '', ytUnit: '',
-    ket: 'Disposisi Deputi: Tahap ' + stageObj.name + (notes ? ' - ' + notes : ''),
+    ket: (unitLocked ? 'Usulan Unit: Tahap ' : 'Disposisi Deputi: Tahap ') + stageObj.name + (notes ? ' - ' + notes : ''),
     tahapan: stageObj.name
   };
 
@@ -4868,9 +5551,9 @@ function submitDisposisiBaru(e) {
     judul: judul,
     stageId: stageId,
     stageName: stageObj.name,
-    status: 'ACC',
+    status: unitLocked ? 'Menunggu ACC' : 'ACC',
     date: new Date().toLocaleDateString('id-ID', {day:'numeric', month:'short', year:'numeric'}),
-    note: 'Disposisi langsung dari Kepala Deputi. ' + notes
+    note: unitLocked ? (notes || 'Usulan baru dari unit kerja, menunggu review & ACC Kepala Deputi.') : ('Disposisi langsung dari Kepala Deputi. ' + notes)
   });
   saveApprovals(list);
 
@@ -4880,10 +5563,13 @@ function submitDisposisiBaru(e) {
   renderSindisaAccTable();
   renderSindisaPenulisan();
   updatePendingBadges();
+  applyPortalFilters();
   renderKPIs();
   renderCharts();
   renderTable();
-  alert('Disposisi topik survei baru berhasil dikirim ke unit ' + unit + '!');
+  alert(unitLocked
+    ? 'Usulan survei baru dari unit ' + unit + ' berhasil dikirim dan berstatus Menunggu ACC Kepala Deputi!'
+    : 'Disposisi topik survei baru berhasil dikirim ke unit ' + unit + '!');
 }
 
 function openTambahPengumumanModal() {
