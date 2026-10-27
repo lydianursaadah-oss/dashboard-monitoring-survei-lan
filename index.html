@@ -492,7 +492,7 @@
 
     /* ═══════════════════ MODAL ═══════════════════ */
     .modal-overlay {
-      display: none; position: fixed; inset: 0; z-index: 200;
+      display: none; position: fixed; inset: 0; z-index: 9999;
       background: rgba(15,23,42,.45); backdrop-filter: blur(6px);
       align-items: center; justify-content: center;
     }
@@ -1322,6 +1322,10 @@ async function syncDataFromSheet(isManual = false) {
     applyFilters();
     renderRoadmap(filteredData);
     renderTable();
+    if (typeof applyPortalFilters === 'function') {
+      initPortalDropdowns();
+      applyPortalFilters();
+    }
 
     const nowStr = new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
     setGasBadge('', `Terhubung Google Sheet (${nowStr})`);
@@ -1898,7 +1902,7 @@ setInterval(() => {
 
 
       <div style="margin-top:auto;padding:16px 20px;border-top:1px solid #f1f5f9">
-        <div style="font-size:11px;color:#94a3b8;margin-bottom:8px">Mode Akses: <strong>Kepala Deputi</strong></div>
+        <div style="font-size:11px;color:#94a3b8;margin-bottom:8px">Mode Akses: <strong id="sipantau-sidebar-mode">Kepala Deputi</strong></div>
         <button onclick="handleUserLogout()" style="width:100%;padding:8px;border-radius:6px;border:1px solid #fecaca;background:#fef2f2;color:#dc2626;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px">
           <i class="fa-solid fa-right-from-bracket"></i> Keluar / Logout
         </button>
@@ -1916,7 +1920,7 @@ setInterval(() => {
           </div>
         </div>
         <div style="display:flex;gap:8px">
-          <button onclick="switchSindisaPage('acc')" style="padding:7px 14px;background:#1e40af;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer">
+          <button onclick="openTab('proposal')" style="padding:7px 14px;background:#1e40af;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer">
             <i class="fa-solid fa-bell" style="margin-right:5px"></i> Perlu ACC (<span id="sindisa-pending-num">3</span>)
           </button>
         </div>
@@ -2575,9 +2579,12 @@ function syncNavUnit(val){
 
 async function syncDataFromGAS(){
   const icon = document.getElementById('refresh-icon');
+  const pIcon = document.getElementById('portal-refresh-icon');
   if(icon) icon.classList.add('fa-spin');
+  if(pIcon) pIcon.classList.add('fa-spin');
   await syncDataFromSheet(true);
   if(icon) setTimeout(()=>icon.classList.remove('fa-spin'), 600);
+  if(pIcon) setTimeout(()=>pIcon.classList.remove('fa-spin'), 600);
 }
 
 function openAddAgendaModal(){
@@ -2725,10 +2732,14 @@ function changeHeatmapYear(delta) {
 }
 
 function openWeeklyCellModal(monthIndex, weekNum) {
+  const isPortal = document.getElementById('deputi-portal-view') && document.getElementById('deputi-portal-view').classList.contains('active');
+  const targetYear = isPortal ? portalHeatmapYear : activeHeatmapYear;
+  const sourceData = isPortal ? portalFilteredData : filteredData;
+
   const monthName = MONTH_ORDER[monthIndex];
-  const items = filteredData.filter(d => {
+  const items = sourceData.filter(d => {
     const yr = parseInt(d.tahun) || 2026;
-    if(yr !== activeHeatmapYear) return false;
+    if(yr !== targetYear) return false;
     if(!d.jadwal) return false;
     const mi = MONTH_ORDER.findIndex(mo => d.jadwal.toLowerCase().includes(mo.toLowerCase()));
     const w = getWeekNum(d.jadwal);
@@ -2739,7 +2750,7 @@ function openWeeklyCellModal(monthIndex, weekNum) {
   const subEl = document.getElementById('weekly-modal-sub');
   const container = document.getElementById('weekly-modal-items');
 
-  titleEl.textContent = 'Jadwal: ' + monthName + ' Minggu ' + weekNum + ' (' + activeHeatmapYear + ')';
+  titleEl.textContent = 'Jadwal: ' + monthName + ' Minggu ' + weekNum + ' (' + targetYear + ')';
   subEl.textContent = items.length + ' publikasi terdaftar pada jadwal ini';
 
   if(!items.length) {
@@ -3579,6 +3590,9 @@ function openKpiList(type) {
   const searchInput = document.getElementById('kpi-modal-search');
   if(searchInput) searchInput.value = '';
 
+  const isPortal = document.getElementById('deputi-portal-view') && document.getElementById('deputi-portal-view').classList.contains('active');
+  const sourceData = isPortal ? portalFilteredData : filteredData;
+
   let list = [];
   let title = '';
   let sub = '';
@@ -3587,22 +3601,22 @@ function openKpiList(type) {
   let icon = 'fa-file-lines';
 
   if(type === 'total') {
-    list = [...filteredData];
+    list = [...sourceData];
     title = 'Daftar Seluruh Publikasi Survei';
     sub = 'Total ' + list.length + ' survei terdata di sistem';
     color = '#2563eb'; bg = '#eff6ff'; icon = 'fa-file-lines';
   } else if(type === 'selesai') {
-    list = filteredData.filter(d => getStatus(d) === 'selesai');
+    list = sourceData.filter(d => getStatus(d) === 'selesai');
     title = 'Daftar Survei yang Telah Selesai';
     sub = list.length + ' survei telah terpublikasi dan selesai';
     color = '#16a34a'; bg = '#f0fdf4'; icon = 'fa-circle-check';
   } else if(type === 'belum') {
-    list = filteredData.filter(d => getStatus(d) === 'belum');
+    list = sourceData.filter(d => getStatus(d) === 'belum');
     title = 'Daftar Survei Belum Selesai (Dalam Proses)';
     sub = list.length + ' survei sedang dalam proses tahapan pengerjaan';
     color = '#dc2626'; bg = '#fef2f2'; icon = 'fa-hourglass-half';
   } else if(type === 'unit') {
-    list = filteredData.filter(d => d.tahun === '2026');
+    list = sourceData.filter(d => d.tahun === '2026');
     title = 'Daftar Publikasi Survei Unit Kerja 2026';
     sub = list.length + ' publikasi aktif dijadwalkan tahun 2026';
     color = '#7c3aed'; bg = '#f5f3ff'; icon = 'fa-building';
@@ -3722,10 +3736,11 @@ const ROLE_CONFIGS = {
     subtitle: "Pimpinan Lembaga Administrasi Negara",
     menus: [
       { id: "dashboard", icon: "fa-chart-pie",         label: "Dashboard",                 action: "openTab('dashboard')" },
-      { id: "proposal",  icon: "fa-clipboard-check",   label: "Persetujuan ACC",           badge: true, action: "openTab('proposal')" },
-      { id: "review",    icon: "fa-clipboard-question",label: "Review Kebijakan",          action: "openTab('seminar')" },
       { id: "pengumuman",icon: "fa-bullhorn",          label: "Pengumuman",                action: "openTab('pengumuman')" },
-      { id: "publikasi", icon: "fa-newspaper",         label: "Publikasi",                 action: "openTab('publikasi')" }
+      { id: "penulisan", icon: "fa-pen-ruler",         label: "Penulisan & Instrumen",     action: "openTab('penulisan')" },
+      { id: "publikasi", icon: "fa-newspaper",         label: "Publikasi",                 action: "openTab('publikasi')" },
+      { id: "review",    icon: "fa-clipboard-question",label: "Review",                    action: "openTab('seminar')" },
+      { id: "proposal",  icon: "fa-clipboard-check",   label: "Topik Proposal / ACC",      badge: true, action: "openTab('proposal')" }
     ],
     defaultTab: "dashboard"
   },
@@ -3747,11 +3762,12 @@ const ROLE_CONFIGS = {
     subtitle: "Pusat Kajian Kebijakan Administrasi Negara",
     menus: [
       { id: "dashboard", icon: "fa-chart-pie",         label: "Dashboard",                 action: "openTab('dashboard')" },
-      { id: "penulisan", icon: "fa-bars-progress",     label: "Monitoring Survei",         action: "openTab('penulisan')" },
-      { id: "publikasi", icon: "fa-newspaper",         label: "Publikasi",                 action: "openTab('publikasi')" },
-      { id: "usulan",    icon: "fa-file-circle-plus",  label: "Usulan Publikasi",          action: "openAjukanDisposisiModal()" },
       { id: "pengumuman",icon: "fa-bullhorn",          label: "Pengumuman",                action: "openTab('pengumuman')" },
-      { id: "proposal",  icon: "fa-clipboard-check",   label: "Topik Proposal / ACC",      badge: true, action: "openTab('proposal')" }
+      { id: "penulisan", icon: "fa-pen-ruler",         label: "Penulisan & Instrumen",     action: "openTab('penulisan')" },
+      { id: "publikasi", icon: "fa-newspaper",         label: "Publikasi",                 action: "openTab('publikasi')" },
+      { id: "review",    icon: "fa-clipboard-question",label: "Review",                    action: "openTab('seminar')" },
+      { id: "proposal",  icon: "fa-clipboard-check",   label: "Topik Proposal / ACC",      badge: true, action: "openTab('proposal')" },
+      { id: "usulan",    icon: "fa-file-circle-plus",  label: "Usulan Publikasi",          action: "openAjukanDisposisiModal()" }
     ],
     defaultTab: "dashboard"
   },
@@ -3759,10 +3775,12 @@ const ROLE_CONFIGS = {
     title: "Humas LAN RI",
     subtitle: "Biro Humas & Publikasi",
     menus: [
-      { id: "dashboard", icon: "fa-chart-pie",         label: "Dashboard & Jadwal",        action: "openTab('dashboard')" },
-      { id: "publikasi", icon: "fa-newspaper",         label: "Monitoring Publikasi",      action: "openTab('publikasi')" },
+      { id: "dashboard", icon: "fa-chart-pie",         label: "Dashboard",                 action: "openTab('dashboard')" },
       { id: "pengumuman",icon: "fa-bullhorn",          label: "Pengumuman",                action: "openTab('pengumuman')" },
-      { id: "review",    icon: "fa-clipboard-question",label: "Review Media",              action: "openTab('seminar')" }
+      { id: "penulisan", icon: "fa-pen-ruler",         label: "Penulisan & Instrumen",     action: "openTab('penulisan')" },
+      { id: "publikasi", icon: "fa-newspaper",         label: "Publikasi",                 action: "openTab('publikasi')" },
+      { id: "review",    icon: "fa-clipboard-question",label: "Review",                    action: "openTab('seminar')" },
+      { id: "proposal",  icon: "fa-clipboard-check",   label: "Topik Proposal / ACC",      badge: true, action: "openTab('proposal')" }
     ],
     defaultTab: "dashboard"
   },
@@ -3771,10 +3789,12 @@ const ROLE_CONFIGS = {
     subtitle: "Pelaksana Publikasi Survei",
     menus: [
       { id: "dashboard", icon: "fa-chart-pie",         label: "Dashboard",                 action: "openTab('dashboard')" },
+      { id: "pengumuman",icon: "fa-bullhorn",          label: "Pengumuman",                action: "openTab('pengumuman')" },
       { id: "penulisan", icon: "fa-pen-ruler",         label: "Penulisan & Instrumen",     action: "openTab('penulisan')" },
       { id: "publikasi", icon: "fa-newspaper",         label: "Publikasi",                 action: "openTab('publikasi')" },
-      { id: "usulan",    icon: "fa-file-circle-plus",  label: "Usulan Publikasi",          action: "openAjukanDisposisiModal()" },
-      { id: "pengumuman",icon: "fa-bullhorn",          label: "Pengumuman",                action: "openTab('pengumuman')" }
+      { id: "review",    icon: "fa-clipboard-question",label: "Review",                    action: "openTab('seminar')" },
+      { id: "proposal",  icon: "fa-clipboard-check",   label: "Topik Proposal / ACC",      badge: true, action: "openTab('proposal')" },
+      { id: "usulan",    icon: "fa-file-circle-plus",  label: "Usulan Publikasi",          action: "openAjukanDisposisiModal()" }
     ],
     defaultTab: "dashboard"
   }
@@ -3853,10 +3873,13 @@ function renderSidebarForRole(user) {
   const cfg = getRoleConfig(user ? user.role : 'deputi');
   const pendingCount = getApprovals().filter(i => i.status === 'Menunggu ACC').length;
 
+  const modeEl = document.getElementById('sipantau-sidebar-mode');
+  if(modeEl && cfg) modeEl.textContent = cfg.title;
+
   // Render the full vertical sidebar menu for SIPANTAU
   menuContainer.innerHTML = cfg.menus.map((m, idx) => {
     return `
-      <li class="sindisa-menu-item ${idx===0?'active':''}" onclick="${m.action}; highlightMenuItem(this)">
+      <li class="sindisa-menu-item ${idx===0?'active':''}" data-tab-id="${m.id}" onclick="${m.action}; highlightMenuItem(this)">
         <i class="fa-solid ${m.icon}"></i>
         <span class="sindisa-menu-text">${m.label}</span>
         ${m.badge ? `<span class="sindisa-badge">${pendingCount}</span>` : ''}
@@ -4295,41 +4318,47 @@ function renderPortalReminderAndPerformance() {
 }
 
 function openTab(tabName) {
+  const panelMap = {
+    'dashboard': 'dashboard',
+    'pengumuman': 'pengumuman',
+    'penulisan': 'penulisan',
+    'publikasi': 'publikasi',
+    'review': 'seminar',
+    'seminar': 'seminar',
+    'proposal': 'proposal',
+    'acc': 'proposal'
+  };
+  const activePanel = panelMap[tabName] || tabName;
+
   const panels = ['dashboard', 'pengumuman', 'penulisan', 'publikasi', 'seminar', 'proposal'];
   panels.forEach(p => {
     const el = document.getElementById('sindisa-panel-' + p);
-    if(el) el.style.display = (p === tabName) ? 'block' : 'none';
+    if(el) el.style.display = (p === activePanel) ? 'block' : 'none';
   });
 
-  if(tabName === 'dashboard') {
+  // Highlight corresponding menu item in the vertical sidebar
+  document.querySelectorAll('#sipantau-role-menu .sindisa-menu-item').forEach(m => {
+    const fnStr = m.getAttribute('onclick') || '';
+    if(fnStr.includes(`'${tabName}'`) || fnStr.includes(`'${activePanel}'`)) {
+      m.classList.add('active');
+    } else {
+      m.classList.remove('active');
+    }
+  });
+
+  if(activePanel === 'dashboard') {
     initPortalDropdowns();
     applyPortalFilters();
   }
 }
 
-function renderEmbeddedDashboard() {
-  const kpiBox = document.getElementById('sipantau-embedded-kpis');
-  if(kpiBox) {
-    kpiBox.innerHTML = document.getElementById('kpi-grid').innerHTML;
-  }
-  const timelineBox = document.getElementById('sipantau-embedded-timeline');
-  if(timelineBox) {
-    const scheduled = RAW.filter(d=>d.tahun==='2026'&&d.jadwal).slice(0, 15);
-    timelineBox.innerHTML = scheduled.map(d=>`
-      <div style="padding:10px 12px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center">
-        <div>
-          <span class="badge" style="background:#e0f2fe;color:#0369a1;font-weight:700">${d.unit}</span>
-          <span style="font-size:11px;color:#94a3b8;margin-left:6px">${d.jadwal}</span>
-          <div style="font-size:12.5px;font-weight:600;color:#1e293b;margin-top:3px">${d.judul}</div>
-        </div>
-        ${renderStageBadge(d)}
-      </div>
-    `).join('');
-  }
-  const unitBox = document.getElementById('sipantau-embedded-units');
-  if(unitBox) {
-    unitBox.innerHTML = document.getElementById('unit-cards-container').innerHTML;
-  }
+function switchSindisaTab(tabId) {
+  openTab(tabId);
+}
+
+function switchSindisaPage(pageName, menuItem) {
+  if(menuItem) highlightMenuItem(menuItem);
+  openTab(pageName);
 }
 
 function openDeputiPortal(targetTab) {
@@ -4338,7 +4367,7 @@ function openDeputiPortal(targetTab) {
   view.classList.add('active');
   document.body.style.overflow = 'hidden';
 
-  const user = getCurrentUser() || { name: 'KEPALA DEPUTI' };
+  const user = getCurrentUser() || { name: 'KEPALA DEPUTI', role: 'deputi' };
   const greetEl = document.getElementById('sindisa-header-username');
   const welEl = document.getElementById('sindisa-welcome-name');
   if(greetEl) greetEl.textContent = 'Hi, ' + user.name;
@@ -4351,11 +4380,10 @@ function openDeputiPortal(targetTab) {
   renderSindisaSeminar();
   renderSindisaAccTable();
   updatePendingBadges();
-  renderEmbeddedDashboard();
 
-  if(targetTab === 'acc') {
-    switchSindisaTab('proposal');
-  }
+  const cfg = getRoleConfig(user ? user.role : 'deputi');
+  const initialTab = targetTab || (cfg && cfg.defaultTab) || 'dashboard';
+  openTab(initialTab);
 }
 
 function exitDeputiPortal() {
@@ -4367,33 +4395,6 @@ function exitDeputiPortal() {
 function toggleSindisaSidebar() {
   const sb = document.getElementById('sindisa-sidebar');
   if(sb) sb.classList.toggle('collapsed');
-}
-
-function switchSindisaTab(tabId, btn) {
-  document.querySelectorAll('.sindisa-tab-btn').forEach(b => b.classList.remove('active'));
-  if(btn) btn.classList.add('active');
-
-  const panels = ['pengumuman', 'penulisan', 'publikasi', 'seminar', 'proposal'];
-  panels.forEach(p => {
-    const el = document.getElementById('sindisa-panel-' + p);
-    if(el) el.style.display = (p === tabId) ? 'block' : 'none';
-  });
-}
-
-function switchSindisaPage(pageName, menuItem) {
-  if(menuItem) {
-    document.querySelectorAll('.sindisa-menu-item').forEach(m => m.classList.remove('active'));
-    menuItem.classList.add('active');
-  }
-  if(pageName === 'acc' || pageName === 'pengajuan') {
-    switchSindisaTab('proposal');
-  } else if(pageName === 'monitoring') {
-    switchSindisaTab('penulisan');
-  } else if(pageName === 'pengumuman') {
-    switchSindisaTab('pengumuman');
-  } else {
-    switchSindisaTab('pengumuman');
-  }
 }
 
 function renderSindisaPengumuman() {
