@@ -1277,7 +1277,7 @@ async function syncDataFromSheet(isManual = false) {
   try {
     const sheetId = getSheetId();
     const sheetGid = getSheetGid();
-    const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${sheetGid}&_t=${Date.now()}`;
+    const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&gid=${sheetGid}&_t=${Date.now()}`;
     const res = await fetch(csvUrl, { cache: 'no-store' });
     if (res.ok) {
       const text = await res.text();
@@ -1462,6 +1462,34 @@ setInterval(() => {
     <!-- KPI Cards -->
     <div class="kpi-grid" id="kpi-grid"></div>
 
+    
+    <!-- ══════════════ WIDGET: REMINDER KETERLAMBATAN & PENILAIAN KINERJA ══════════════ -->
+    <div class="grid-2" style="margin-bottom:20px">
+      <!-- REMINDER TELAT -->
+      <div class="card" style="border-left:4px solid #dc2626">
+        <div class="card-header" style="display:flex;align-items:center;justify-content:space-between">
+          <span class="card-title" style="color:#b91c1c">
+            <i class="fa-solid fa-bell-exclamation fa-shake" style="color:#dc2626;margin-right:6px"></i>
+            Reminder Publikasi Melewati Jadwal (Perlu Tindak Lanjut)
+          </span>
+          <span class="badge badge-red" id="reminder-overdue-count">0 Terlambat</span>
+        </div>
+        <div class="card-body" style="padding:14px;max-height:280px;overflow-y:auto" id="reminder-overdue-list"></div>
+      </div>
+
+      <!-- PENILAIAN KINERJA UNIT -->
+      <div class="card" style="border-left:4px solid #1e40af">
+        <div class="card-header" style="display:flex;align-items:center;justify-content:space-between">
+          <span class="card-title" style="color:#1e40af">
+            <i class="fa-solid fa-award" style="color:#1e40af;margin-right:6px"></i>
+            Penilaian Kinerja Capaian Publikasi per Unit Kerja
+          </span>
+          <span class="badge" style="background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe;font-weight:700">Skor & Predikat</span>
+        </div>
+        <div class="card-body" style="padding:14px;max-height:280px;overflow-y:auto" id="unit-performance-score-list"></div>
+      </div>
+    </div>
+
     <!-- Row 1 -->
     <div class="grid-3">
       <div class="card">
@@ -1524,8 +1552,13 @@ setInterval(() => {
         </div>
       </div>
       <div class="card">
-        <div class="card-header">
+        <div class="card-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
           <span class="card-title"><i class="fa-solid fa-grip"></i> Distribusi Jadwal per Minggu</span>
+          <div style="display:flex;align-items:center;gap:6px">
+            <button class="filter-reset" onclick="changeHeatmapYear(-1)" style="padding:3px 9px;font-size:11px" title="Periode Tahun Sebelumnya"><i class="fa-solid fa-chevron-left"></i> Prev</button>
+            <span id="heatmap-year-badge" style="font-size:11.5px;font-weight:800;padding:3px 10px;background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe;border-radius:14px">Tahun 2026</span>
+            <button class="filter-reset" onclick="changeHeatmapYear(1)" style="padding:3px 9px;font-size:11px" title="Periode Tahun Berikutnya">Next <i class="fa-solid fa-chevron-right"></i></button>
+          </div>
         </div>
         <div class="card-body" id="heatmap-container"></div>
       </div>
@@ -1778,6 +1811,27 @@ setInterval(() => {
         &bull; <strong>Admin</strong>: user <code>admin</code> / sandi <code>admin2026</code>
       </div>
     </form>
+  </div>
+</div>
+
+
+<!-- ══════════════════════ MODAL: DAFTAR PUBLIKASI JADWAL MINGGU ══════════════════════ -->
+<div class="modal-overlay" id="weekly-list-modal" onclick="if(event.target===this)closeWeeklyListModal()">
+  <div class="modal" style="max-width:700px;text-align:left">
+    <div class="modal-close" onclick="closeWeeklyListModal()"><i class="fa-solid fa-xmark"></i></div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+      <div style="width:42px;height:42px;border-radius:10px;background:#eff6ff;color:#1e40af;display:flex;align-items:center;justify-content:center;font-size:18px">
+        <i class="fa-solid fa-calendar-week"></i>
+      </div>
+      <div>
+        <h3 id="weekly-modal-title" style="font-size:16px;font-weight:800;color:#1e293b">Daftar Publikasi Jadwal</h3>
+        <p id="weekly-modal-sub" style="font-size:12px;color:#64748b">Klik pada judul untuk melihat lembar detail lengkap</p>
+      </div>
+    </div>
+    <div class="kpi-modal-list" id="weekly-modal-items" style="max-height:420px;overflow-y:auto"></div>
+    <div style="display:flex;justify-content:flex-end;margin-top:14px">
+      <button onclick="closeWeeklyListModal()" style="padding:7px 16px;border-radius:8px;background:var(--bg3);border:1px solid var(--border);color:var(--text2);font-size:12px;cursor:pointer">Tutup</button>
+    </div>
   </div>
 </div>
 
@@ -2360,7 +2414,7 @@ function applyFilters(){
     if(status  && !status.startsWith('tahap:') && status!=='overdue' && getStatus(d)!==status) return false;
     return true;
   });
-  renderKPIs(); renderCharts();
+  renderKPIs(); renderCharts(); renderReminderAndPerformance(filteredData);
 }
 function resetFilters(){
   ['f-year','f-unit','f-cluster','f-status'].forEach(id=>document.getElementById(id).value='');
@@ -2540,6 +2594,209 @@ function baseOpts(extra={}){
 /* ══════════════════════════════════════════════════════════
    RENDER ALL CHARTS
    ══════════════════════════════════════════════════════════ */
+
+/* ══════════════════════════════════════════════════════════
+   DISTRIBUSI JADWAL PER MINGGU DENGAN TOMBOL TAHUN 2025-2030
+   & POPUP DAFTAR PUBLIKASI SAAT CELL DIKLIK
+   ══════════════════════════════════════════════════════════ */
+let activeHeatmapYear = 2026;
+
+function changeHeatmapYear(delta) {
+  activeHeatmapYear += delta;
+  if(activeHeatmapYear < 2025) activeHeatmapYear = 2025;
+  if(activeHeatmapYear > 2030) activeHeatmapYear = 2030;
+  const badge = document.getElementById('heatmap-year-badge');
+  if(badge) badge.textContent = 'Tahun ' + activeHeatmapYear;
+  renderHeatmap(filteredData);
+}
+
+function openWeeklyCellModal(monthIndex, weekNum) {
+  const monthName = MONTH_ORDER[monthIndex];
+  const items = filteredData.filter(d => {
+    const yr = parseInt(d.tahun) || 2026;
+    if(yr !== activeHeatmapYear) return false;
+    if(!d.jadwal) return false;
+    const mi = MONTH_ORDER.findIndex(mo => d.jadwal.toLowerCase().includes(mo.toLowerCase()));
+    const w = getWeekNum(d.jadwal);
+    return mi === monthIndex && w === weekNum;
+  });
+
+  const titleEl = document.getElementById('weekly-modal-title');
+  const subEl = document.getElementById('weekly-modal-sub');
+  const container = document.getElementById('weekly-modal-items');
+
+  titleEl.textContent = 'Jadwal: ' + monthName + ' Minggu ' + weekNum + ' (' + activeHeatmapYear + ')';
+  subEl.textContent = items.length + ' publikasi terdaftar pada jadwal ini';
+
+  if(!items.length) {
+    container.innerHTML = '<div style="padding:30px;text-align:center;color:var(--text3);font-size:13px">Tidak ada agenda publikasi pada periode ini</div>';
+  } else {
+    container.innerHTML = items.map(d => {
+      const st = getStatus(d);
+      const uc = UNIT_COLORS[getPrimaryUnit(d.unit)] || UNIT_COLORS['MULTI'];
+      const idx = RAW.findIndex(x => x.no === d.no);
+      return `
+        <div class="kpi-modal-item" onclick="closeWeeklyListModal(); openModal(${idx})">
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap">
+              <span class="badge" style="background:${uc.bg};color:${uc.text};font-weight:700">${d.unit}</span>
+              ${renderStageBadge(d)}
+            </div>
+            <div style="font-size:13px;font-weight:700;color:var(--text1)">${d.judul}</div>
+            <div style="font-size:11.5px;color:var(--text2);margin-top:2px">${d.ket || '-'}</div>
+          </div>
+          <div style="text-align:right">
+            ${statusBadge(st)}
+            <div style="font-size:11px;color:#1e40af;font-weight:700;margin-top:6px">Detail &rarr;</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  document.getElementById('weekly-list-modal').classList.add('open');
+}
+
+function closeWeeklyListModal() {
+  const modal = document.getElementById('weekly-list-modal');
+  if(modal) modal.classList.remove('open');
+}
+
+function renderHeatmap(data){
+  const container = document.getElementById('heatmap-container');
+  if(!container) return;
+
+  const yearData = data.filter(d => (parseInt(d.tahun) || 2026) === activeHeatmapYear && d.jadwal);
+  const matrix = {};
+  yearData.forEach(d => {
+    const mi = MONTH_ORDER.findIndex(mo => d.jadwal.toLowerCase().includes(mo.toLowerCase()));
+    const w = getWeekNum(d.jadwal);
+    if(mi >= 0 && w > 0) {
+      const k = `${mi}-${w}`;
+      matrix[k] = (matrix[k] || 0) + 1;
+    }
+  });
+
+  const max = Math.max(...Object.values(matrix), 1);
+  const heatColor = v => {
+    if(!v) return '#f8fafc';
+    const i = v / max;
+    if(i <= 0.25) return '#bfdbfe';
+    if(i <= 0.5) return '#60a5fa';
+    if(i <= 0.75) return '#2563eb';
+    return '#1e40af';
+  };
+  const textColor = v => {
+    if(!v) return '#94a3b8';
+    return (v/max > 0.4) ? '#fff' : '#1e40af';
+  };
+
+  container.innerHTML = `
+    <div style="display:grid;grid-template-columns:auto repeat(12,1fr);gap:4px;font-size:9.5px;color:#64748b;font-family:Inter">
+      <div></div>
+      ${MONTH_ORDER.map(m=>`<div style="text-align:center;padding-bottom:5px;font-weight:700;color:#475569">${m.slice(0,3)}</div>`).join('')}
+      ${[1,2,3,4].map(w=>`
+        <div style="display:flex;align-items:center;font-weight:800;padding-right:7px;color:#475569">M${w}</div>
+        ${MONTH_ORDER.map((m,mi)=>{
+          const v = matrix[`${mi}-${w}`] || 0;
+          return `<div class="heatmap-cell" onclick="openWeeklyCellModal(${mi}, ${w})" style="background:${heatColor(v)};color:${textColor(v)};height:32px;border-radius:6px;cursor:${v?'pointer':'default'};transition:all .18s;border:1px solid ${v?'transparent':'#f1f5f9'}" title="${m} Minggu ${w} (${activeHeatmapYear}): ${v} publikasi (Klik untuk lihat daftar)">${v || ''}</div>`;
+        }).join('')}
+      `).join('')}
+    </div>
+    <div class="heatmap-legend" style="margin-top:12px;display:flex;align-items:center;justify-content:flex-end;gap:5px;font-size:10px;color:#64748b">
+      <span>0 Publikasi</span>
+      <div class="heatmap-legend-cell" style="background:#f8fafc;border:1px solid #e2e8f0"></div>
+      <div class="heatmap-legend-cell" style="background:#bfdbfe"></div>
+      <div class="heatmap-legend-cell" style="background:#60a5fa"></div>
+      <div class="heatmap-legend-cell" style="background:#2563eb"></div>
+      <div class="heatmap-legend-cell" style="background:#1e40af"></div>
+      <span>Padat</span>
+    </div>`;
+}
+
+/* ══════════════════════════════════════════════════════════
+   REMINDER KETERLAMBATAN DENGAN TAHAPAN & PENILAIAN KINERJA
+   ══════════════════════════════════════════════════════════ */
+function renderReminderAndPerformance(data) {
+  // 1. REMINDER TERLAMBAT
+  const overdueItems = data.filter(d => isOverdue(d));
+  const reminderList = document.getElementById('reminder-overdue-list');
+  const countBadge = document.getElementById('reminder-overdue-count');
+  if(countBadge) countBadge.textContent = overdueItems.length + ' Terlambat';
+
+  if(reminderList) {
+    if(!overdueItems.length) {
+      reminderList.innerHTML = '<div style="padding:24px;text-align:center;color:#16a34a;font-size:12.5px;font-weight:600"><i class="fa-solid fa-circle-check" style="font-size:24px;display:block;margin-bottom:6px"></i>Seluruh publikasi saat ini tepat waktu sesuai jadwal!</div>';
+    } else {
+      reminderList.innerHTML = overdueItems.map(d => {
+        const stage = getStageInfo(d);
+        const uc = UNIT_COLORS[getPrimaryUnit(d.unit)] || UNIT_COLORS['MULTI'];
+        const idx = RAW.findIndex(x => x.no === d.no);
+        return `
+          <div style="padding:10px 12px;border-radius:8px;border:1px solid #fecaca;background:#fff5f5;margin-bottom:8px;cursor:pointer;transition:all .18s" onclick="openModal(${idx})">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+              <span class="badge" style="background:${uc.bg};color:${uc.text};font-weight:700">${d.unit}</span>
+              <span style="font-size:11px;font-weight:700;color:#b91c1c"><i class="fa-solid fa-clock-rotate-left"></i> Target: ${d.jadwal || '-'}</span>
+            </div>
+            <div style="font-size:12.5px;font-weight:700;color:#1e293b;margin:4px 0">${d.judul}</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;flex-wrap:wrap;gap:6px">
+              <div style="display:flex;align-items:center;gap:6px">
+                <span style="font-size:11px;color:#64748b;font-weight:600">Saat ini di:</span>
+                ${renderStageBadge(d)}
+              </div>
+              <span style="font-size:11px;color:#dc2626;font-weight:700">Perlu Penanganan &rarr;</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+  }
+
+  // 2. PENILAIAN KINERJA ATAS APA YANG SUDAH DICAPAI
+  const performanceList = document.getElementById('unit-performance-score-list');
+  if(performanceList) {
+    const allUnits = [...new Set(RAW.flatMap(d => getAllUnits(d.unit)))].filter(u => u && !u.includes(',') && u!=='MULTI').sort();
+    const stats = allUnits.map(u => {
+      const uRecords = data.filter(d => getAllUnits(d.unit).includes(u));
+      const total = uRecords.length;
+      const selesai = uRecords.filter(d => getStatus(d) === 'selesai').length;
+      const pct = total ? Math.round((selesai / total) * 100) : 0;
+
+      // Penilaian Kinerja Kualitatif & Kuantitatif
+      let predikat = 'Sangat Kurang';
+      let badgeCls = 'badge-red';
+      let icon = 'fa-circle-xmark';
+      if(pct >= 85) { predikat = 'Sangat Baik (A)'; badgeCls = 'badge-green'; icon = 'fa-medal'; }
+      else if(pct >= 65) { predikat = 'Baik (B)'; badgeCls = 'badge-blue'; icon = 'fa-star'; }
+      else if(pct >= 40) { predikat = 'Cukup (C)'; badgeCls = 'badge-yellow'; icon = 'fa-award'; }
+      else if(pct > 0) { predikat = 'Kurang (D)'; badgeCls = 'badge-orange'; icon = 'fa-triangle-exclamation'; }
+
+      return { unit: u, total, selesai, pct, predikat, badgeCls, icon };
+    }).filter(s => s.total > 0).sort((a,b) => b.pct - a.pct || b.total - a.total);
+
+    performanceList.innerHTML = stats.map(s => {
+      const uc = UNIT_COLORS[s.unit] || UNIT_COLORS['MULTI'];
+      return `
+        <div style="padding:10px 12px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between;gap:10px">
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;align-items:center;gap:8px">
+              <span class="badge" style="background:${uc.bg};color:${uc.text};font-weight:700">${s.unit}</span>
+              <span style="font-size:12px;font-weight:700;color:#1e293b">${s.selesai} dari ${s.total} Publikasi Selesai</span>
+            </div>
+            <div class="progress-bar-bg" style="margin-top:6px;height:6px">
+              <div class="progress-bar-fill" style="width:${s.pct}%;background:${s.pct>=65?'#16a34a':s.pct>=40?'#2563eb':'#dc2626'}"></div>
+            </div>
+          </div>
+          <div style="text-align:right;flex-shrink:0">
+            <div style="font-size:14px;font-weight:800;color:#1e293b">${s.pct}%</div>
+            <span class="badge ${s.badgeCls}" style="font-size:10px;padding:2px 7px"><i class="fa-solid ${s.icon}"></i> ${s.predikat}</span>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+}
+
 function renderCharts(){
   const data=filteredData;
 
