@@ -1922,40 +1922,154 @@ setInterval(() => {
         </div>
       </div>
 
-      <!-- HORIZONTAL TABS (IDENTICAL TO SCREENSHOT) -->
-      <div class="sindisa-nav-tabs">
-        <button class="sindisa-tab-btn" onclick="openTab('dashboard')"><i class="fa-solid fa-chart-pie" style="margin-right:6px"></i>Dashboard</button>
-        <button class="sindisa-tab-btn active" onclick="switchSindisaTab('pengumuman', this)">Pengumuman</button>
-        <button class="sindisa-tab-btn" onclick="switchSindisaTab('penulisan', this)">Penulisan & Instrumen</button>
-        <button class="sindisa-tab-btn" onclick="switchSindisaTab('publikasi', this)">Publikasi</button>
-        <button class="sindisa-tab-btn" onclick="switchSindisaTab('seminar', this)">Review</button>
-        <button class="sindisa-tab-btn" onclick="switchSindisaTab('proposal', this)">Topik Proposal / ACC</button>
-      </div>
+
 
       
-      <!-- TAB PANEL 0: DASHBOARD INTERAKTIF SIPANTAU -->
-      <div class="sindisa-panel-box" id="sindisa-panel-dashboard" style="display:none;padding:16px 18px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+      <!-- TAB PANEL 0: DASHBOARD INTERAKTIF SIPANTAU LENGKAP BISA DIFILTER -->
+      <div class="sindisa-panel-box" id="sindisa-panel-dashboard" style="display:block;padding:20px;border:none;box-shadow:none;background:transparent">
+        
+        <!-- HEADER DASHBOARD & SINKRONISASI -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:10px">
           <div>
-            <h3 style="font-size:17px;font-weight:800;color:#1e293b"><i class="fa-solid fa-chart-line" style="color:#1e40af;margin-right:8px"></i>Dashboard Interaktif Publikasi Survei</h3>
-            <p style="font-size:12px;color:#64748b">Monitoring capaian publikasi survei seluruh unit kerja LAN RI</p>
+            <h2 style="font-size:19px;font-weight:800;color:#1e293b;display:flex;align-items:center;gap:8px">
+              <i class="fa-solid fa-chart-pie" style="color:#1e40af"></i> Dashboard Interaktif Publikasi LAN RI
+            </h2>
+            <p style="font-size:12.5px;color:#64748b;margin-top:2px">Sistem Monitoring dan Evaluasi Capaian Publikasi Seluruh Unit Kerja</p>
           </div>
-          <button onclick="syncDataFromGAS()" style="padding:7px 14px;background:#1e40af;color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer">
-            <i class="fa-solid fa-rotate"></i> Refresh Data Live
+          <button onclick="syncDataFromGAS()" style="padding:8px 16px;background:#1e40af;color:#fff;border:none;border-radius:8px;font-size:12.5px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:7px;box-shadow:0 2px 6px rgba(30,64,175,.25)">
+            <i class="fa-solid fa-rotate" id="portal-refresh-icon"></i> Sinkronkan Google Sheet Live
           </button>
         </div>
-        <div id="sipantau-embedded-kpis" class="kpi-grid" style="margin-bottom:18px"></div>
-        <div class="grid-2" style="margin-bottom:18px">
-          <div class="card">
-            <div class="card-header"><span class="card-title"><i class="fa-solid fa-calendar"></i> Jadwal Rilis Survei</span></div>
-            <div class="card-body" style="max-height:360px;overflow-y:auto" id="sipantau-embedded-timeline"></div>
+
+        <!-- FILTER BAR INTERAKTIF DI DALAM DASHBOARD -->
+        <div class="filter-bar" style="margin-bottom:20px">
+          <label><i class="fa-solid fa-sliders" style="margin-right:5px;color:var(--accent)"></i>Filter Data:</label>
+          <select id="p-year" onchange="applyPortalFilters()">
+            <option value="">Semua Tahun</option>
+            <option value="2025">2025</option>
+            <option value="2026">2026</option>
+          </select>
+          <div class="filter-divider"></div>
+          <select id="p-unit" onchange="applyPortalFilters()"><option value="">Semua Unit Kerja</option></select>
+          <div class="filter-divider"></div>
+          <select id="p-cluster" onchange="applyPortalFilters()"><option value="">Semua Cluster</option></select>
+          <div class="filter-divider"></div>
+          <select id="p-status" onchange="applyPortalFilters()">
+            <option value="">Semua Status</option>
+            <option value="selesai">Selesai</option>
+            <option value="belum">Belum Selesai</option>
+            <option value="overdue">⚠️ Melewati Deadline</option>
+            <optgroup label="Tahapan (Belum Selesai)">
+              <option value="tahap:Persiapan">Tahap 1: Persiapan</option>
+              <option value="tahap:Penyusunan instrumen">Tahap 2: Penyusunan Instrumen</option>
+              <option value="tahap:Pengumpulan data">Tahap 3: Pengumpulan Data</option>
+              <option value="tahap:Pengolahan data">Tahap 4: Pengolahan Data</option>
+              <option value="tahap:Penyusunan laporan">Tahap 5: Penyusunan Laporan</option>
+              <option value="tahap:Publikasi">Tahap 6: Publikasi</option>
+            </optgroup>
+          </select>
+          <button class="filter-reset" onclick="resetPortalFilters()"><i class="fa-solid fa-rotate-left"></i> Reset Filter</button>
+        </div>
+
+        <!-- 4 KPI CARDS UTAMA (INTERAKTIF & BISA DIKLIK) -->
+        <div class="kpi-grid" id="portal-kpi-grid" style="margin-bottom:22px"></div>
+
+        <!-- WIDGET REMINDER TELAT & PENILAIAN KINERJA -->
+        <div class="grid-2" style="margin-bottom:22px">
+          <!-- REMINDER TELAT -->
+          <div class="card" style="border-left:4px solid #dc2626">
+            <div class="card-header" style="display:flex;align-items:center;justify-content:space-between">
+              <span class="card-title" style="color:#b91c1c">
+                <i class="fa-solid fa-triangle-exclamation" style="color:#dc2626;margin-right:6px"></i>
+                Reminder Publikasi Melewati Jadwal (Perlu Tindak Lanjut)
+              </span>
+              <span class="badge badge-red" id="portal-reminder-count">0 Terlambat</span>
+            </div>
+            <div class="card-body" style="padding:14px;max-height:280px;overflow-y:auto" id="portal-reminder-list"></div>
           </div>
-          <div class="card">
-            <div class="card-header"><span class="card-title"><i class="fa-solid fa-building"></i> Publikasi per Unit Kerja</span></div>
-            <div class="card-body" style="max-height:360px;overflow-y:auto" id="sipantau-embedded-units"></div>
+
+          <!-- PENILAIAN KINERJA CAPAIAN UNIT -->
+          <div class="card" style="border-left:4px solid #1e40af">
+            <div class="card-header" style="display:flex;align-items:center;justify-content:space-between">
+              <span class="card-title" style="color:#1e40af">
+                <i class="fa-solid fa-award" style="color:#1e40af;margin-right:6px"></i>
+                Penilaian Kinerja Capaian Publikasi per Unit Kerja
+              </span>
+              <span class="badge" style="background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe;font-weight:700">Skor & Predikat</span>
+            </div>
+            <div class="card-body" style="padding:14px;max-height:280px;overflow-y:auto" id="portal-performance-list"></div>
           </div>
         </div>
-      </div>
+
+        <!-- ROW GRAFIK 1: STATUS DONUT, PUBLIKASI PER BULAN, JANGKAUAN CHANNEL -->
+        <div class="grid-3" style="margin-bottom:22px">
+          <div class="card">
+            <div class="card-header"><span class="card-title"><i class="fa-solid fa-circle-half-stroke"></i> Status Publikasi</span></div>
+            <div class="card-body">
+              <div class="chart-wrap" style="height:150px"><canvas id="portal-chart-status-donut"></canvas></div>
+              <div class="donut-legend" id="portal-donut-legend" style="margin-top:14px"></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title"><i class="fa-solid fa-chart-bar"></i> Publikasi per Bulan (2026)</span></div>
+            <div class="card-body">
+              <div class="chart-wrap" style="height:220px"><canvas id="portal-chart-monthly"></canvas></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title"><i class="fa-solid fa-bullhorn"></i> Jangkauan Channel</span></div>
+            <div class="card-body">
+              <div class="channel-grid" id="portal-channel-grid"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ROW GRAFIK 2: PUBLIKASI PER UNIT & CLUSTER KEBIJAKAN -->
+        <div class="grid-2" style="margin-bottom:22px">
+          <div class="card">
+            <div class="card-header"><span class="card-title"><i class="fa-solid fa-building"></i> Publikasi per Unit</span></div>
+            <div class="card-body">
+              <div class="chart-wrap" style="height:280px"><canvas id="portal-chart-unit-bar"></canvas></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title"><i class="fa-solid fa-tags"></i> Publikasi per Cluster Kebijakan</span></div>
+            <div class="card-body">
+              <div class="chart-wrap" style="height:280px"><canvas id="portal-chart-cluster-bar"></canvas></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ROW GRAFIK 3: JENIS PUBLIKASI & DISTRIBUSI JADWAL MINGGUAN -->
+        <div class="grid-2" style="margin-bottom:22px">
+          <div class="card">
+            <div class="card-header"><span class="card-title"><i class="fa-solid fa-layer-group"></i> Jenis Publikasi</span></div>
+            <div class="card-body">
+              <div class="chart-wrap" style="height:220px"><canvas id="portal-chart-type"></canvas></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+              <span class="card-title"><i class="fa-solid fa-grip"></i> Distribusi Jadwal per Minggu</span>
+              <div style="display:flex;align-items:center;gap:6px">
+                <button class="filter-reset" onclick="changePortalHeatmapYear(-1)" style="padding:3px 9px;font-size:11px" title="Periode Tahun Sebelumnya"><i class="fa-solid fa-chevron-left"></i> Prev</button>
+                <span id="portal-heatmap-year-badge" style="font-size:11.5px;font-weight:800;padding:3px 10px;background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe;border-radius:14px">Tahun 2026</span>
+                <button class="filter-reset" onclick="changePortalHeatmapYear(1)" style="padding:3px 9px;font-size:11px" title="Periode Tahun Berikutnya">Next <i class="fa-solid fa-chevron-right"></i></button>
+              </div>
+            </div>
+            <div class="card-body" id="portal-heatmap-container"></div>
+          </div>
+        </div>
+
+        <!-- TABEL ROADMAP JADWAL RILIS SURVEI 2026 -->
+        <div class="card">
+          <div class="card-header"><span class="card-title"><i class="fa-solid fa-calendar-days"></i> Roadmap Publikasi Survei 2026</span></div>
+          <div class="card-body">
+            <div id="portal-roadmap-grid" class="roadmap-grid"></div>
+          </div>
+        </div>
+
+      </div><!-- /sindisa-panel-dashboard -->
 
       <!-- TAB PANEL 1: PENGUMUMAN & ARAHAN -->
       <div class="sindisa-panel-box" id="sindisa-panel-pengumuman">
@@ -3593,23 +3707,38 @@ function saveApprovals(arr) {
    - Humas: Monitoring, Jadwal Publikasi
    - Unit Kerja: Dashboard, Usulan Publikasi
    ══════════════════════════════════════════════════════════ */
+const ALL_SIPANTAU_MENUS = [
+  { id: "dashboard", icon: "fa-chart-pie",         label: "Dashboard",                 action: "openTab('dashboard')" },
+  { id: "pengumuman",icon: "fa-bullhorn",          label: "Pengumuman",                action: "openTab('pengumuman')" },
+  { id: "penulisan", icon: "fa-pen-ruler",         label: "Penulisan & Instrumen",     action: "openTab('penulisan')" },
+  { id: "publikasi", icon: "fa-newspaper",         label: "Publikasi",                 action: "openTab('publikasi')" },
+  { id: "review",    icon: "fa-clipboard-question",label: "Review",                    action: "openTab('seminar')" },
+  { id: "proposal",  icon: "fa-clipboard-check",   label: "Topik Proposal / ACC",      badge: true, action: "openTab('proposal')" },
+];
+
 const ROLE_CONFIGS = {
   kepala_lan: {
     title: "Kepala LAN RI",
     subtitle: "Pimpinan Lembaga Administrasi Negara",
     menus: [
-      { id: "acc", icon: "fa-clipboard-check", label: "Persetujuan ACC", badge: true, action: "openTab('proposal')" },
-      { id: "riwayat", icon: "fa-clock-rotate-left", label: "Riwayat ACC", action: "openTab('seminar')" }
+      { id: "dashboard", icon: "fa-chart-pie",         label: "Dashboard",                 action: "openTab('dashboard')" },
+      { id: "proposal",  icon: "fa-clipboard-check",   label: "Persetujuan ACC",           badge: true, action: "openTab('proposal')" },
+      { id: "review",    icon: "fa-clipboard-question",label: "Review Kebijakan",          action: "openTab('seminar')" },
+      { id: "pengumuman",icon: "fa-bullhorn",          label: "Pengumuman",                action: "openTab('pengumuman')" },
+      { id: "publikasi", icon: "fa-newspaper",         label: "Publikasi",                 action: "openTab('publikasi')" }
     ],
-    defaultTab: "proposal"
+    defaultTab: "dashboard"
   },
   deputi: {
     title: "Kepala Deputi",
     subtitle: "Deputi Kajian Kebijakan & Inovasi",
     menus: [
-      { id: "dashboard", icon: "fa-chart-pie", label: "Dashboard", action: "openTab('dashboard')" },
-      { id: "acc", icon: "fa-clipboard-check", label: "Persetujuan ACC", badge: true, action: "openTab('proposal')" },
-      { id: "pengumuman", icon: "fa-bullhorn", label: "Tambah Pengumuman", action: "openTambahPengumumanModal()" }
+      { id: "dashboard", icon: "fa-chart-pie",         label: "Dashboard",                 action: "openTab('dashboard')" },
+      { id: "pengumuman",icon: "fa-bullhorn",          label: "Pengumuman",                action: "openTab('pengumuman')" },
+      { id: "penulisan", icon: "fa-pen-ruler",         label: "Penulisan & Instrumen",     action: "openTab('penulisan')" },
+      { id: "publikasi", icon: "fa-newspaper",         label: "Publikasi",                 action: "openTab('publikasi')" },
+      { id: "review",    icon: "fa-clipboard-question",label: "Review",                    action: "openTab('seminar')" },
+      { id: "proposal",  icon: "fa-clipboard-check",   label: "Topik Proposal / ACC",      badge: true, action: "openTab('proposal')" }
     ],
     defaultTab: "dashboard"
   },
@@ -3617,9 +3746,12 @@ const ROLE_CONFIGS = {
     title: "Admin DSPK2AN",
     subtitle: "Pusat Kajian Kebijakan Administrasi Negara",
     menus: [
-      { id: "dashboard", icon: "fa-chart-pie", label: "Dashboard", action: "openTab('dashboard')" },
-      { id: "usulan", icon: "fa-file-circle-plus", label: "Usulan Publikasi", action: "openAjukanDisposisiModal()" },
-      { id: "monitoring", icon: "fa-bars-progress", label: "Monitoring Survei", action: "openTab('penulisan')" }
+      { id: "dashboard", icon: "fa-chart-pie",         label: "Dashboard",                 action: "openTab('dashboard')" },
+      { id: "penulisan", icon: "fa-bars-progress",     label: "Monitoring Survei",         action: "openTab('penulisan')" },
+      { id: "publikasi", icon: "fa-newspaper",         label: "Publikasi",                 action: "openTab('publikasi')" },
+      { id: "usulan",    icon: "fa-file-circle-plus",  label: "Usulan Publikasi",          action: "openAjukanDisposisiModal()" },
+      { id: "pengumuman",icon: "fa-bullhorn",          label: "Pengumuman",                action: "openTab('pengumuman')" },
+      { id: "proposal",  icon: "fa-clipboard-check",   label: "Topik Proposal / ACC",      badge: true, action: "openTab('proposal')" }
     ],
     defaultTab: "dashboard"
   },
@@ -3627,17 +3759,22 @@ const ROLE_CONFIGS = {
     title: "Humas LAN RI",
     subtitle: "Biro Humas & Publikasi",
     menus: [
-      { id: "monitoring", icon: "fa-bars-progress", label: "Monitoring Publikasi", action: "openTab('publikasi')" },
-      { id: "jadwal", icon: "fa-calendar-days", label: "Jadwal Publikasi", action: "openTab('dashboard')" }
+      { id: "dashboard", icon: "fa-chart-pie",         label: "Dashboard & Jadwal",        action: "openTab('dashboard')" },
+      { id: "publikasi", icon: "fa-newspaper",         label: "Monitoring Publikasi",      action: "openTab('publikasi')" },
+      { id: "pengumuman",icon: "fa-bullhorn",          label: "Pengumuman",                action: "openTab('pengumuman')" },
+      { id: "review",    icon: "fa-clipboard-question",label: "Review Media",              action: "openTab('seminar')" }
     ],
-    defaultTab: "publikasi"
+    defaultTab: "dashboard"
   },
   default_unit: {
     title: "Unit Kerja Pelaksana",
     subtitle: "Pelaksana Publikasi Survei",
     menus: [
-      { id: "dashboard", icon: "fa-chart-pie", label: "Dashboard", action: "openTab('dashboard')" },
-      { id: "usulan", icon: "fa-file-circle-plus", label: "Usulan Publikasi", action: "openAjukanDisposisiModal()" }
+      { id: "dashboard", icon: "fa-chart-pie",         label: "Dashboard",                 action: "openTab('dashboard')" },
+      { id: "penulisan", icon: "fa-pen-ruler",         label: "Penulisan & Instrumen",     action: "openTab('penulisan')" },
+      { id: "publikasi", icon: "fa-newspaper",         label: "Publikasi",                 action: "openTab('publikasi')" },
+      { id: "usulan",    icon: "fa-file-circle-plus",  label: "Usulan Publikasi",          action: "openAjukanDisposisiModal()" },
+      { id: "pengumuman",icon: "fa-bullhorn",          label: "Pengumuman",                action: "openTab('pengumuman')" }
     ],
     defaultTab: "dashboard"
   }
@@ -3694,7 +3831,7 @@ function handleLandingLogin(e) {
 
   setCurrentUser(userObj);
   hideLandingLogin();
-  openDeputiPortal(cfg.defaultTab);
+  openDeputiPortal("dashboard");
 }
 
 function showLandingLogin() {
@@ -3716,6 +3853,7 @@ function renderSidebarForRole(user) {
   const cfg = getRoleConfig(user ? user.role : 'deputi');
   const pendingCount = getApprovals().filter(i => i.status === 'Menunggu ACC').length;
 
+  // Render the full vertical sidebar menu for SIPANTAU
   menuContainer.innerHTML = cfg.menus.map((m, idx) => {
     return `
       <li class="sindisa-menu-item ${idx===0?'active':''}" onclick="${m.action}; highlightMenuItem(this)">
@@ -3732,11 +3870,431 @@ function highlightMenuItem(el) {
   if(el) el.classList.add('active');
 }
 
-function openTab(tabName) {
-  document.querySelectorAll('.sindisa-tab-btn').forEach(b => b.classList.remove('active'));
-  const btn = Array.from(document.querySelectorAll('.sindisa-tab-btn')).find(b => (b.getAttribute('onclick')||'').includes(tabName));
-  if(btn) btn.classList.add('active');
 
+/* ══════════════════════════════════════════════════════════
+   PORTAL INTERAKTIF DASHBOARD: FILTERS, CHARTS, & DATA SYNC
+   ══════════════════════════════════════════════════════════ */
+let portalFilteredData = [...RAW];
+let portalHeatmapYear = 2026;
+let portalCharts = {};
+
+function initPortalDropdowns() {
+  const units = [...new Set(RAW.flatMap(d=>getAllUnits(d.unit)))].filter(u => u && !u.includes(',') && !u.includes('|') && u !== 'MULTI' && u !== 'Unknown').sort();
+  const clusters = [...new Set(RAW.map(d=>d.cluster).filter(Boolean))].sort();
+
+  const uSelect = document.getElementById('p-unit');
+  if(uSelect) {
+    uSelect.innerHTML = '<option value="">Semua Unit Kerja</option>';
+    units.forEach(u => {
+      const o = document.createElement('option');
+      o.value = u; o.textContent = u;
+      uSelect.appendChild(o);
+    });
+  }
+
+  const cSelect = document.getElementById('p-cluster');
+  if(cSelect) {
+    cSelect.innerHTML = '<option value="">Semua Cluster</option>';
+    clusters.forEach(c => {
+      const o = document.createElement('option');
+      o.value = c; o.textContent = c;
+      cSelect.appendChild(o);
+    });
+  }
+}
+
+function applyPortalFilters() {
+  const year = document.getElementById('p-year') ? document.getElementById('p-year').value : '';
+  const unit = document.getElementById('p-unit') ? document.getElementById('p-unit').value : '';
+  const cluster = document.getElementById('p-cluster') ? document.getElementById('p-cluster').value : '';
+  const status = document.getElementById('p-status') ? document.getElementById('p-status').value : '';
+
+  portalFilteredData = RAW.filter(d => {
+    if(year && d.tahun !== year) return false;
+    if(unit && !getAllUnits(d.unit).includes(unit)) return false;
+    if(cluster && d.cluster !== cluster) return false;
+    if(status && status === 'overdue' && !isOverdue(d)) return false;
+    if(status && status.startsWith('tahap:') && getStageInfo(d).name.toLowerCase() !== status.replace('tahap:','').toLowerCase()) return false;
+    if(status && !status.startsWith('tahap:') && status !== 'overdue' && getStatus(d) !== status) return false;
+    return true;
+  });
+
+  renderPortalKPIs();
+  renderPortalCharts();
+  renderPortalRoadmap();
+  renderPortalReminderAndPerformance();
+}
+
+function resetPortalFilters() {
+  ['p-year','p-unit','p-cluster','p-status'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.value = '';
+  });
+  portalFilteredData = [...RAW];
+  renderPortalKPIs();
+  renderPortalCharts();
+  renderPortalRoadmap();
+  renderPortalReminderAndPerformance();
+}
+
+function renderPortalKPIs() {
+  const data = portalFilteredData, total = data.length;
+  const selesai = data.filter(d=>getStatus(d)==='selesai').length;
+  const belum = data.filter(d=>getStatus(d)==='belum').length;
+  const pct = total ? Math.round(selesai/total*100) : 0;
+  const pctBelum = total ? Math.round(belum/total*100) : 0;
+  const selectedUnit = (document.getElementById('p-unit') && document.getElementById('p-unit').value) || '';
+  const units2026 = selectedUnit ? 1 : 9;
+
+  const kpis = [
+    {type:'total',   icon:'fa-file-lines',    value:total,     label:'Total Publikasi', sub:'Semua tahun & unit · Klik lihat list',         color:'#1e40af', ibg:'#eff6ff', delta:null},
+    {type:'selesai', icon:'fa-circle-check',  value:selesai,   label:'Selesai',         sub:`${pct}% selesai · Klik lihat list`,           color:'#16a34a', ibg:'#f0fdf4', delta:{cls:'delta-good',text:`${pct}%`}},
+    {type:'belum',   icon:'fa-hourglass-half',value:belum,     label:'Belum Selesai',   sub:`${belum} survei berjalan · Klik lihat list`, color:'#dc2626', ibg:'#fef2f2', delta:{cls:'delta-bad', text:`${pctBelum}%`}},
+    {type:'unit',    icon:'fa-building',      value:units2026, label:'Unit Aktif 2026', sub:'Unit dengan publikasi 2026 · Klik list',     color:'#7c3aed', ibg:'#f5f3ff', delta:null},
+  ];
+
+  const grid = document.getElementById('portal-kpi-grid');
+  if(!grid) return;
+  grid.innerHTML = kpis.map(k=>`
+    <div class="kpi-card clickable" onclick="openKpiList('${k.type}')" style="--accent-color:${k.color}" title="Klik untuk melihat daftar nama survei">
+      ${k.delta?`<div class="kpi-delta ${k.delta.cls}">${k.delta.text}</div>`:''}
+      <div class="kpi-icon" style="background:${k.ibg};color:${k.color}"><i class="fa-solid ${k.icon}"></i></div>
+      <div class="kpi-value" style="color:${k.color};cursor:pointer">${k.value}</div>
+      <div class="kpi-label">${k.label}</div>
+      <div class="kpi-sub">${k.sub}</div>
+    </div>`).join('');
+}
+
+function renderPortalCharts() {
+  const data = portalFilteredData;
+
+  // 1. Status Donut
+  if(portalCharts['status']) portalCharts['status'].destroy();
+  const selesai = data.filter(d=>getStatus(d)==='selesai').length;
+  const belum = data.filter(d=>getStatus(d)==='belum').length;
+  const canvasStatus = document.getElementById('portal-chart-status-donut');
+  if(canvasStatus) {
+    portalCharts['status'] = new Chart(canvasStatus, {
+      type: 'doughnut',
+      data: { labels:['Selesai','Belum Selesai'], datasets:[{data:[selesai,belum], backgroundColor:['#22c55e','#ef4444'], borderWidth:2, borderColor:'#fff', hoverOffset:5}] },
+      options: { cutout:'72%', maintainAspectRatio:false, plugins:{legend:{display:false},datalabels:{display:false},tooltip:CHART_TOOLTIP} }
+    });
+    const donutLeg = document.getElementById('portal-donut-legend');
+    if(donutLeg) {
+      donutLeg.innerHTML = [['Selesai',selesai,'#22c55e'],['Belum Selesai',belum,'#ef4444']].map(([l,v,c])=>
+        `<div class="donut-legend-item"><div class="donut-legend-dot" style="background:${c}"></div><div class="donut-legend-label">${l}</div><div class="donut-legend-value">${v}</div><div class="donut-legend-pct">${data.length?Math.round(v/data.length*100):0}%</div></div>`
+      ).join('');
+    }
+  }
+
+  // 2. Monthly Bar
+  if(portalCharts['monthly']) portalCharts['monthly'].destroy();
+  const data2026 = data.filter(d=>d.tahun==='2026'&&d.jadwal);
+  const monthCounts = {};
+  MONTH_ORDER.forEach(m => monthCounts[m] = {selesai:0, belum:0});
+  data2026.forEach(d => {
+    const m = MONTH_ORDER.find(mo => d.jadwal.toLowerCase().includes(mo.toLowerCase()));
+    if(m) monthCounts[m][getStatus(d)]++;
+  });
+  const canvasMonthly = document.getElementById('portal-chart-monthly');
+  if(canvasMonthly) {
+    portalCharts['monthly'] = new Chart(canvasMonthly, {
+      type: 'bar',
+      data: {
+        labels: MONTH_ORDER.map(m=>m.slice(0,3)),
+        datasets: [
+          {label:'Selesai', data:MONTH_ORDER.map(m=>monthCounts[m].selesai), backgroundColor:'rgba(34,197,94,.85)', borderRadius:3, borderSkipped:false},
+          {label:'Belum Selesai', data:MONTH_ORDER.map(m=>monthCounts[m].belum), backgroundColor:'rgba(239,68,68,.85)', borderRadius:3, borderSkipped:false},
+        ]
+      },
+      options: { ...baseOpts(), scales:{x:{stacked:true,ticks:{color:TICK_COLOR,font:TICK_FONT},grid:{color:CHART_GRID}},y:{stacked:true,beginAtZero:true,ticks:{color:TICK_COLOR,font:TICK_FONT,stepSize:1},grid:{color:CHART_GRID}}}, plugins:{legend:{display:true,position:'top',labels:LEGEND_LABEL},datalabels:{display:false},tooltip:CHART_TOOLTIP} }
+    });
+  }
+
+  // 3. Channel Summary Grid
+  const chGrid = document.getElementById('portal-channel-grid');
+  if(chGrid) {
+    const maxCh = Math.max(...CHANNEL_DEFS.map(cd=>data.filter(d=>hasLink(d[cd.field])).length),1);
+    chGrid.innerHTML = CHANNEL_DEFS.map(cd => {
+      const cnt = data.filter(d=>hasLink(d[cd.field])).length;
+      const pct = data.length ? Math.round(cnt/data.length*100) : 0;
+      const barPct = Math.round(cnt/maxCh*100);
+      return `
+        <div class="channel-card">
+          <div class="channel-icon-wrap" style="background:${cd.bg};border:1.5px solid ${cd.border}">
+            <svg width="20" height="20" style="color:${cd.color}"><use href="#${cd.iconId}"/></svg>
+          </div>
+          <div class="channel-info">
+            <div class="channel-name">${cd.label}</div>
+            <div class="channel-count-badge" style="color:${cd.color}">${cnt}</div>
+            <div class="channel-pct">${pct}% &bull; ${cd.sublabel}</div>
+            <div class="channel-bar-mini"><div class="channel-bar-fill" style="width:${barPct}%;background:${cd.color}"></div></div>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  // 4. Unit Bar
+  if(portalCharts['unit']) portalCharts['unit'].destroy();
+  const allUnits = [...new Set(RAW.flatMap(d=>getAllUnits(d.unit)))].filter(u => u && !u.includes(',') && u!=='MULTI').sort();
+  const unitCounts = allUnits.map(u => ({ unit: u, count: data.filter(d=>getAllUnits(d.unit).includes(u)).length })).filter(u => u.count > 0).sort((a,b)=>b.count - a.count);
+  const canvasUnit = document.getElementById('portal-chart-unit-bar');
+  if(canvasUnit) {
+    portalCharts['unit'] = new Chart(canvasUnit, {
+      type: 'bar',
+      data: {
+        labels: unitCounts.map(u=>u.unit),
+        datasets: [{ data: unitCounts.map(u=>u.count), backgroundColor: unitCounts.map(u=>(UNIT_COLORS[u.unit]||UNIT_COLORS['MULTI']).bar+'cc'), borderRadius:4, borderSkipped:false }]
+      },
+      options: { ...baseOpts(), indexAxis:'y', scales:{x:{beginAtZero:true,ticks:{color:TICK_COLOR,font:TICK_FONT,stepSize:1},grid:{color:CHART_GRID}},y:{ticks:{color:TICK_COLOR,font:{family:'Inter',size:11,weight:'600'}},grid:{display:false}}} }
+    });
+  }
+
+  // 5. Cluster Bar
+  if(portalCharts['cluster']) portalCharts['cluster'].destroy();
+  const clusters = [...new Set(RAW.map(d=>d.cluster).filter(Boolean))];
+  const clusterCounts = clusters.map(c => ({ cluster: c, count: data.filter(d=>d.cluster===c).length })).sort((a,b)=>b.count-a.count);
+  const canvasCluster = document.getElementById('portal-chart-cluster-bar');
+  if(canvasCluster) {
+    portalCharts['cluster'] = new Chart(canvasCluster, {
+      type: 'bar',
+      data: {
+        labels: clusterCounts.map(c=>c.cluster),
+        datasets: [{ data: clusterCounts.map(c=>c.count), backgroundColor: clusterCounts.map(c=>(CLUSTER_COLORS[c.cluster]||{bar:'#94a3b8'}).bar+'cc'), borderRadius:4, borderSkipped:false }]
+      },
+      options: { ...baseOpts(), indexAxis:'y', scales:{x:{beginAtZero:true,ticks:{color:TICK_COLOR,font:TICK_FONT,stepSize:1},grid:{color:CHART_GRID}},y:{ticks:{color:TICK_COLOR,font:{family:'Inter',size:10}},grid:{display:false}}} }
+    });
+  }
+
+  // 6. Type Doughnut
+  if(portalCharts['type']) portalCharts['type'].destroy();
+  const typeCounts = {};
+  data.forEach(d => { const t = d.jenis || 'Survei/Laporan'; typeCounts[t] = (typeCounts[t]||0)+1; });
+  const typeLabels = Object.keys(typeCounts);
+  const typeColors = ['#1e40af','#0891b2','#059669','#d97706','#7c3aed','#dc2626','#64748b'];
+  const canvasType = document.getElementById('portal-chart-type');
+  if(canvasType) {
+    portalCharts['type'] = new Chart(canvasType, {
+      type: 'doughnut',
+      data: { labels: typeLabels, datasets:[{ data: Object.values(typeCounts), backgroundColor: typeColors.slice(0, typeLabels.length), borderWidth:2, borderColor:'#fff' }] },
+      options: { maintainAspectRatio:false, cutout:'65%', plugins:{legend:{display:true,position:'right',labels:LEGEND_LABEL},datalabels:{display:false},tooltip:CHART_TOOLTIP} }
+    });
+  }
+
+  renderPortalHeatmap();
+}
+
+function changePortalHeatmapYear(delta) {
+  portalHeatmapYear += delta;
+  if(portalHeatmapYear < 2025) portalHeatmapYear = 2025;
+  if(portalHeatmapYear > 2030) portalHeatmapYear = 2030;
+  const badge = document.getElementById('portal-heatmap-year-badge');
+  if(badge) badge.textContent = 'Tahun ' + portalHeatmapYear;
+  renderPortalHeatmap();
+}
+
+function renderPortalHeatmap() {
+  const container = document.getElementById('portal-heatmap-container');
+  if(!container) return;
+
+  const yearData = portalFilteredData.filter(d => (parseInt(d.tahun)||2026) === portalHeatmapYear && d.jadwal);
+  const matrix = {};
+  yearData.forEach(d => {
+    const mi = MONTH_ORDER.findIndex(mo => d.jadwal.toLowerCase().includes(mo.toLowerCase()));
+    const w = getWeekNum(d.jadwal);
+    if(mi >= 0 && w > 0) {
+      const k = `${mi}-${w}`;
+      matrix[k] = (matrix[k]||0) + 1;
+    }
+  });
+
+  const max = Math.max(...Object.values(matrix), 1);
+  const heatColor = v => {
+    if(!v) return '#f8fafc';
+    const i = v / max;
+    if(i <= 0.25) return '#bfdbfe';
+    if(i <= 0.5) return '#60a5fa';
+    if(i <= 0.75) return '#2563eb';
+    return '#1e40af';
+  };
+  const textColor = v => {
+    if(!v) return '#94a3b8';
+    return (v/max > 0.4) ? '#fff' : '#1e40af';
+  };
+
+  container.innerHTML = `
+    <div style="display:grid;grid-template-columns:auto repeat(12,1fr);gap:4px;font-size:9.5px;color:#64748b;font-family:Inter">
+      <div></div>
+      ${MONTH_ORDER.map(m=>`<div style="text-align:center;padding-bottom:5px;font-weight:700;color:#475569">${m.slice(0,3)}</div>`).join('')}
+      ${[1,2,3,4].map(w=>`
+        <div style="display:flex;align-items:center;font-weight:800;padding-right:7px;color:#475569">M${w}</div>
+        ${MONTH_ORDER.map((m,mi)=>{
+          const v = matrix[`${mi}-${w}`] || 0;
+          return `<div class="heatmap-cell" onclick="openWeeklyCellModal(${mi}, ${w})" style="background:${heatColor(v)};color:${textColor(v)};height:32px;border-radius:6px;cursor:${v?'pointer':'default'};transition:all .18s;border:1px solid ${v?'transparent':'#f1f5f9'}" title="${m} Minggu ${w} (${portalHeatmapYear}): ${v} publikasi (Klik untuk lihat daftar)">${v || ''}</div>`;
+        }).join('')}
+      `).join('')}
+    </div>
+    <div class="heatmap-legend" style="margin-top:12px;display:flex;align-items:center;justify-content:flex-end;gap:5px;font-size:10px;color:#64748b">
+      <span>0 Publikasi</span>
+      <div class="heatmap-legend-cell" style="background:#f8fafc;border:1px solid #e2e8f0"></div>
+      <div class="heatmap-legend-cell" style="background:#bfdbfe"></div>
+      <div class="heatmap-legend-cell" style="background:#60a5fa"></div>
+      <div class="heatmap-legend-cell" style="background:#2563eb"></div>
+      <div class="heatmap-legend-cell" style="background:#1e40af"></div>
+      <span>Padat</span>
+    </div>`;
+}
+
+function renderPortalRoadmap() {
+  const grid = document.getElementById('portal-roadmap-grid');
+  if(!grid) return;
+
+  const scheduled = portalFilteredData.filter(d => d.jadwal && d.tahun === '2026')
+    .sort((a,b) => {
+      const ma = getMonthNum(a.jadwal), mb = getMonthNum(b.jadwal);
+      return ma !== mb ? ma - mb : getWeekNum(a.jadwal) - getWeekNum(b.jadwal);
+    });
+
+  const byMonth = {};
+  MONTH_ORDER.forEach(m => {
+    const found = scheduled.filter(d => d.jadwal.toLowerCase().includes(m.toLowerCase()));
+    if(found.length) byMonth[m] = found;
+  });
+
+  const monthKeys = Object.keys(byMonth);
+  if(!monthKeys.length) {
+    grid.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text3);font-size:13px;grid-column:1/-1">Tidak ada jadwal survei untuk filter ini</div>';
+    return;
+  }
+
+  function getStatusLabel(d) {
+    const st = getStatus(d);
+    if(isOverdue(d)) return {cls:'rsb-overdue', text:'⚠️ Melewati Deadline'};
+    if(st === 'selesai') return {cls:'rsb-selesai', text:'Selesai Publikasi'};
+    if(st === 'belum') {
+      if((d.ket||'').toLowerCase().includes('pengumpulan data')) return {cls:'rsb-data', text:'Pengumpulan Data'};
+      return {cls:'rsb-proses', text:'Dalam Proses'};
+    }
+    return {cls:'rsb-belum', text:'Belum Dimulai'};
+  }
+
+  grid.innerHTML = monthKeys.map(m => {
+    const items = byMonth[m];
+    const overdueCount = items.filter(d => isOverdue(d)).length;
+    return `
+      <div class="roadmap-month-col">
+        <div class="roadmap-month-header">
+          <div style="display:flex;align-items:center;gap:6px">
+            <span class="roadmap-month-name">${m}</span>
+            ${overdueCount ? `<span class="badge-overdue-tag"><i class="fa-solid fa-triangle-exclamation"></i> ${overdueCount} telat</span>` : ''}
+          </div>
+          <span class="roadmap-month-count">${items.length} agenda</span>
+        </div>
+        <div class="roadmap-month-body">
+          ${items.map(d => {
+            const sl = getStatusLabel(d), od = isOverdue(d);
+            const uc = UNIT_COLORS[getPrimaryUnit(d.unit)] || UNIT_COLORS['MULTI'];
+            const idx = RAW.findIndex(x => x.no === d.no);
+            return `
+              <div class="roadmap-pub-card${od?' overdue':''}" onclick="openModal(${idx})">
+                <div class="roadmap-pub-top">
+                  <span class="roadmap-unit-badge" style="background:${uc.bg};color:${uc.text};border:1px solid ${uc.border}">${d.unit}</span>
+                  <span class="roadmap-status-badge ${sl.cls}">${sl.text}</span>
+                </div>
+                <div class="roadmap-pub-title">${d.judul}</div>
+                ${getStatus(d) === 'belum' ? `<div style="margin-top:4px">${renderStageBadge(d)}</div>` : ''}
+                <div style="font-size:11px;color:#64748b;margin-top:6px"><i class="fa-regular fa-clock"></i> ${d.jadwal || '-'}</div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderPortalReminderAndPerformance() {
+  const data = portalFilteredData;
+
+  // 1. Reminder Overdue
+  const overdueItems = data.filter(d => isOverdue(d));
+  const reminderList = document.getElementById('portal-reminder-list');
+  const countBadge = document.getElementById('portal-reminder-count');
+  if(countBadge) countBadge.textContent = overdueItems.length + ' Terlambat';
+
+  if(reminderList) {
+    if(!overdueItems.length) {
+      reminderList.innerHTML = '<div style="padding:24px;text-align:center;color:#16a34a;font-size:12.5px;font-weight:600"><i class="fa-solid fa-circle-check" style="font-size:24px;display:block;margin-bottom:6px"></i>Seluruh publikasi saat ini tepat waktu sesuai jadwal!</div>';
+    } else {
+      reminderList.innerHTML = overdueItems.map(d => {
+        const stage = getStageInfo(d);
+        const uc = UNIT_COLORS[getPrimaryUnit(d.unit)] || UNIT_COLORS['MULTI'];
+        const idx = RAW.findIndex(x => x.no === d.no);
+        return `
+          <div style="padding:10px 12px;border-radius:8px;border:1px solid #fecaca;background:#fff5f5;margin-bottom:8px;cursor:pointer;transition:all .18s" onclick="openModal(${idx})">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+              <span class="badge" style="background:${uc.bg};color:${uc.text};font-weight:700">${d.unit}</span>
+              <span style="font-size:11px;font-weight:700;color:#b91c1c"><i class="fa-solid fa-clock-rotate-left"></i> Target: ${d.jadwal || '-'}</span>
+            </div>
+            <div style="font-size:12.5px;font-weight:700;color:#1e293b;margin:4px 0">${d.judul}</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;flex-wrap:wrap;gap:6px">
+              <div style="display:flex;align-items:center;gap:6px">
+                <span style="font-size:11px;color:#64748b;font-weight:600">Saat ini di:</span>
+                ${renderStageBadge(d)}
+              </div>
+              <span style="font-size:11px;color:#dc2626;font-weight:700">Perlu Penanganan &rarr;</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+  }
+
+  // 2. Penilaian Kinerja
+  const perfList = document.getElementById('portal-performance-list');
+  if(perfList) {
+    const allUnits = [...new Set(RAW.flatMap(d => getAllUnits(d.unit)))].filter(u => u && !u.includes(',') && u!=='MULTI').sort();
+    const stats = allUnits.map(u => {
+      const uRecords = data.filter(d => getAllUnits(d.unit).includes(u));
+      const total = uRecords.length;
+      const selesai = uRecords.filter(d => getStatus(d) === 'selesai').length;
+      const pct = total ? Math.round((selesai / total) * 100) : 0;
+
+      let predikat = 'Sangat Kurang';
+      let badgeCls = 'badge-red';
+      let icon = 'fa-circle-xmark';
+      if(pct >= 85) { predikat = 'Sangat Baik (A)'; badgeCls = 'badge-green'; icon = 'fa-medal'; }
+      else if(pct >= 65) { predikat = 'Baik (B)'; badgeCls = 'badge-blue'; icon = 'fa-star'; }
+      else if(pct >= 40) { predikat = 'Cukup (C)'; badgeCls = 'badge-yellow'; icon = 'fa-award'; }
+      else if(pct > 0) { predikat = 'Kurang (D)'; badgeCls = 'badge-orange'; icon = 'fa-triangle-exclamation'; }
+
+      return { unit: u, total, selesai, pct, predikat, badgeCls, icon };
+    }).filter(s => s.total > 0).sort((a,b) => b.pct - a.pct || b.total - a.total);
+
+    perfList.innerHTML = stats.map(s => {
+      const uc = UNIT_COLORS[s.unit] || UNIT_COLORS['MULTI'];
+      return `
+        <div style="padding:10px 12px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between;gap:10px">
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;align-items:center;gap:8px">
+              <span class="badge" style="background:${uc.bg};color:${uc.text};font-weight:700">${s.unit}</span>
+              <span style="font-size:12px;font-weight:700;color:#1e293b">${s.selesai} dari ${s.total} Publikasi Selesai</span>
+            </div>
+            <div class="progress-bar-bg" style="margin-top:6px;height:6px">
+              <div class="progress-bar-fill" style="width:${s.pct}%;background:${s.pct>=65?'#16a34a':s.pct>=40?'#2563eb':'#dc2626'}"></div>
+            </div>
+          </div>
+          <div style="text-align:right;flex-shrink:0">
+            <div style="font-size:14px;font-weight:800;color:#1e293b">${s.pct}%</div>
+            <span class="badge ${s.badgeCls}" style="font-size:10px;padding:2px 7px"><i class="fa-solid ${s.icon}"></i> ${s.predikat}</span>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+}
+
+function openTab(tabName) {
   const panels = ['dashboard', 'pengumuman', 'penulisan', 'publikasi', 'seminar', 'proposal'];
   panels.forEach(p => {
     const el = document.getElementById('sindisa-panel-' + p);
@@ -3744,7 +4302,8 @@ function openTab(tabName) {
   });
 
   if(tabName === 'dashboard') {
-    renderEmbeddedDashboard();
+    initPortalDropdowns();
+    applyPortalFilters();
   }
 }
 
