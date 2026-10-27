@@ -687,6 +687,255 @@
       .nav-tab span { display: none; } /* icon only on tiny screens */
       .header-inner { flex-direction: row; justify-content: space-between; }
     }
+
+    /* ═══════════════════ LOGIN BUTTON & PROFILE AVATAR ═══════════════════ */
+    .btn-login-nav {
+      background: #7c2d92; color: #fff; border: none;
+      padding: 7px 16px; border-radius: 20px; font-size: 12.5px; font-weight: 600;
+      cursor: pointer; display: flex; align-items: center; gap: 7px;
+      transition: all .2s; font-family: inherit;
+      box-shadow: 0 2px 8px rgba(124,45,146,.25);
+    }
+    .btn-login-nav:hover { background: #622175; transform: translateY(-1px); }
+
+    .user-profile-btn {
+      display: flex; align-items: center; gap: 9px; cursor: pointer;
+      padding: 4px 12px 4px 6px; border-radius: 24px; background: #f5f3ff;
+      border: 1px solid #ddd6fe; transition: all .2s; position: relative;
+    }
+    .user-profile-btn:hover { background: #ede9fe; }
+    .user-avatar-img {
+      width: 32px; height: 32px; border-radius: 50%; object-fit: cover;
+      background: #7c2d92; color: #fff; display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 13px; border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,.15);
+    }
+    .user-name-text { font-size: 12px; font-weight: 700; color: #4c1d95; }
+    .user-dropdown-menu {
+      display: none; position: absolute; right: 0; top: 115%; background: #fff;
+      border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow-lg);
+      width: 220px; z-index: 250; overflow: hidden;
+    }
+    .user-dropdown-menu.show { display: block; animation: dropFadeIn .18s ease; }
+    @keyframes dropFadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+    .user-dropdown-header { padding: 12px 14px; background: #faf5ff; border-bottom: 1px solid #f3e8ff; }
+    .user-dropdown-header .ud-name { font-size: 12px; font-weight: 700; color: #581c87; }
+    .user-dropdown-header .ud-role { font-size: 11px; color: #7e22ce; }
+    .user-dropdown-item {
+      padding: 10px 14px; font-size: 12px; color: var(--text1); display: flex;
+      align-items: center; gap: 10px; cursor: pointer; transition: background .15s;
+    }
+    .user-dropdown-item:hover { background: #f8fafc; color: #7c2d92; }
+    .user-dropdown-item i { width: 16px; font-size: 12px; color: var(--text3); }
+    .user-dropdown-item:hover i { color: #7c2d92; }
+    .user-dropdown-divider { height: 1px; background: var(--border); margin: 4px 0; }
+
+    /* ═══════════════════ SINDISA DEPUTI PORTAL ═══════════════════ */
+    #deputi-portal-view {
+      display: none; position: fixed; inset: 0; z-index: 1000;
+      background: #f8f9fa; font-family: 'Inter', system-ui, sans-serif;
+      overflow-y: auto;
+    }
+    #deputi-portal-view.active { display: block; }
+
+    .sindisa-topbar {
+      height: 60px; background: #7c2d92; color: #fff;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 22px; position: sticky; top: 0; z-index: 110;
+      box-shadow: 0 2px 10px rgba(0,0,0,.15);
+    }
+    .sindisa-topbar-left { display: flex; align-items: center; gap: 16px; }
+    .sindisa-burger-btn {
+      background: transparent; border: none; color: #fff; font-size: 18px;
+      cursor: pointer; padding: 6px; border-radius: 6px; display: flex; align-items: center;
+    }
+    .sindisa-burger-btn:hover { background: rgba(255,255,255,.15); }
+    .sindisa-top-title { font-size: 15px; font-weight: 700; color: #fff; letter-spacing: -.2px; }
+
+    .sindisa-topbar-right { display: flex; align-items: center; gap: 14px; }
+    .sindisa-user-greet {
+      display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 600;
+      cursor: pointer; position: relative; padding: 4px 10px; border-radius: 20px;
+      transition: background .15s;
+    }
+    .sindisa-user-greet:hover { background: rgba(255,255,255,.12); }
+    .sindisa-user-pic {
+      width: 34px; height: 34px; border-radius: 50%; border: 2px solid #fff;
+      object-fit: cover; background: #fff;
+    }
+    .sindisa-exit-btn {
+      background: rgba(255,255,255,.18); border: 1px solid rgba(255,255,255,.35);
+      color: #fff; padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 600;
+      cursor: pointer; transition: all .18s; display: flex; align-items: center; gap: 6px;
+    }
+    .sindisa-exit-btn:hover { background: #dc2626; border-color: #dc2626; }
+
+    .sindisa-layout { display: flex; min-height: calc(100vh - 60px); }
+
+    /* SINDISA SIDEBAR */
+    .sindisa-sidebar {
+      width: 250px; background: #ffffff; border-right: 1px solid #e2e8f0;
+      flex-shrink: 0; padding: 20px 0; transition: all .25s ease;
+      display: flex; flex-direction: column;
+    }
+    .sindisa-sidebar.collapsed { width: 68px; }
+    .sindisa-sidebar.collapsed .sindisa-brand-text,
+    .sindisa-sidebar.collapsed .sindisa-section-title,
+    .sindisa-sidebar.collapsed .sindisa-menu-text,
+    .sindisa-sidebar.collapsed .sindisa-badge { display: none; }
+    .sindisa-sidebar.collapsed .sindisa-menu-item { justify-content: center; padding: 12px 0; }
+
+    .sindisa-brand {
+      padding: 0 20px 18px; display: flex; align-items: center; gap: 10px;
+      border-bottom: 1px solid #f1f5f9; margin-bottom: 14px;
+    }
+    .sindisa-logo-icon {
+      width: 32px; height: 32px; border-radius: 8px; object-fit: contain;
+    }
+    .sindisa-brand-text { font-size: 17px; font-weight: 800; color: #1e293b; letter-spacing: .5px; }
+
+    .sindisa-section-title {
+      font-size: 10.5px; font-weight: 800; color: #94a3b8; text-transform: uppercase;
+      letter-spacing: .8px; padding: 10px 22px 6px;
+    }
+    .sindisa-menu { list-style: none; padding: 0; margin: 0; }
+    .sindisa-menu-item {
+      display: flex; align-items: center; gap: 12px; padding: 11px 22px;
+      font-size: 13px; font-weight: 500; color: #475569; cursor: pointer;
+      transition: all .18s; position: relative; user-select: none;
+    }
+    .sindisa-menu-item:hover { color: #7c2d92; background: #fbf7fc; }
+    .sindisa-menu-item.active {
+      background: #fbf2fb; color: #7c2d92; font-weight: 700;
+    }
+    .sindisa-menu-item.active::before {
+      content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+      background: #7c2d92; border-radius: 0 4px 4px 0;
+    }
+    .sindisa-menu-item i { width: 18px; text-align: center; font-size: 14px; }
+    .sindisa-badge {
+      margin-left: auto; background: #dc2626; color: #fff; font-size: 10px;
+      font-weight: 700; padding: 1px 7px; border-radius: 20px;
+    }
+    .sindisa-badge.badge-purple { background: #7c2d92; }
+
+    /* SINDISA CONTENT AREA */
+    .sindisa-content { flex: 1; padding: 26px 30px; min-width: 0; background: #f8fafc; }
+    .sindisa-welcome-card {
+      background: #fff; border: 1px solid #e2e8f0; border-radius: 10px;
+      padding: 16px 22px; font-size: 15px; font-weight: 800; color: #1e293b;
+      margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,.04);
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;
+    }
+
+    /* SINDISA HORIZONTAL TABS (IDENTICAL TO SCREENSHOT) */
+    .sindisa-nav-tabs {
+      display: flex; border: 1px solid #e2e8f0; border-radius: 8px;
+      background: #fff; overflow-x: auto; margin-bottom: 22px;
+      box-shadow: 0 1px 3px rgba(0,0,0,.04);
+    }
+    .sindisa-tab-btn {
+      flex: 1; min-width: 140px; padding: 12px 14px; text-align: center; font-size: 13px;
+      font-weight: 600; color: #475569; background: #fff; border: none;
+      border-right: 1px solid #e2e8f0; cursor: pointer; transition: all .2s;
+      white-space: nowrap;
+    }
+    .sindisa-tab-btn:last-child { border-right: none; }
+    .sindisa-tab-btn:hover { background: #faf5ff; color: #7c2d92; }
+    .sindisa-tab-btn.active {
+      background: #7c2d92; color: #fff; font-weight: 700;
+    }
+
+    /* SINDISA TAB CONTENT BOX */
+    .sindisa-panel-box {
+      background: #fff; border: 1px solid #e2e8f0; border-radius: 10px;
+      padding: 24px; box-shadow: 0 1px 4px rgba(0,0,0,.05);
+    }
+    .sindisa-list-item {
+      padding: 14px 0; border-bottom: 1px solid #f1f5f9; display: flex;
+      flex-direction: column; gap: 4px; transition: background .15s;
+    }
+    .sindisa-list-item:last-child { border-bottom: none; }
+    .sindisa-item-title {
+      font-size: 14px; font-weight: 700; color: #7c2d92; cursor: pointer;
+      display: flex; align-items: center; gap: 8px; text-decoration: none;
+    }
+    .sindisa-item-title:hover { text-decoration: underline; }
+    .sindisa-item-date { font-size: 11px; color: #94a3b8; font-weight: 500; }
+    .sindisa-item-desc { font-size: 12.5px; color: #475569; margin-top: 3px; }
+
+    /* ACC / APPROVAL TABLE */
+    .acc-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+    .acc-table th {
+      background: #f8fafc; color: #475569; font-weight: 700; text-align: left;
+      padding: 11px 14px; border-bottom: 2px solid #e2e8f0; font-size: 11.5px;
+      text-transform: uppercase; letter-spacing: .5px;
+    }
+    .acc-table td { padding: 12px 14px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+    .acc-table tr:hover { background: #faf5ff; }
+    .acc-action-btn {
+      padding: 5px 11px; border-radius: 6px; font-size: 11.5px; font-weight: 700;
+      border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;
+      transition: all .15s; margin-right: 4px;
+    }
+    .btn-acc { background: #16a34a; color: #fff; }
+    .btn-acc:hover { background: #15803d; }
+    .btn-rev { background: #d97706; color: #fff; }
+    .btn-rev:hover { background: #b45309; }
+    .btn-view { background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; }
+    .btn-view:hover { background: #e2e8f0; }
+
+    /* ═══════════════════ STEPPER & TAHAPAN BADGES ═══════════════════ */
+    .stage-badge {
+      display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px;
+      border-radius: 14px; font-size: 10.5px; font-weight: 700; white-space: nowrap;
+    }
+    .stage-1 { background: #f3f4f6; color: #4b5563; border: 1px solid #e5e7eb; } /* Persiapan */
+    .stage-2 { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; } /* Penyusunan instrumen */
+    .stage-3 { background: #e0f2fe; color: #075985; border: 1px solid #bae6fd; } /* Pengumpulan data */
+    .stage-4 { background: #ede9fe; color: #5b21b6; border: 1px solid #ddd6fe; } /* Pengolahan data */
+    .stage-5 { background: #ffedd5; color: #9a3412; border: 1px solid #fed7aa; } /* Penyusunan laporan */
+    .stage-6 { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; } /* Publikasi */
+    .stage-7 { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; font-weight: 800; } /* Selesai */
+
+    .stage-timeline-mini {
+      display: flex; align-items: center; gap: 3px; margin-top: 6px;
+    }
+    .stage-dot {
+      width: 7px; height: 7px; border-radius: 50%; background: #e2e8f0;
+      transition: background .2s;
+    }
+    .stage-dot.filled { background: #7c2d92; }
+    .stage-dot.active-pulse { background: #2563eb; transform: scale(1.3); }
+
+    /* KPI Clickable style */
+    .kpi-card.clickable {
+      cursor: pointer; position: relative; transition: all .2s ease;
+    }
+    .kpi-card.clickable:hover {
+      transform: translateY(-3px); box-shadow: 0 8px 24px rgba(37,99,235,.15);
+      border-color: #93c5fd;
+    }
+    .kpi-card.clickable::after {
+      content: '\f002 Klik utk daftar survei';
+      font-family: 'Font Awesome 6 Free', 'Inter'; font-weight: 700;
+      position: absolute; right: 12px; bottom: 8px; font-size: 9.5px;
+      color: var(--accent); opacity: 0; transition: opacity .18s;
+    }
+    .kpi-card.clickable:hover::after { opacity: .85; }
+
+    /* LIST SURVEYS MODAL */
+    .kpi-modal-list {
+      max-height: 480px; overflow-y: auto; padding-right: 4px;
+    }
+    .kpi-modal-item {
+      padding: 12px 14px; border-radius: 8px; border: 1px solid var(--border);
+      margin-bottom: 8px; background: #fff; display: flex; align-items: center;
+      justify-content: space-between; gap: 12px; cursor: pointer; transition: all .15s;
+    }
+    .kpi-modal-item:hover {
+      background: #f8fafc; border-color: var(--accent); transform: translateX(2px);
+    }
+
   </style>
 </head>
 <body>
@@ -704,6 +953,11 @@
       </div>
     </div>
     <div class="header-right">
+      <!-- User / Login Navigation Widget -->
+      <div id="nav-auth-container">
+        <!-- Rendered by JS: either Login button or User Profile -->
+      </div>
+      <div style="width:1px;height:24px;background:var(--border);margin:0 4px"></div>
       <!-- Google Sheets Sync Badge -->
       <div class="gs-badge disconnected" id="gs-badge" onclick="openGasModal()" title="Pengaturan Sinkronisasi Google Sheets">
         <div class="gs-dot"></div>
@@ -1083,6 +1337,14 @@ setInterval(() => {
         <option value="selesai">Selesai</option>
         <option value="belum">Belum Selesai</option>
         <option value="overdue">⚠️ Melewati Deadline</option>
+        <optgroup label="Tahapan (Belum Selesai)">
+          <option value="tahap:Persiapan">Tahap 1: Persiapan</option>
+          <option value="tahap:Penyusunan instrumen">Tahap 2: Penyusunan Instrumen</option>
+          <option value="tahap:Pengumpulan data">Tahap 3: Pengumpulan Data</option>
+          <option value="tahap:Pengolahan data">Tahap 4: Pengolahan Data</option>
+          <option value="tahap:Penyusunan laporan">Tahap 5: Penyusunan Laporan</option>
+          <option value="tahap:Publikasi">Tahap 6: Publikasi</option>
+        </optgroup>
       </select>
       <button class="filter-reset" onclick="resetFilters()"><i class="fa-solid fa-rotate-left"></i> Reset</button>
     </div>
@@ -1305,6 +1567,14 @@ setInterval(() => {
         <option value="selesai">Selesai</option>
         <option value="belum">Belum Selesai</option>
         <option value="overdue">⚠️ Melewati Deadline</option>
+        <optgroup label="Tahapan (Belum Selesai)">
+          <option value="tahap:Persiapan">Tahap 1: Persiapan</option>
+          <option value="tahap:Penyusunan instrumen">Tahap 2: Penyusunan Instrumen</option>
+          <option value="tahap:Pengumpulan data">Tahap 3: Pengumpulan Data</option>
+          <option value="tahap:Pengolahan data">Tahap 4: Pengolahan Data</option>
+          <option value="tahap:Penyusunan laporan">Tahap 5: Penyusunan Laporan</option>
+          <option value="tahap:Publikasi">Tahap 6: Publikasi</option>
+        </optgroup>
       </select>
       <select id="r-year" onchange="renderTable()">
         <option value="">Semua Tahun</option>
@@ -1338,6 +1608,350 @@ setInterval(() => {
   </div>
 
 </div><!-- .main -->
+
+
+<!-- ══════════════════════ MODAL: LOGIN / MASUK ══════════════════════ -->
+<div class="modal-overlay" id="login-modal-overlay" onclick="if(event.target===this)closeLoginModal()">
+  <div class="modal" style="max-width:420px;text-align:left;padding:28px 24px">
+    <div class="modal-close" onclick="closeLoginModal()"><i class="fa-solid fa-xmark"></i></div>
+    <div style="text-align:center;margin-bottom:20px">
+      <div style="width:52px;height:52px;background:#f3e8ff;color:#7c2d92;border-radius:16px;display:inline-flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:10px">
+        <i class="fa-solid fa-user-shield"></i>
+      </div>
+      <h3 style="font-size:18px;font-weight:800;color:var(--text1);margin-bottom:4px">Masuk ke Sistem</h3>
+      <p style="font-size:12px;color:var(--text3)">Akses khusus Kepala Deputi & Pengelola Survei LAN RI</p>
+    </div>
+    <form id="form-login-user" onsubmit="handleUserLogin(event)">
+      <div style="margin-bottom:12px">
+        <label style="font-size:11.5px;font-weight:700;color:var(--text2);display:block;margin-bottom:5px">Pilih Peran / Jabatan</label>
+        <select id="login-role" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:9px;font-size:12.5px;font-family:inherit" onchange="toggleLoginPresets(this.value)">
+          <option value="deputi">Kepala Deputi (Deputi Bidang Kajian Kebijakan)</option>
+          <option value="admin">Admin / Pengelola Survei</option>
+        </select>
+      </div>
+      <div style="margin-bottom:12px">
+        <label style="font-size:11.5px;font-weight:700;color:var(--text2);display:block;margin-bottom:5px">Nama Pengguna / Username</label>
+        <input type="text" id="login-username" value="deputi" required style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:9px;font-size:12.5px;font-family:inherit"/>
+      </div>
+      <div style="margin-bottom:16px">
+        <label style="font-size:11.5px;font-weight:700;color:var(--text2);display:block;margin-bottom:5px">Kata Sandi / Password</label>
+        <input type="password" id="login-password" value="deputi2026" required style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:9px;font-size:12.5px;font-family:inherit"/>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <label style="font-size:11px;color:var(--text2);display:flex;align-items:center;gap:6px;cursor:pointer">
+          <input type="checkbox" id="login-remember" checked /> Ingat sesi saya
+        </label>
+        <span style="font-size:11px;color:#7c2d92;font-weight:600">LAN RI Cloud</span>
+      </div>
+      <button type="submit" style="width:100%;padding:11px;background:#7c2d92;color:#fff;border:none;border-radius:9px;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit;box-shadow:0 3px 10px rgba(124,45,146,.25)">
+        <i class="fa-solid fa-right-to-bracket" style="margin-right:6px"></i> Masuk Sekarang
+      </button>
+      <div style="margin-top:14px;padding:10px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;font-size:11px;color:var(--text2);line-height:1.4">
+        <strong>Akun Demo Cepat:</strong><br/>
+        &bull; <strong>Deputi</strong>: user <code>deputi</code> / sandi <code>deputi2026</code><br/>
+        &bull; <strong>Admin</strong>: user <code>admin</code> / sandi <code>admin2026</code>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ══════════════════════ MODAL: LIST SURVEI DARI KLIK NUMBER KPI ══════════════════════ -->
+<div class="modal-overlay" id="kpi-list-modal" onclick="if(event.target===this)closeKpiListModal()">
+  <div class="modal" style="max-width:750px">
+    <div class="modal-close" onclick="closeKpiListModal()"><i class="fa-solid fa-xmark"></i></div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+      <div id="kpi-modal-icon" style="width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px"></div>
+      <div>
+        <h3 id="kpi-modal-title" style="font-size:17px;font-weight:800;color:var(--text1)">Daftar Survei</h3>
+        <p id="kpi-modal-subtitle" style="font-size:12px;color:var(--text3)">Menampilkan daftar publikasi survei berdasarkan filter</p>
+      </div>
+    </div>
+    <div style="margin-bottom:14px;display:flex;align-items:center;gap:10px;background:var(--bg3);padding:8px 12px;border-radius:8px">
+      <i class="fa-solid fa-magnifying-glass" style="color:var(--text3);font-size:12px"></i>
+      <input type="text" id="kpi-modal-search" placeholder="Cari judul survei atau unit..." oninput="filterKpiListModal(this.value)" style="border:none;background:transparent;outline:none;font-size:12px;width:100%;font-family:inherit"/>
+      <span id="kpi-modal-count" style="font-size:11px;font-weight:700;color:var(--text2);white-space:nowrap">0 survei</span>
+    </div>
+    <div class="kpi-modal-list" id="kpi-modal-items-container"></div>
+    <div style="display:flex;justify-content:flex-end;margin-top:14px">
+      <button onclick="closeKpiListModal()" style="padding:7px 16px;border-radius:8px;background:var(--bg3);border:1px solid var(--border);color:var(--text2);font-size:12px;cursor:pointer">Tutup</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════ PORTAL KEPALA DEPUTI (GAYA SINDISA) ══════════════════════ -->
+<div id="deputi-portal-view">
+  <!-- SINDISA TOPBAR -->
+  <div class="sindisa-topbar">
+    <div class="sindisa-topbar-left">
+      <button class="sindisa-burger-btn" onclick="toggleSindisaSidebar()" title="Toggle Sidebar">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span class="sindisa-top-title">PORTAL KEPALA DEPUTI — SINDISA LAN RI</span>
+      </div>
+    </div>
+    <div class="sindisa-topbar-right">
+      <div class="sindisa-user-greet" onclick="toggleUserDropdown(event)">
+        <img src="favicon.png" class="sindisa-user-pic" alt="Avatar"/>
+        <span id="sindisa-header-username">Hi, PUJIATMO SUBARKAH</span>
+        <i class="fa-solid fa-caret-down" style="font-size:11px;opacity:.8"></i>
+      </div>
+      <button class="sindisa-exit-btn" onclick="exitDeputiPortal()" title="Kembali ke Dashboard Publik">
+        <i class="fa-solid fa-arrow-left"></i> Kembali ke Dashboard Publik
+      </button>
+    </div>
+  </div>
+
+  <div class="sindisa-layout">
+    <!-- SINDISA SIDEBAR -->
+    <aside class="sindisa-sidebar" id="sindisa-sidebar">
+      <div class="sindisa-brand">
+        <img src="favicon.png" alt="SINDISA" class="sindisa-logo-icon"/>
+        <span class="sindisa-brand-text">SINDISA</span>
+      </div>
+
+      <div class="sindisa-section-title">DASHBOARD</div>
+      <ul class="sindisa-menu">
+        <li class="sindisa-menu-item active" onclick="switchSindisaPage('dashboard', this)">
+          <i class="fa-solid fa-house"></i>
+          <span class="sindisa-menu-text">Dashboard</span>
+        </li>
+        <li class="sindisa-menu-item" onclick="switchSindisaPage('acc', this)">
+          <i class="fa-solid fa-clipboard-check"></i>
+          <span class="sindisa-menu-text">Persetujuan & ACC</span>
+          <span class="sindisa-badge" id="sindisa-pending-badge">3</span>
+        </li>
+        <li class="sindisa-menu-item" onclick="switchSindisaPage('pengajuan', this)">
+          <i class="fa-solid fa-file-circle-plus"></i>
+          <span class="sindisa-menu-text">Ajukan Disposisi</span>
+        </li>
+        <li class="sindisa-menu-item" onclick="switchSindisaPage('monitoring', this)">
+          <i class="fa-solid fa-chart-pie"></i>
+          <span class="sindisa-menu-text">Monitoring 7 Tahap</span>
+        </li>
+        <li class="sindisa-menu-item" onclick="switchSindisaPage('pengumuman', this)">
+          <i class="fa-solid fa-bullhorn"></i>
+          <span class="sindisa-menu-text">Arahan & Memo</span>
+        </li>
+        <li class="sindisa-menu-item" onclick="switchSindisaPage('riwayat', this)">
+          <i class="fa-solid fa-clock-rotate-left"></i>
+          <span class="sindisa-menu-text">Riwayat ACC</span>
+        </li>
+      </ul>
+
+      <div style="margin-top:auto;padding:16px 20px;border-top:1px solid #f1f5f9">
+        <div style="font-size:11px;color:#94a3b8;margin-bottom:8px">Mode Akses: <strong>Kepala Deputi</strong></div>
+        <button onclick="handleUserLogout()" style="width:100%;padding:8px;border-radius:6px;border:1px solid #fecaca;background:#fef2f2;color:#dc2626;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px">
+          <i class="fa-solid fa-right-from-bracket"></i> Keluar / Logout
+        </button>
+      </div>
+    </aside>
+
+    <!-- SINDISA MAIN CONTENT -->
+    <main class="sindisa-content">
+      <!-- WELCOME CARD -->
+      <div class="sindisa-welcome-card">
+        <div>
+          <span id="sindisa-welcome-name">Selamat Datang PUJIATMO SUBARKAH</span>
+          <div style="font-size:12px;font-weight:500;color:#64748b;margin-top:2px">
+            Portal Pemantauan & Persetujuan Survei Lembaga Administrasi Negara Republik Indonesia
+          </div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button onclick="switchSindisaPage('acc')" style="padding:7px 14px;background:#7c2d92;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer">
+            <i class="fa-solid fa-bell" style="margin-right:5px"></i> Perlu ACC (<span id="sindisa-pending-num">3</span>)
+          </button>
+        </div>
+      </div>
+
+      <!-- HORIZONTAL TABS (IDENTICAL TO SCREENSHOT) -->
+      <div class="sindisa-nav-tabs">
+        <button class="sindisa-tab-btn active" onclick="switchSindisaTab('pengumuman', this)">Pengumuman</button>
+        <button class="sindisa-tab-btn" onclick="switchSindisaTab('penulisan', this)">Penulisan & Instrumen</button>
+        <button class="sindisa-tab-btn" onclick="switchSindisaTab('publikasi', this)">Publikasi</button>
+        <button class="sindisa-tab-btn" onclick="switchSindisaTab('seminar', this)">Review & Ujian Policy</button>
+        <button class="sindisa-tab-btn" onclick="switchSindisaTab('proposal', this)">Topik Proposal / ACC</button>
+      </div>
+
+      <!-- TAB PANEL 1: PENGUMUMAN & ARAHAN -->
+      <div class="sindisa-panel-box" id="sindisa-panel-pengumuman">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;border-bottom:1px solid #f1f5f9;padding-bottom:10px">
+          <h4 style="font-size:15px;font-weight:800;color:#1e293b">Papan Informasi & Memo Kebijakan Deputi</h4>
+          <button onclick="openTambahPengumumanModal()" style="padding:6px 12px;background:#7c2d92;color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer;font-weight:600">
+            <i class="fa-solid fa-plus"></i> Tambah Memo Baru
+          </button>
+        </div>
+        <div id="sindisa-pengumuman-list">
+          <!-- Dynamically populated or default identical to screenshot styling -->
+        </div>
+      </div>
+
+      <!-- TAB PANEL 2: PENULISAN & INSTRUMEN -->
+      <div class="sindisa-panel-box" id="sindisa-panel-penulisan" style="display:none">
+        <h4 style="font-size:15px;font-weight:800;color:#1e293b;margin-bottom:6px">Status Penyusunan Instrumen & Data Survei</h4>
+        <p style="font-size:12px;color:#64748b;margin-bottom:18px">Daftar survei yang sedang dalam tahap penyusunan instrumen dan pengumpulan data</p>
+        <div class="table-wrap">
+          <table class="acc-table">
+            <thead>
+              <tr><th>No</th><th>Unit</th><th>Judul Survei</th><th>Tahapan</th><th>Jadwal</th><th>Keterangan</th><th>Aksi Deputi</th></tr>
+            </thead>
+            <tbody id="sindisa-penulisan-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- TAB PANEL 3: PUBLIKASI -->
+      <div class="sindisa-panel-box" id="sindisa-panel-publikasi" style="display:none">
+        <h4 style="font-size:15px;font-weight:800;color:#1e293b;margin-bottom:6px">Publikasi Survei Selesai</h4>
+        <p style="font-size:12px;color:#64748b;margin-bottom:18px">Publikasi survei yang telah selesai diterbitkan ke berbagai kanal resmi LAN RI</p>
+        <div class="table-wrap">
+          <table class="acc-table">
+            <thead>
+              <tr><th>No</th><th>Unit</th><th>Judul Publikasi</th><th>Cluster</th><th>Kanal Publikasi</th><th>Status</th></tr>
+            </thead>
+            <tbody id="sindisa-publikasi-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- TAB PANEL 4: REVIEW & UJIAN POLICY -->
+      <div class="sindisa-panel-box" id="sindisa-panel-seminar" style="display:none">
+        <h4 style="font-size:15px;font-weight:800;color:#1e293b;margin-bottom:6px">Review Policy Brief & Paparan Kajian</h4>
+        <p style="font-size:12px;color:#64748b;margin-bottom:18px">Agenda pembahasan dan review hasil riset bersama Kepala Deputi</p>
+        <div id="sindisa-seminar-list"></div>
+      </div>
+
+      <!-- TAB PANEL 5: TOPIK PROPOSAL / PERSETUJUAN (ACC) -->
+      <div class="sindisa-panel-box" id="sindisa-panel-proposal" style="display:none">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+          <div>
+            <h4 style="font-size:15px;font-weight:800;color:#1e293b">Persetujuan & Pengajuan Survei (ACC Deputi)</h4>
+            <p style="font-size:12px;color:#64748b">Beri persetujuan (ACC), catatan revisi, atau disposisi langsung untuk unit kerja</p>
+          </div>
+          <button onclick="openAjukanDisposisiModal()" style="padding:8px 14px;background:#16a34a;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer">
+            <i class="fa-solid fa-plus-circle"></i> Beri Disposisi Baru
+          </button>
+        </div>
+        <div class="table-wrap">
+          <table class="acc-table">
+            <thead>
+              <tr><th>Tanggal</th><th>Unit Pengusul</th><th>Judul / Draft Survei</th><th>Tahap Saat Ini</th><th>Status ACC</th><th style="min-width:180px">Tindakan Kepala Deputi</th></tr>
+            </thead>
+            <tbody id="sindisa-acc-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- MODAL: BERI ACC / REVISI DEPUTI -->
+<div class="modal-overlay" id="acc-action-modal" onclick="if(event.target===this)closeAccActionModal()">
+  <div class="modal" style="max-width:540px;text-align:left">
+    <div class="modal-close" onclick="closeAccActionModal()"><i class="fa-solid fa-xmark"></i></div>
+    <h3 style="font-size:16px;font-weight:800;color:#1e293b;margin-bottom:4px" id="acc-modal-title">Lembar Disposisi / ACC Deputi</h3>
+    <p style="font-size:12px;color:#64748b;margin-bottom:14px" id="acc-modal-sub">Survei LAN RI</p>
+    <div style="background:#f8fafc;padding:12px 14px;border-radius:8px;border:1px solid #e2e8f0;margin-bottom:14px">
+      <div style="font-size:11px;color:#94a3b8;font-weight:700;text-transform:uppercase">Judul Survei:</div>
+      <div style="font-size:13px;font-weight:700;color:#1e293b;margin-top:2px" id="acc-survey-title">-</div>
+      <div style="font-size:11.5px;color:#64748b;margin-top:4px" id="acc-survey-meta">-</div>
+    </div>
+    <form onsubmit="submitAccDecision(event)">
+      <input type="hidden" id="acc-item-id"/>
+      <div style="margin-bottom:12px">
+        <label style="font-size:11.5px;font-weight:700;color:#334155;display:block;margin-bottom:5px">Keputusan Kepala Deputi *</label>
+        <select id="acc-decision-select" required style="width:100%;padding:9px;border:1px solid #cbd5e1;border-radius:7px;font-size:12.5px;font-family:inherit">
+          <option value="ACC">DISETUJUI (ACC Penuh)</option>
+          <option value="ACC dengan Catatan">ACC DENGAN CATATAN</option>
+          <option value="Perlu Revisi">PERLU PERBAIKAN / REVISI</option>
+          <option value="Ditunda">DITUNDA / DIJADWALKAN ULANG</option>
+        </select>
+      </div>
+      <div style="margin-bottom:12px">
+        <label style="font-size:11.5px;font-weight:700;color:#334155;display:block;margin-bottom:5px">Pembaruan Tahapan Survei</label>
+        <select id="acc-stage-select" style="width:100%;padding:9px;border:1px solid #cbd5e1;border-radius:7px;font-size:12.5px;font-family:inherit">
+          <option value="1">1. Persiapan</option>
+          <option value="2">2. Penyusunan instrumen</option>
+          <option value="3">3. Pengumpulan data</option>
+          <option value="4">4. Pengolahan data</option>
+          <option value="5">5. Penyusunan laporan</option>
+          <option value="6">6. Publikasi</option>
+          <option value="7">7. Selesai</option>
+        </select>
+      </div>
+      <div style="margin-bottom:16px">
+        <label style="font-size:11.5px;font-weight:700;color:#334155;display:block;margin-bottom:5px">Catatan & Arahan Deputi</label>
+        <textarea id="acc-notes-input" rows="3" placeholder="Tuliskan arahan, penajaman substansi, atau batas waktu..." style="width:100%;padding:9px;border:1px solid #cbd5e1;border-radius:7px;font-size:12px;font-family:inherit;resize:vertical"></textarea>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:8px">
+        <button type="button" onclick="closeAccActionModal()" style="padding:8px 14px;border:1px solid #cbd5e1;background:#f8fafc;border-radius:7px;font-size:12px;cursor:pointer">Batal</button>
+        <button type="submit" style="padding:8px 18px;border:none;background:#7c2d92;color:#fff;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer">Simpan Keputusan</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: TAMBAH DISPOSISI / PENGAJUAN BARU OLEH DEPUTI -->
+<div class="modal-overlay" id="ajukan-disposisi-modal" onclick="if(event.target===this)closeAjukanDisposisiModal()">
+  <div class="modal" style="max-width:560px;text-align:left">
+    <div class="modal-close" onclick="closeAjukanDisposisiModal()"><i class="fa-solid fa-xmark"></i></div>
+    <h3 style="font-size:16px;font-weight:800;color:#1e293b;margin-bottom:4px">Disposisi & Pengajuan Topik Survei Baru</h3>
+    <p style="font-size:12px;color:#64748b;margin-bottom:16px">Beri penugasan survei strategis dari Kepala Deputi kepada unit kerja</p>
+    <form onsubmit="submitDisposisiBaru(event)">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+        <div>
+          <label style="font-size:11.5px;font-weight:700;color:#334155;display:block;margin-bottom:5px">Unit Pelaksana *</label>
+          <select id="disp-unit" required style="width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:7px;font-size:12px;font-family:inherit">
+            <option value="SKPP">SKPP</option>
+            <option value="DAPKK">DAPKK</option>
+            <option value="SKMP">SKMP</option>
+            <option value="SKTAN">SKTAN</option>
+            <option value="STIA BDG">STIA BDG</option>
+            <option value="STIA JKT">STIA JKT</option>
+            <option value="STIA MKS">STIA MKS</option>
+            <option value="DSPK2AN">DSPK2AN</option>
+            <option value="SKMK">SKMK</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:11.5px;font-weight:700;color:#334155;display:block;margin-bottom:5px">Cluster Kebijakan</label>
+          <select id="disp-cluster" style="width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:7px;font-size:12px;font-family:inherit">
+            <option>Prioritas Presiden</option>
+            <option>Tata Kelola & Manajemen ASN</option>
+            <option>Pelayanan Publik</option>
+            <option>Digitalisasi</option>
+          </select>
+        </div>
+      </div>
+      <div style="margin-bottom:12px">
+        <label style="font-size:11.5px;font-weight:700;color:#334155;display:block;margin-bottom:5px">Judul Topik / Survei yang Ditugaskan *</label>
+        <textarea id="disp-judul" required rows="2" placeholder="Masukkan arahan judul survei..." style="width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:7px;font-size:12px;font-family:inherit"></textarea>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+        <div>
+          <label style="font-size:11.5px;font-weight:700;color:#334155;display:block;margin-bottom:5px">Target Jadwal Selesai</label>
+          <input type="text" id="disp-jadwal" placeholder="Contoh: November (2) 2026" style="width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:7px;font-size:12px;font-family:inherit"/>
+        </div>
+        <div>
+          <label style="font-size:11.5px;font-weight:700;color:#334155;display:block;margin-bottom:5px">Tahap Awal</label>
+          <select id="disp-stage" style="width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:7px;font-size:12px;font-family:inherit">
+            <option value="1">1. Persiapan</option>
+            <option value="2">2. Penyusunan instrumen</option>
+          </select>
+        </div>
+      </div>
+      <div style="margin-bottom:16px">
+        <label style="font-size:11.5px;font-weight:700;color:#334155;display:block;margin-bottom:5px">Arahan Khusus Deputi</label>
+        <textarea id="disp-notes" rows="2" placeholder="Catatan penting untuk unit kerja..." style="width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:7px;font-size:12px;font-family:inherit"></textarea>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:8px">
+        <button type="button" onclick="closeAjukanDisposisiModal()" style="padding:8px 14px;border:1px solid #cbd5e1;background:#f8fafc;border-radius:7px;font-size:12px;cursor:pointer">Batal</button>
+        <button type="submit" style="padding:8px 18px;border:none;background:#16a34a;color:#fff;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer">Kirim Disposisi</button>
+      </div>
+    </form>
+  </div>
+</div>
 
 <!-- ═══════════════════ MODAL DETAIL ═══════════════════ -->
 <div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
@@ -1612,7 +2226,8 @@ function applyFilters(){
     if(unit    && !getAllUnits(d.unit).includes(unit)) return false;
     if(cluster && d.cluster!==cluster) return false;
     if(status  && status==='overdue' && !isOverdue(d)) return false;
-    if(status  && status!=='overdue' && getStatus(d)!==status) return false;
+    if(status  && status.startsWith('tahap:') && getStageInfo(d).name.toLowerCase() !== status.replace('tahap:','').toLowerCase()) return false;
+    if(status  && !status.startsWith('tahap:') && status!=='overdue' && getStatus(d)!==status) return false;
     return true;
   });
   renderKPIs(); renderCharts();
@@ -1749,16 +2364,16 @@ function renderKPIs(){
   const units2026 = selectedUnit ? 1 : 9;
 
   const kpis=[
-    {icon:'fa-file-lines',    value:total,     label:'Total Publikasi', sub:'Semua tahun & unit',         color:'#2563eb', ibg:'#eff6ff', delta:null},
-    {icon:'fa-circle-check',  value:selesai,   label:'Selesai',         sub:`${pct}% completion rate`,    color:'#16a34a', ibg:'#f0fdf4', delta:{cls:'delta-good',text:`${pct}%`}},
-    {icon:'fa-hourglass-half',value:belum,     label:'Belum Selesai',   sub:'Memerlukan tindak lanjut',   color:'#dc2626', ibg:'#fef2f2', delta:{cls:'delta-bad', text:`${pctBelum}%`}},
-    {icon:'fa-building',      value:units2026, label:'Unit Aktif 2026', sub:'Unit dengan publikasi 2026', color:'#7c3aed', ibg:'#f5f3ff', delta:null},
+    {type:'total',   icon:'fa-file-lines',    value:total,     label:'Total Publikasi', sub:'Semua tahun & unit · Klik lihat list',         color:'#2563eb', ibg:'#eff6ff', delta:null},
+    {type:'selesai', icon:'fa-circle-check',  value:selesai,   label:'Selesai',         sub:`${pct}% selesai · Klik lihat list`,           color:'#16a34a', ibg:'#f0fdf4', delta:{cls:'delta-good',text:`${pct}%`}},
+    {type:'belum',   icon:'fa-hourglass-half',value:belum,     label:'Belum Selesai',   sub:`${belum} survei berjalan · Klik lihat list`, color:'#dc2626', ibg:'#fef2f2', delta:{cls:'delta-bad', text:`${pctBelum}%`}},
+    {type:'unit',    icon:'fa-building',      value:units2026, label:'Unit Aktif 2026', sub:'Unit dengan publikasi 2026 · Klik list',     color:'#7c3aed', ibg:'#f5f3ff', delta:null},
   ];
   document.getElementById('kpi-grid').innerHTML=kpis.map(k=>`
-    <div class="kpi-card" style="--accent-color:${k.color}">
+    <div class="kpi-card clickable" onclick="openKpiList('${k.type}')" style="--accent-color:${k.color}" title="Klik untuk melihat daftar nama survei">
       ${k.delta?`<div class="kpi-delta ${k.delta.cls}">${k.delta.text}</div>`:''}
       <div class="kpi-icon" style="background:${k.ibg};color:${k.color}"><i class="fa-solid ${k.icon}"></i></div>
-      <div class="kpi-value" style="color:${k.color}">${k.value}</div>
+      <div class="kpi-value" style="color:${k.color};cursor:pointer">${k.value}</div>
       <div class="kpi-label">${k.label}</div>
       <div class="kpi-sub">${k.sub}</div>
     </div>`).join('');
@@ -1993,6 +2608,7 @@ function renderRoadmap(data){
             <div class="roadmap-pub-top">
               <span class="roadmap-unit-badge" style="background:${uc.bg};color:${uc.text};border:1px solid ${uc.border}">${d.unit}</span>
               <span class="roadmap-status-badge ${sl.cls}">${sl.text}</span>
+              ${getStatus(d) === 'belum' ? `<div style="margin-top:2px">${renderStageBadge(d)}</div>` : ''}
             </div>
             <div class="roadmap-pub-title">${d.judul}</div>
             ${renderLinks(d)}
@@ -2151,7 +2767,8 @@ function renderTable(){
     if(unit&&!getAllUnits(d.unit).includes(unit)) return false;
     if(cluster&&d.cluster!==cluster) return false;
     if(status&&status==='overdue'&&!isOverdue(d)) return false;
-    if(status&&status!=='overdue'&&getStatus(d)!==status) return false;
+    if(status&&status.startsWith('tahap:')&&getStageInfo(d).name.toLowerCase()!==status.replace('tahap:','').toLowerCase()) return false;
+    if(status&&!status.startsWith('tahap:')&&status!=='overdue'&&getStatus(d)!==status) return false;
     if(search&&!(d.judul.toLowerCase().includes(search)||d.unit.toLowerCase().includes(search)||(d.cluster||'').toLowerCase().includes(search))) return false;
     return true;
   }).sort((a,b)=>{ let va=a[sortState.key]||'',vb=b[sortState.key]||''; if(sortState.key==='no'){va=+va||0;vb=+vb||0;} if(sortState.key==='status'){va=getStatus(a);vb=getStatus(b);} return (va<vb?-1:va>vb?1:0)*sortState.dir; });
@@ -2173,6 +2790,7 @@ function renderTable(){
       <td style="text-align:center"><span style="color:${chColor};font-weight:700;font-size:13px">${ch}</span></td>
       <td>
         ${statusBadge(st)}
+        ${st === 'belum' ? `<div style="margin-top:4px">${renderStageBadge(d)}</div>${renderStageDots(d)}` : ''}
         ${od ? `<div style="margin-top:3px"><span class="badge" style="background:#fee2e2;color:#b91c1c;border:1px solid #fecaca;font-size:9.5px;font-weight:700;display:inline-flex;align-items:center;gap:3px;padding:2px 6px"><i class="fa-solid fa-triangle-exclamation"></i> Lewat Deadline</span></div>` : ''}
       </td>
       <td><button onclick="openModal(${d.no-1})" style="background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:7px;padding:4px 11px;font-size:11px;cursor:pointer;transition:all .18s;font-family:Inter" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text2)'"><i class="fa-solid fa-expand"></i></button></td>
@@ -2216,7 +2834,7 @@ function openModal(idx){
   ];
   document.getElementById('modal-meta').innerHTML=meta.map(m=>`<span class="badge" style="background:${m.bg};color:${m.tc};border:none;font-size:11px;padding:4px 10px">${m.l}: <strong>${m.v}</strong></span>`).join('');
   const st=getStatus(d);
-  document.getElementById('modal-channels').innerHTML=[statusBadge(st),...CHANNEL_DEFS.map(cd=>{ if(!hasLink(d[cd.field])) return `<span class="badge badge-gray" style="opacity:.45">${cd.label}</span>`; const cnt=countLinks(d[cd.field]); return `<span class="badge" style="background:${cd.bg};color:${cd.color};border:1px solid ${cd.border}">${cd.label}${cnt>1?` ×${cnt}`:''}</span>`; })].join('');
+  document.getElementById('modal-channels').innerHTML=[statusBadge(st),(st==='belum'?renderStageBadge(d):''),...CHANNEL_DEFS.map(cd=>{ if(!hasLink(d[cd.field])) return `<span class="badge badge-gray" style="opacity:.45">${cd.label}</span>`; const cnt=countLinks(d[cd.field]); return `<span class="badge" style="background:${cd.bg};color:${cd.color};border:1px solid ${cd.border}">${cd.label}${cnt>1?` ×${cnt}`:''}</span>`; })].join('');
   const ks=document.getElementById('modal-ket-section'); if(d.ket){ks.style.display='block';document.getElementById('modal-ket').textContent=d.ket;}else{ks.style.display='none';}
   document.getElementById('modal-overlay').classList.add('open');
 }
@@ -2270,6 +2888,660 @@ if(hd) hd.textContent = new Date().toLocaleDateString('id-ID',{weekday:'long',ye
   } catch(e){ console.warn('localStorage data error, using default:', e); }
 })();
 
+
+/* ══════════════════════════════════════════════════════════
+   7 TAHAPAN SURVEI MODEL & LOGIC
+   1. Persiapan
+   2. Penyusunan instrumen
+   3. Pengumpulan data
+   4. Pengolahan data
+   5. Penyusunan laporan
+   6. Publikasi
+   7. Selesai
+   ══════════════════════════════════════════════════════════ */
+const SURVEY_STAGES = [
+  { id: 1, name: "Persiapan",           cls: "stage-1", icon: "fa-compass" },
+  { id: 2, name: "Penyusunan instrumen", cls: "stage-2", icon: "fa-pen-ruler" },
+  { id: 3, name: "Pengumpulan data",    cls: "stage-3", icon: "fa-database" },
+  { id: 4, name: "Pengolahan data",     cls: "stage-4", icon: "fa-chart-pie" },
+  { id: 5, name: "Penyusunan laporan",  cls: "stage-5", icon: "fa-file-lines" },
+  { id: 6, name: "Publikasi",           cls: "stage-6", icon: "fa-bullhorn" },
+  { id: 7, name: "Selesai",             cls: "stage-7", icon: "fa-circle-check" },
+];
+
+function getStageInfo(d) {
+  const st = getStatus(d);
+  if(st === 'selesai') return SURVEY_STAGES[6]; // stage 7 (Selesai)
+
+  const k = ((d.ket || '') + ' ' + (d.tahapan || '')).toLowerCase();
+  if(k.includes('persiapan') || k.includes('tahap persiapan')) return SURVEY_STAGES[0];
+  if(k.includes('instrumen') || k.includes('penyusunan instrumen') || k.includes('penyebaran instrumen')) return SURVEY_STAGES[1];
+  if(k.includes('pengumpulan data') || k.includes('responden') || k.includes('kuesioner')) return SURVEY_STAGES[2];
+  if(k.includes('pengolahan') || k.includes('analisis data') || k.includes('olah data')) return SURVEY_STAGES[3];
+  if(k.includes('laporan') || k.includes('policy brief') || k.includes('policy paper') || k.includes('draft')) return SURVEY_STAGES[4];
+  if(k.includes('publikasi') || k.includes('infografis') || k.includes('podcast') || k.includes('webinar')) return SURVEY_STAGES[5];
+
+  // Default for unfinished
+  return SURVEY_STAGES[1]; // default stage 2
+}
+
+function renderStageBadge(d) {
+  const stage = getStageInfo(d);
+  return `<span class="stage-badge ${stage.cls}"><i class="fa-solid ${stage.icon}" style="font-size:9.5px"></i> ${stage.name}</span>`;
+}
+
+function renderStageDots(d) {
+  const stage = getStageInfo(d);
+  let html = '<div class="stage-timeline-mini" title="Tahapan: ' + stage.name + ' (Tahap ' + stage.id + '/7)">';
+  for(let i=1; i<=7; i++) {
+    const isFilled = i <= stage.id;
+    const isPulse = i === stage.id && stage.id < 7;
+    html += `<div class="stage-dot ${isFilled ? 'filled' : ''} ${isPulse ? 'active-pulse' : ''}"></div>`;
+  }
+  html += '</div>';
+  return html;
+}
+
+/* ══════════════════════════════════════════════════════════
+   USER AUTHENTICATION & SESSION MANAGEMENT
+   ══════════════════════════════════════════════════════════ */
+function getCurrentUser() {
+  try {
+    const u = localStorage.getItem('lan_current_user');
+    return u ? JSON.parse(u) : null;
+  } catch(e) { return null; }
+}
+
+function setCurrentUser(user) {
+  if(!user) localStorage.removeItem('lan_current_user');
+  else localStorage.setItem('lan_current_user', JSON.stringify(user));
+  renderAuthNav();
+}
+
+function openLoginModal() {
+  document.getElementById('login-modal-overlay').classList.add('open');
+}
+function closeLoginModal() {
+  document.getElementById('login-modal-overlay').classList.remove('open');
+}
+
+function toggleLoginPresets(role) {
+  const uInput = document.getElementById('login-username');
+  const pInput = document.getElementById('login-password');
+  if(role === 'deputi') {
+    uInput.value = 'deputi';
+    pInput.value = 'deputi2026';
+  } else {
+    uInput.value = 'admin';
+    pInput.value = 'admin2026';
+  }
+}
+
+function handleUserLogin(e) {
+  e.preventDefault();
+  const role = document.getElementById('login-role').value;
+  const username = document.getElementById('login-username').value.trim();
+
+  let userObj = {
+    name: role === 'deputi' ? 'PUJIATMO SUBARKAH' : 'ADMIN PENGELOLA',
+    title: role === 'deputi' ? 'Kepala Deputi Bidang Kajian Kebijakan' : 'Admin Publikasi & Data',
+    role: role,
+    username: username,
+    avatar: 'favicon.png',
+    loginTime: new Date().toISOString()
+  };
+
+  setCurrentUser(userObj);
+  closeLoginModal();
+
+  if(role === 'deputi') {
+    openDeputiPortal();
+  } else {
+    window.location.href = 'admin.html';
+  }
+}
+
+function handleUserLogout() {
+  setCurrentUser(null);
+  exitDeputiPortal();
+}
+
+function toggleUserDropdown(e) {
+  if(e) e.stopPropagation();
+  const menu = document.getElementById('user-dropdown-menu');
+  if(menu) menu.classList.toggle('show');
+}
+window.addEventListener('click', () => {
+  const menu = document.getElementById('user-dropdown-menu');
+  if(menu) menu.classList.remove('show');
+});
+
+function renderAuthNav() {
+  const container = document.getElementById('nav-auth-container');
+  if(!container) return;
+  const user = getCurrentUser();
+
+  if(!user) {
+    container.innerHTML = `
+      <button class="btn-login-nav" onclick="openLoginModal()" title="Login Pejabat / Admin">
+        <i class="fa-solid fa-user-lock"></i> Masuk / Login
+      </button>
+    `;
+  } else {
+    const isDeputi = user.role === 'deputi';
+    container.innerHTML = `
+      <div class="user-profile-btn" onclick="toggleUserDropdown(event)" title="Profil Pengguna">
+        <div class="user-avatar-img"><i class="fa-solid fa-user"></i></div>
+        <span class="user-name-text">Hi, ${user.name.split(' ')[0]}</span>
+        <i class="fa-solid fa-chevron-down" style="font-size:10px;color:var(--text3)"></i>
+        
+        <div class="user-dropdown-menu" id="user-dropdown-menu">
+          <div class="user-dropdown-header">
+            <div class="ud-name">${user.name}</div>
+            <div class="ud-role">${user.title}</div>
+          </div>
+          ${isDeputi ? `
+            <div class="user-dropdown-item" onclick="openDeputiPortal()">
+              <i class="fa-solid fa-gauge-high"></i> <strong>Buka Portal Deputi</strong>
+            </div>
+            <div class="user-dropdown-item" onclick="openDeputiPortal('acc')">
+              <i class="fa-solid fa-clipboard-check"></i> Persetujuan (ACC)
+            </div>
+          ` : `
+            <div class="user-dropdown-item" onclick="window.location.href='admin.html'">
+              <i class="fa-solid fa-table-cells"></i> Editor Admin Panel
+            </div>
+          `}
+          <div class="user-dropdown-divider"></div>
+          <div class="user-dropdown-item" onclick="handleUserLogout()" style="color:#dc2626">
+            <i class="fa-solid fa-right-from-bracket" style="color:#dc2626"></i> Keluar / Logout
+          </div>
+        </div>
+      </div>
+    `;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════
+   CLICKABLE KPI NUMBERS -> LIST SURVEYS MODAL
+   ══════════════════════════════════════════════════════════ */
+let activeKpiItems = [];
+
+function openKpiList(type) {
+  const modal = document.getElementById('kpi-list-modal');
+  const iconBox = document.getElementById('kpi-modal-icon');
+  const titleEl = document.getElementById('kpi-modal-title');
+  const subEl = document.getElementById('kpi-modal-subtitle');
+  const searchInput = document.getElementById('kpi-modal-search');
+  if(searchInput) searchInput.value = '';
+
+  let list = [];
+  let title = '';
+  let sub = '';
+  let color = '#2563eb';
+  let bg = '#eff6ff';
+  let icon = 'fa-file-lines';
+
+  if(type === 'total') {
+    list = [...filteredData];
+    title = 'Daftar Seluruh Publikasi Survei';
+    sub = 'Total ' + list.length + ' survei terdata di sistem';
+    color = '#2563eb'; bg = '#eff6ff'; icon = 'fa-file-lines';
+  } else if(type === 'selesai') {
+    list = filteredData.filter(d => getStatus(d) === 'selesai');
+    title = 'Daftar Survei yang Telah Selesai';
+    sub = list.length + ' survei telah terpublikasi dan selesai';
+    color = '#16a34a'; bg = '#f0fdf4'; icon = 'fa-circle-check';
+  } else if(type === 'belum') {
+    list = filteredData.filter(d => getStatus(d) === 'belum');
+    title = 'Daftar Survei Belum Selesai (Dalam Proses)';
+    sub = list.length + ' survei sedang dalam proses tahapan pengerjaan';
+    color = '#dc2626'; bg = '#fef2f2'; icon = 'fa-hourglass-half';
+  } else if(type === 'unit') {
+    list = filteredData.filter(d => d.tahun === '2026');
+    title = 'Daftar Publikasi Survei Unit Kerja 2026';
+    sub = list.length + ' publikasi aktif dijadwalkan tahun 2026';
+    color = '#7c3aed'; bg = '#f5f3ff'; icon = 'fa-building';
+  }
+
+  activeKpiItems = list;
+  iconBox.style.color = color;
+  iconBox.style.background = bg;
+  iconBox.innerHTML = `<i class="fa-solid ${icon}"></i>`;
+  titleEl.textContent = title;
+  subEl.textContent = sub;
+
+  renderKpiListContainer(activeKpiItems);
+  modal.classList.add('open');
+}
+
+function closeKpiListModal() {
+  document.getElementById('kpi-list-modal').classList.remove('open');
+}
+
+function filterKpiListModal(query) {
+  const q = (query || '').toLowerCase().trim();
+  const filtered = activeKpiItems.filter(d => {
+    return (d.judul || '').toLowerCase().includes(q) ||
+           (d.unit || '').toLowerCase().includes(q) ||
+           (d.cluster || '').toLowerCase().includes(q) ||
+           (d.ket || '').toLowerCase().includes(q);
+  });
+  renderKpiListContainer(filtered);
+}
+
+function renderKpiListContainer(items) {
+  const container = document.getElementById('kpi-modal-items-container');
+  const countEl = document.getElementById('kpi-modal-count');
+  if(countEl) countEl.textContent = items.length + ' survei';
+
+  if(!items.length) {
+    container.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text3);font-size:13px">Tidak ada survei yang sesuai filter</div>';
+    return;
+  }
+
+  container.innerHTML = items.map(d => {
+    const st = getStatus(d);
+    const stage = getStageInfo(d);
+    const uc = UNIT_COLORS[getPrimaryUnit(d.unit)] || UNIT_COLORS['MULTI'];
+    const idx = RAW.findIndex(x => x.no === d.no);
+
+    return `
+      <div class="kpi-modal-item" onclick="closeKpiListModal(); openModal(${idx})">
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap">
+            <span class="badge" style="background:${uc.bg};color:${uc.text};font-weight:700">${d.unit}</span>
+            <span style="font-size:11px;color:var(--text3);font-weight:600"><i class="fa-regular fa-calendar"></i> ${d.jadwal || '-'} (${d.tahun || '2026'})</span>
+            ${renderStageBadge(d)}
+          </div>
+          <div style="font-size:13px;font-weight:700;color:var(--text1);line-height:1.4">${d.judul}</div>
+          ${d.ket ? `<div style="font-size:11.5px;color:var(--text2);margin-top:3px">${d.ket.slice(0, 110)}${d.ket.length>110?'...':''}</div>` : ''}
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          ${statusBadge(st)}
+          <div style="margin-top:6px;font-size:11px;color:var(--accent);font-weight:600">Lihat Detail &rarr;</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+/* ══════════════════════════════════════════════════════════
+   PORTAL KEPALA DEPUTI (SINDISA CLONE)
+   ══════════════════════════════════════════════════════════ */
+// Default Pengumuman list as shown in Sindisa screenshot
+let DEPUTI_PENGUMUMAN = [
+  { id: 1, title: "Syarat Ujian Tertutup Doktoral & Kelayakan Policy Paper LAN", date: "29 Jul 2026", desc: "Ketentuan final naskah akademik kebijakan sebelum persetujuan publikasi nasional." },
+  { id: 2, title: "PENGUMUMAN MAINTENANCE SISTEM SINDISA LAN RI", date: "20 Feb 2026", desc: "Pembaruan server rutin sinkronisasi database survei dan portal monitoring." },
+  { id: 3, title: "Pembukaan Pendaftaran Seminar Disertasi periode Ujian Februari 2026", date: "19 Jan 2026", desc: "Jadwal sidang review hasil kajian unit kerja bersama Kepala Deputi." },
+  { id: 4, title: "Monitoring dan Evaluasi Kemajuan Studi - Semester Ganjil 2025/2026", date: "19 Nov 2025", desc: "Evaluasi capaian 56 publikasi survei seluruh unit kerja LAN RI." },
+  { id: 5, title: "Referensi Jurnal SCOPUS dan Akreditasi Nasional Tahun 2024-2026", date: "20 Oct 2025", desc: "Panduan submisi publikasi riset kolaboratif STIA dan Pusat Kajian." },
+];
+
+// Deputi Approval Submissions Store
+function getApprovals() {
+  try {
+    const s = localStorage.getItem('lan_deputi_approvals');
+    if(s) return JSON.parse(s);
+  } catch(e){}
+  // Default pending items if empty
+  return [
+    { id: 101, surveyNo: 24, unit: "STIA JKT, STIA MKS, STIA BDG", judul: "Birokrasi melayani outlook", stageId: 2, stageName: "Penyusunan instrumen", status: "Menunggu ACC", date: "26 Okt 2026", note: "Draft kuesioner kolaborasi 3 STIA siap direview Deputi." },
+    { id: 102, surveyNo: 27, unit: "SKMP", judul: "Strategi adaptasi fiskal Pemda terhadap pemangkasan dana transfer ke daerah", stageId: 3, stageName: "Pengumpulan data", status: "Menunggu ACC", date: "25 Okt 2026", note: "Pengajuan perpanjangan masa kuesioner responden daerah." },
+    { id: 103, surveyNo: 35, unit: "SKTAN", judul: "Survei Kesiapan Operasional Koperasi Desa Merah Putih di Desa", stageId: 5, stageName: "Penyusunan laporan", status: "Menunggu ACC", date: "24 Okt 2026", note: "Sedang dilakukan review policy brief oleh Deputi." },
+    { id: 104, surveyNo: 43, unit: "SKMK", judul: "Evaluasi Kebijakan Makan Bergizi Gratis", stageId: 5, stageName: "Penyusunan laporan", status: "ACC", date: "20 Okt 2026", note: "Disetujui untuk lanjut ke tahap publikasi media & infografis." }
+  ];
+}
+function saveApprovals(arr) {
+  try { localStorage.setItem('lan_deputi_approvals', JSON.stringify(arr)); } catch(e){}
+}
+
+function openDeputiPortal(targetTab) {
+  const view = document.getElementById('deputi-portal-view');
+  if(!view) return;
+  view.classList.add('active');
+  document.body.style.overflow = 'hidden';
+
+  const user = getCurrentUser() || { name: 'PUJIATMO SUBARKAH' };
+  const greetEl = document.getElementById('sindisa-header-username');
+  const welEl = document.getElementById('sindisa-welcome-name');
+  if(greetEl) greetEl.textContent = 'Hi, ' + user.name;
+  if(welEl) welEl.textContent = 'Selamat Datang ' + user.name;
+
+  renderSindisaPengumuman();
+  renderSindisaPenulisan();
+  renderSindisaPublikasi();
+  renderSindisaSeminar();
+  renderSindisaAccTable();
+  updatePendingBadges();
+
+  if(targetTab === 'acc') {
+    switchSindisaTab('proposal');
+  }
+}
+
+function exitDeputiPortal() {
+  const view = document.getElementById('deputi-portal-view');
+  if(view) view.classList.remove('active');
+  document.body.style.overflow = '';
+}
+
+function toggleSindisaSidebar() {
+  const sb = document.getElementById('sindisa-sidebar');
+  if(sb) sb.classList.toggle('collapsed');
+}
+
+function switchSindisaTab(tabId, btn) {
+  document.querySelectorAll('.sindisa-tab-btn').forEach(b => b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+
+  const panels = ['pengumuman', 'penulisan', 'publikasi', 'seminar', 'proposal'];
+  panels.forEach(p => {
+    const el = document.getElementById('sindisa-panel-' + p);
+    if(el) el.style.display = (p === tabId) ? 'block' : 'none';
+  });
+}
+
+function switchSindisaPage(pageName, menuItem) {
+  if(menuItem) {
+    document.querySelectorAll('.sindisa-menu-item').forEach(m => m.classList.remove('active'));
+    menuItem.classList.add('active');
+  }
+  if(pageName === 'acc' || pageName === 'pengajuan') {
+    switchSindisaTab('proposal');
+  } else if(pageName === 'monitoring') {
+    switchSindisaTab('penulisan');
+  } else if(pageName === 'pengumuman') {
+    switchSindisaTab('pengumuman');
+  } else {
+    switchSindisaTab('pengumuman');
+  }
+}
+
+function renderSindisaPengumuman() {
+  const container = document.getElementById('sindisa-pengumuman-list');
+  if(!container) return;
+  container.innerHTML = DEPUTI_PENGUMUMAN.map(p => `
+    <div class="sindisa-list-item">
+      <a class="sindisa-item-title" href="javascript:void(0)" onclick="alert('${p.title}\n\n${p.desc}')">
+        &rarr; ${p.title}
+      </a>
+      <div class="sindisa-item-date">${p.date}</div>
+      <div class="sindisa-item-desc">${p.desc}</div>
+    </div>
+  `).join('');
+}
+
+function renderSindisaPenulisan() {
+  const tbody = document.getElementById('sindisa-penulisan-tbody');
+  if(!tbody) return;
+  const inProgress = RAW.filter(d => getStatus(d) === 'belum');
+
+  tbody.innerHTML = inProgress.map((d, i) => {
+    const stage = getStageInfo(d);
+    return `
+      <tr>
+        <td>${i+1}</td>
+        <td><strong>${d.unit}</strong></td>
+        <td><div style="font-weight:600">${d.judul}</div></td>
+        <td>${renderStageBadge(d)} ${renderStageDots(d)}</td>
+        <td>${d.jadwal || '-'}</td>
+        <td style="font-size:11.5px;color:#64748b">${d.ket || '-'}</td>
+        <td>
+          <button class="acc-action-btn btn-acc" onclick="openAccDecisionForSurvey(${d.no})">
+            <i class="fa-solid fa-stamp"></i> ACC / Disposisi
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('') || '<tr><td colspan="7" style="text-align:center;padding:20px;color:#94a3b8">Tidak ada data survei belum selesai</td></tr>';
+}
+
+function renderSindisaPublikasi() {
+  const tbody = document.getElementById('sindisa-publikasi-tbody');
+  if(!tbody) return;
+  const selesai = RAW.filter(d => getStatus(d) === 'selesai');
+
+  tbody.innerHTML = selesai.map((d, i) => {
+    const ch = getChannelCount(d);
+    return `
+      <tr>
+        <td>${i+1}</td>
+        <td><strong>${d.unit}</strong></td>
+        <td><div style="font-weight:600">${d.judul}</div></td>
+        <td><span class="badge" style="background:#f1f5f9;color:#334155">${d.cluster || '-'}</span></td>
+        <td><span class="badge badge-green"><i class="fa-solid fa-bullhorn"></i> ${ch} Channel Aktif</span></td>
+        <td>${statusBadge('selesai')}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function renderSindisaSeminar() {
+  const container = document.getElementById('sindisa-seminar-list');
+  if(!container) return;
+  const reviews = RAW.filter(d => (d.ket||'').toLowerCase().includes('review') || (d.ket||'').toLowerCase().includes('webinar') || (d.ket||'').toLowerCase().includes('policy brief'));
+
+  container.innerHTML = reviews.map(d => `
+    <div class="sindisa-list-item" style="padding:14px;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:10px;background:#fff">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div style="font-size:11px;font-weight:700;color:#7c2d92">${d.unit} &bull; Jadwal: ${d.jadwal}</div>
+          <div style="font-size:14px;font-weight:700;color:#1e293b;margin:3px 0">${d.judul}</div>
+          <div style="font-size:12px;color:#64748b">${d.ket}</div>
+        </div>
+        <button class="acc-action-btn btn-acc" onclick="openAccDecisionForSurvey(${d.no})">
+          <i class="fa-solid fa-check-double"></i> Review & ACC
+        </button>
+      </div>
+    </div>
+  `).join('') || '<div style="padding:20px;text-align:center;color:#94a3b8">Tidak ada agenda review terjadwal saat ini</div>';
+}
+
+function renderSindisaAccTable() {
+  const tbody = document.getElementById('sindisa-acc-tbody');
+  if(!tbody) return;
+  const list = getApprovals();
+
+  tbody.innerHTML = list.map(item => {
+    let statusClass = 'badge badge-yellow';
+    if(item.status === 'ACC') statusClass = 'badge badge-green';
+    if(item.status === 'Perlu Revisi') statusClass = 'badge badge-red';
+
+    return `
+      <tr>
+        <td style="white-space:nowrap;font-size:11.5px;color:#64748b">${item.date}</td>
+        <td><strong>${item.unit}</strong></td>
+        <td>
+          <div style="font-weight:700;color:#1e293b">${item.judul}</div>
+          ${item.note ? `<div style="font-size:11px;color:#7c2d92;margin-top:2px"><i class="fa-solid fa-comment-dots"></i> ${item.note}</div>` : ''}
+        </td>
+        <td><span class="stage-badge stage-${item.stageId}">Tahap ${item.stageId}: ${item.stageName}</span></td>
+        <td><span class="${statusClass}">${item.status}</span></td>
+        <td>
+          <button class="acc-action-btn btn-acc" onclick="openAccDecisionItem(${item.id})">
+            <i class="fa-solid fa-check"></i> ACC
+          </button>
+          <button class="acc-action-btn btn-rev" onclick="openAccDecisionItem(${item.id}, 'Perlu Revisi')">
+            <i class="fa-solid fa-pen"></i> Catatan
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function updatePendingBadges() {
+  const list = getApprovals();
+  const pending = list.filter(i => i.status === 'Menunggu ACC').length;
+  const badge1 = document.getElementById('sindisa-pending-badge');
+  const badge2 = document.getElementById('sindisa-pending-num');
+  if(badge1) badge1.textContent = pending;
+  if(badge2) badge2.textContent = pending;
+}
+
+function openAccDecisionForSurvey(surveyNo) {
+  const d = RAW.find(x => x.no === surveyNo);
+  if(!d) return;
+
+  const currentStage = getStageInfo(d);
+  document.getElementById('acc-item-id').value = 'survey-' + surveyNo;
+  document.getElementById('acc-survey-title').textContent = d.judul;
+  document.getElementById('acc-survey-meta').textContent = 'Unit: ' + d.unit + ' | Jadwal: ' + (d.jadwal||'-');
+  document.getElementById('acc-stage-select').value = String(currentStage.id);
+  document.getElementById('acc-notes-input').value = d.ket || '';
+  document.getElementById('acc-action-modal').classList.add('open');
+}
+
+function openAccDecisionItem(itemId, defaultDecision) {
+  const list = getApprovals();
+  const item = list.find(x => x.id === itemId);
+  if(!item) return;
+
+  document.getElementById('acc-item-id').value = String(itemId);
+  document.getElementById('acc-survey-title').textContent = item.judul;
+  document.getElementById('acc-survey-meta').textContent = 'Unit: ' + item.unit + ' | Pengajuan: ' + item.date;
+  document.getElementById('acc-decision-select').value = defaultDecision || (item.status === 'ACC' ? 'ACC' : 'ACC');
+  document.getElementById('acc-stage-select').value = String(item.stageId || 2);
+  document.getElementById('acc-notes-input').value = item.note || '';
+  document.getElementById('acc-action-modal').classList.add('open');
+}
+
+function closeAccActionModal() {
+  document.getElementById('acc-action-modal').classList.remove('open');
+}
+
+function submitAccDecision(e) {
+  e.preventDefault();
+  const idVal = document.getElementById('acc-item-id').value;
+  const decision = document.getElementById('acc-decision-select').value;
+  const stageId = parseInt(document.getElementById('acc-stage-select').value) || 2;
+  const notes = document.getElementById('acc-notes-input').value.trim();
+  const stageObj = SURVEY_STAGES.find(s => s.id === stageId) || SURVEY_STAGES[1];
+
+  let list = getApprovals();
+
+  if(idVal.startsWith('survey-')) {
+    const surveyNo = parseInt(idVal.replace('survey-', ''));
+    const d = RAW.find(x => x.no === surveyNo);
+    if(d) {
+      if(stageId === 7 || decision === 'ACC Penuh' && stageId === 7) {
+        d.ket = 'Selesai\nACC Deputi: ' + notes;
+      } else {
+        d.ket = 'Tahap ' + stageObj.name + (notes ? ' - ' + notes : '');
+      }
+      d.tahapan = stageObj.name;
+    }
+    // Also record in approvals list
+    list.unshift({
+      id: Date.now(),
+      surveyNo: surveyNo,
+      unit: d ? d.unit : 'LAN RI',
+      judul: d ? d.judul : 'Survei',
+      stageId: stageId,
+      stageName: stageObj.name,
+      status: decision.includes('ACC') ? 'ACC' : 'Perlu Revisi',
+      date: new Date().toLocaleDateString('id-ID', {day:'numeric', month:'short', year:'numeric'}),
+      note: notes || ('Keputusan: ' + decision)
+    });
+  } else {
+    const itemId = parseInt(idVal);
+    const item = list.find(x => x.id === itemId);
+    if(item) {
+      item.status = decision.includes('ACC') ? 'ACC' : 'Perlu Revisi';
+      item.stageId = stageId;
+      item.stageName = stageObj.name;
+      item.note = notes;
+    }
+  }
+
+  saveApprovals(list);
+  try { localStorage.setItem('lan_pub_data', JSON.stringify(RAW)); } catch(err){}
+
+  closeAccActionModal();
+  renderSindisaAccTable();
+  renderSindisaPenulisan();
+  updatePendingBadges();
+  renderKPIs();
+  renderTable();
+  alert('Keputusan Kepala Deputi berhasil disimpan dan status diperbarui!');
+}
+
+function openAjukanDisposisiModal() {
+  document.getElementById('ajukan-disposisi-modal').classList.add('open');
+}
+function closeAjukanDisposisiModal() {
+  document.getElementById('ajukan-disposisi-modal').classList.remove('open');
+}
+
+function submitDisposisiBaru(e) {
+  e.preventDefault();
+  const unit = document.getElementById('disp-unit').value;
+  const cluster = document.getElementById('disp-cluster').value;
+  const judul = document.getElementById('disp-judul').value.trim();
+  const jadwal = document.getElementById('disp-jadwal').value.trim();
+  const stageId = parseInt(document.getElementById('disp-stage').value) || 1;
+  const notes = document.getElementById('disp-notes').value.trim();
+  const stageObj = SURVEY_STAGES.find(s => s.id === stageId) || SURVEY_STAGES[0];
+
+  const newNo = RAW.length > 0 ? Math.max(...RAW.map(d=>d.no||0)) + 1 : 1;
+  const newItem = {
+    no: newNo,
+    unit: unit,
+    judul: judul,
+    jenis: 'Survei Disposisi Deputi',
+    jadwal: jadwal,
+    tahun: '2026',
+    cluster: cluster,
+    jurnal: '', media: '', webLAN: '', webUnit: '', igLAN: '', igUnit: '', ytLAN: '', ytUnit: '',
+    ket: 'Disposisi Deputi: Tahap ' + stageObj.name + (notes ? ' - ' + notes : ''),
+    tahapan: stageObj.name
+  };
+
+  RAW.unshift(newItem);
+  filteredData = [...RAW];
+
+  const list = getApprovals();
+  list.unshift({
+    id: Date.now(),
+    surveyNo: newNo,
+    unit: unit,
+    judul: judul,
+    stageId: stageId,
+    stageName: stageObj.name,
+    status: 'ACC',
+    date: new Date().toLocaleDateString('id-ID', {day:'numeric', month:'short', year:'numeric'}),
+    note: 'Disposisi langsung dari Kepala Deputi. ' + notes
+  });
+  saveApprovals(list);
+
+  try { localStorage.setItem('lan_pub_data', JSON.stringify(RAW)); } catch(err){}
+
+  closeAjukanDisposisiModal();
+  renderSindisaAccTable();
+  renderSindisaPenulisan();
+  updatePendingBadges();
+  renderKPIs();
+  renderCharts();
+  renderTable();
+  alert('Disposisi topik survei baru berhasil dikirim ke unit ' + unit + '!');
+}
+
+function openTambahPengumumanModal() {
+  const title = prompt('Masukkan Judul Pengumuman / Memo Deputi:');
+  if(!title || !title.trim()) return;
+  const desc = prompt('Masukkan Keterangan / Isi Memo:');
+  DEPUTI_PENGUMUMAN.unshift({
+    id: Date.now(),
+    title: title.trim(),
+    date: new Date().toLocaleDateString('id-ID', {day:'numeric', month:'short', year:'numeric'}),
+    desc: desc ? desc.trim() : 'Arahan resmi dari Kepala Deputi LAN RI.'
+  });
+  renderSindisaPengumuman();
+  alert('Memo berhasil diterbitkan di papan pengumuman!');
+}
+
+renderAuthNav();
 populateDropdowns();
 filteredData=[...RAW];
 renderKPIs();
