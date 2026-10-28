@@ -1522,7 +1522,7 @@
       <div class="fokus-unit-group">
         <span class="fokus-unit-label"><i class="fa-solid fa-sliders"></i> Fokus Unit:</span>
         <select id="nav-unit-select" class="fokus-unit-select" onchange="syncNavUnit(this.value)">
-          <option value="">Semua Unit Kerja (56)</option>
+          <option value="">Semua Unit Kerja</option>
         </select>
       </div>
       <nav class="nav-tabs-custom">
@@ -2329,7 +2329,7 @@ window.addEventListener('focus', () => {
               <i class="fa-solid fa-sliders"></i> Fokus Unit:
             </span>
             <select id="p-focus-unit" onchange="handlePortalFocusUnit(this.value)" style="border:1.5px solid #cbd5e1;border-radius:20px;padding:6px 16px;font-size:13px;font-weight:600;color:#1e293b;background:#f8fafc;outline:none;cursor:pointer;">
-              <option value="">Semua Unit Kerja (51)</option>
+              <option value="">Semua Unit Kerja</option>
             </select>
           </div>
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
@@ -4249,7 +4249,7 @@ function populateDropdowns(){
   // Populate top navbar unit select
   const navUnit = document.getElementById('nav-unit-select');
   if(navUnit){
-    navUnit.innerHTML = `<option value="">Semua Unit Kerja (${RAW.length})</option>`;
+    navUnit.innerHTML = `<option value="">Semua Unit Kerja</option>`;
     units.forEach(u=>{
       const cnt = RAW.filter(d => getAllUnits(d.unit).includes(u)).length;
       const opt = document.createElement('option');
@@ -4386,16 +4386,24 @@ function renderKPIs(){
     {type:'total',   icon:'fa-file-lines',    value:total,     label:'Total Publikasi', sub:'Semua tahun & unit · Klik lihat list',         color:'#2563eb', ibg:'#eff6ff', delta:null},
     {type:'selesai', icon:'fa-circle-check',  value:selesai,   label:'Selesai',         sub:`${pct}% selesai · Klik lihat list`,           color:'#16a34a', ibg:'#f0fdf4', delta:{cls:'delta-good',text:`${pct}%`}},
     {type:'belum',   icon:'fa-hourglass-half',value:belum,     label:'Belum Selesai',   sub:`${belum} survei berjalan · Klik lihat list`, color:'#dc2626', ibg:'#fef2f2', delta:{cls:'delta-bad', text:`${pctBelum}%`}},
-    {type:'unit',    icon:'fa-building',      value:units2026, label:'Unit Aktif 2026', sub:'Unit dengan publikasi 2026 · Klik list',     color:'#7c3aed', ibg:'#f5f3ff', delta:null},
+    {type:'unit',    icon:'fa-building',      value:units2026, label:'Unit Aktif 2026', sub:'Unit dengan publikasi 2026',                 color:'#7c3aed', ibg:'#f5f3ff', delta:null, clickable:false},
   ];
-  document.getElementById('kpi-grid').innerHTML=kpis.map(k=>`
-    <div class="kpi-card clickable" onclick="openKpiList('${k.type}')" style="--accent-color:${k.color}" title="Klik untuk melihat daftar nama survei">
-      ${k.delta?`<div class="kpi-delta ${k.delta.cls}">${k.delta.text}</div>`:''}
-      <div class="kpi-icon" style="background:${k.ibg};color:${k.color}"><i class="fa-solid ${k.icon}"></i></div>
-      <div class="kpi-value" style="color:${k.color};cursor:pointer">${k.value}</div>
-      <div class="kpi-label">${k.label}</div>
-      <div class="kpi-sub">${k.sub}</div>
-    </div>`).join('');
+  document.getElementById('kpi-grid').innerHTML = kpis.map(k => {
+    const isClickable = k.clickable !== false;
+    const clickAttr = isClickable ? `onclick="openKpiList('${k.type}')"` : '';
+    const clickCls = isClickable ? 'clickable' : '';
+    const clickTitle = isClickable ? 'title="Klik untuk melihat daftar nama survei"' : '';
+    const valCursor = isClickable ? 'cursor:pointer' : 'cursor:default';
+
+    return `
+      <div class="kpi-card ${clickCls}" ${clickAttr} style="--accent-color:${k.color};${isClickable?'':'cursor:default'}" ${clickTitle}>
+        ${k.delta?`<div class="kpi-delta ${k.delta.cls}">${k.delta.text}</div>`:''}
+        <div class="kpi-icon" style="background:${k.ibg};color:${k.color}"><i class="fa-solid ${k.icon}"></i></div>
+        <div class="kpi-value" style="color:${k.color};${valCursor}">${k.value}</div>
+        <div class="kpi-label">${k.label}</div>
+        <div class="kpi-sub">${k.sub}</div>
+      </div>`;
+  }).join('');
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -5321,6 +5329,7 @@ function renderAuthNav() {
 let activeKpiItems = [];
 
 function openKpiList(type) {
+  if(type === 'unit') return;
   const modal = document.getElementById('kpi-list-modal');
   const iconBox = document.getElementById('kpi-modal-icon');
   const titleEl = document.getElementById('kpi-modal-title');
@@ -5802,7 +5811,7 @@ function renderPortalKPIs() {
   } else {
     const selectedUnit = (document.getElementById('p-unit') && document.getElementById('p-unit').value) || '';
     const units2026 = selectedUnit ? 1 : 9;
-    fourthKpi = {type:'unit', icon:'fa-building', value:units2026, label:'Unit Aktif 2026', sub:'Unit dengan publikasi 2026 · Klik list', color:'#7c3aed', ibg:'#f5f3ff', delta:null};
+    fourthKpi = {type:'unit', icon:'fa-building', value:units2026, label:'Unit Aktif 2026', sub:'Unit dengan publikasi 2026', color:'#7c3aed', ibg:'#f5f3ff', delta:null, clickable:false};
   }
 
   const kpis = [
@@ -5814,14 +5823,22 @@ function renderPortalKPIs() {
 
   const grid = document.getElementById('portal-kpi-grid');
   if(!grid) return;
-  grid.innerHTML = kpis.map(k=>`
-    <div class="kpi-card clickable" onclick="openKpiList('${k.type}')" style="--accent-color:${k.color}" title="Klik untuk melihat daftar nama survei">
-      ${k.delta?`<div class="kpi-delta ${k.delta.cls}">${k.delta.text}</div>`:''}
-      <div class="kpi-icon" style="background:${k.ibg};color:${k.color}"><i class="fa-solid ${k.icon}"></i></div>
-      <div class="kpi-value" style="color:${k.color};cursor:pointer">${k.value}</div>
-      <div class="kpi-label">${k.label}</div>
-      <div class="kpi-sub">${k.sub}</div>
-    </div>`).join('');
+  grid.innerHTML = kpis.map(k => {
+    const isClickable = k.clickable !== false;
+    const clickAttr = isClickable ? `onclick="openKpiList('${k.type}')"` : '';
+    const clickCls = isClickable ? 'clickable' : '';
+    const clickTitle = isClickable ? 'title="Klik untuk melihat daftar nama survei"' : '';
+    const valCursor = isClickable ? 'cursor:pointer' : 'cursor:default';
+
+    return `
+      <div class="kpi-card ${clickCls}" ${clickAttr} style="--accent-color:${k.color};${isClickable?'':'cursor:default'}" ${clickTitle}>
+        ${k.delta?`<div class="kpi-delta ${k.delta.cls}">${k.delta.text}</div>`:''}
+        <div class="kpi-icon" style="background:${k.ibg};color:${k.color}"><i class="fa-solid ${k.icon}"></i></div>
+        <div class="kpi-value" style="color:${k.color};${valCursor}">${k.value}</div>
+        <div class="kpi-label">${k.label}</div>
+        <div class="kpi-sub">${k.sub}</div>
+      </div>`;
+  }).join('');
 }
 
 function renderPortalCharts() {
@@ -6704,6 +6721,9 @@ function initPortalInteractiveDashboard() {
 
   function safePopulate(sel, items, defaultText) {
     if(!sel || !sel.options) return;
+    if(defaultText && sel.options.length > 0 && sel.options[0].value === '') {
+      sel.options[0].textContent = defaultText;
+    }
     if(sel.options.length <= 1) {
       if(defaultText && sel.options.length === 0) {
         const dOpt = document.createElement('option');
