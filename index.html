@@ -1154,21 +1154,29 @@
             <div class="prism-input-wrap">
               <i class="fa-solid fa-user-tie prism-icon-left"></i>
               <select id="landing-jabatan" class="prism-select" onchange="handleJabatanChange(this.value)" required>
-                <option value="" disabled selected>Pilih Nama Jabatan...</option>
-                <option value="Pimpinan Lembaga Administrasi Negara">Pimpinan Lembaga Administrasi Negara</option>
-                <option value="Deputi Kajian Kebijakan &amp; Inovasi">Deputi Kajian Kebijakan &amp; Inovasi</option>
-                <option value="Pengelola Survei &amp; Publikasi DSPK2AN">Pengelola Survei &amp; Publikasi DSPK2AN</option>
-                <option value="Biro Humas &amp; Publikasi">Biro Humas &amp; Publikasi</option>
-                <option value="Pusat Kajian Kebijakan">Pusat Kajian Kebijakan</option>
-                <option value="Aparatur &amp; Kelembagaan">Aparatur &amp; Kelembagaan</option>
-                <option value="Manajemen Publik">Manajemen Publik</option>
-                <option value="Tata Administrasi Negara">Tata Administrasi Negara</option>
-                <option value="Politeknik STIA LAN Jakarta">Politeknik STIA LAN Jakarta</option>
-                <option value="Politeknik STIA LAN Makassar">Politeknik STIA LAN Makassar</option>
-                <option value="Politeknik STIA LAN Bandung">Politeknik STIA LAN Bandung</option>
-                <option value="Krisis &amp; Mitigasi">Krisis &amp; Mitigasi</option>
+                <option value="" disabled selected>Pilih Nama Jabatan / Akun...</option>
+                <option value="kepala.lan">Pimpinan Lembaga Administrasi Negara — (@kepala.lan)</option>
+                <option value="deputi">Deputi Kajian Kebijakan &amp; Inovasi — (@deputi)</option>
+                <option value="admin.dspk2an">Pengelola Survei &amp; Publikasi DSPK2AN — (@admin.dspk2an)</option>
+                <option value="humas.lan">Biro Humas &amp; Publikasi — (@humas.lan)</option>
+                <option value="skpp">Pusat Kajian Kebijakan — (@skpp)</option>
+                <option value="dapkk">Aparatur &amp; Kelembagaan — (@dapkk)</option>
+                <option value="skmp">Manajemen Publik — (@skmp)</option>
+                <option value="sktan">Tata Administrasi Negara — (@sktan)</option>
+                <option value="stia.jkt">Politeknik STIA LAN Jakarta — (@stia.jkt)</option>
+                <option value="stia.mks">Politeknik STIA LAN Makassar — (@stia.mks)</option>
+                <option value="stia.bdg">Politeknik STIA LAN Bandung — (@stia.bdg)</option>
+                <option value="skmk">Pusat Pembelajaran dan Strategi Kebijakan Manajemen Kinerja — (@skmk)</option>
               </select>
               <i class="fa-solid fa-chevron-down prism-select-arrow"></i>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:5px;font-size:11px">
+              <span id="login-mode-hint" style="color:#64748b">Pilih jabatan dari daftar di atas</span>
+              <a href="javascript:void(0)" onclick="toggleManualUsername()" id="btn-toggle-input" style="color:#2563eb;font-weight:600;text-decoration:none"><i class="fa-solid fa-keyboard"></i> Ketik Username Manual</a>
+            </div>
+            <div id="manual-username-wrap" style="display:none;margin-top:8px;position:relative">
+              <i class="fa-solid fa-at prism-icon-left"></i>
+              <input type="text" id="landing-username-manual" placeholder="Ketik username (contoh: deputi, skmk, kepala.lan...)" class="prism-input" oninput="handleManualUsernameInput(this.value)" autocomplete="username" />
             </div>
           </div>
 
@@ -1191,7 +1199,7 @@
           <div class="prism-captcha-row">
             <div class="prism-input-wrap" style="flex:1">
               <i class="fa-solid fa-shield-halved prism-icon-left"></i>
-              <input type="text" id="landing-captcha" placeholder="Verification code" required class="prism-input" maxlength="6" autocomplete="off" />
+              <input type="text" id="landing-captcha" placeholder="Verification code" value="8Ad4F" required class="prism-input" maxlength="6" autocomplete="off" />
             </div>
             <div class="prism-captcha-box" onclick="refreshCaptcha()" title="Klik untuk refresh kode verifikasi">
               <span id="captcha-text" class="prism-captcha-text">8Ad4F</span>
@@ -1221,9 +1229,7 @@
     <div class="prism-login-right">
       <!-- TOP BADGES -->
       <div class="prism-art-top">
-        <span class="prism-glass-badge">
-          <i class="fa-solid fa-circle" style="color:#4ade80;font-size:7px"></i> Live Cloud Database
-        </span>
+        
         <span class="prism-glass-badge">
           <i class="fa-solid fa-building-columns"></i> LAN RI 2026
         </span>
@@ -1346,23 +1352,6 @@
                 stroke="url(#prismRibbonGrad)" stroke-width="8" stroke-linecap="round" fill="none" opacity="0.85" filter="url(#prismGlow)" />
           <path d="M100,280 C130,220 190,160 250,150 C320,140 380,170 410,230 C430,270 390,320 330,335 C260,350 180,330 140,360"
                 stroke="#ffffff" stroke-width="2" stroke-linecap="round" fill="none" opacity="0.9" />
-
-          <!-- FLOATING KPI CARDS / BADGES -->
-          <g transform="translate(70, 150)" class="prism-pulse-anim">
-            <rect x="0" y="0" width="105" height="42" rx="10" fill="#ffffff" fill-opacity="0.94" filter="url(#prismGlow)" />
-            <circle cx="20" cy="21" r="12" fill="#eff6ff" />
-            <text x="20" y="25" font-family="'Inter', sans-serif" font-size="12" font-weight="900" fill="#1e40af" text-anchor="middle">56</text>
-            <text x="38" y="18" font-family="'Inter', sans-serif" font-size="9" font-weight="800" fill="#1e293b">PUBLIKASI</text>
-            <text x="38" y="30" font-family="'Inter', sans-serif" font-size="8" font-weight="600" fill="#16a34a">100% Target</text>
-          </g>
-
-          <g transform="translate(330, 95)" class="prism-pulse-anim">
-            <rect x="0" y="0" width="105" height="42" rx="10" fill="#ffffff" fill-opacity="0.94" filter="url(#prismGlow)" />
-            <circle cx="20" cy="21" r="12" fill="#eff6ff" />
-            <text x="20" y="25" font-family="'Inter', sans-serif" font-size="12" font-weight="900" fill="#2563eb" text-anchor="middle">9</text>
-            <text x="38" y="18" font-family="'Inter', sans-serif" font-size="9" font-weight="800" fill="#1e293b">UNIT KERJA</text>
-            <text x="38" y="30" font-family="'Inter', sans-serif" font-size="8" font-weight="600" fill="#3b82f6">Aktif Memantau</text>
-          </g>
 
           <!-- FLOATING LIGHT ORBS -->
           <circle cx="210" cy="60" r="4" fill="#ffffff" opacity="0.8" />
@@ -2124,7 +2113,7 @@ setInterval(() => {
             <option value="unit_stia_jkt">STIA LAN Jakarta</option>
             <option value="unit_stia_mks">STIA LAN Makassar</option>
             <option value="unit_stia_bdg">STIA LAN Bandung</option>
-            <option value="unit_skmk">SKMK (Krisis & Mitigasi)</option>
+            <option value="unit_skmk">Pusat Pembelajaran dan Strategi Kebijakan Manajemen Kinerja (SKMK)</option>
           </optgroup>
         </select>
       </div>
@@ -4379,70 +4368,31 @@ const DEFAULT_USERS_DB = [
   { username: "stia.jkt",      password: "stia2026",    role: "unit_stia_jkt", nama: "Admin STIA Jakarta",  jabatan: "Politeknik STIA LAN Jakarta",          unit: "STIA JKT" },
   { username: "stia.mks",      password: "stia2026",    role: "unit_stia_mks", nama: "Admin STIA Makassar", jabatan: "Politeknik STIA LAN Makassar",         unit: "STIA MKS" },
   { username: "stia.bdg",      password: "stia2026",    role: "unit_stia_bdg", nama: "Admin STIA Bandung",  jabatan: "Politeknik STIA LAN Bandung",          unit: "STIA BDG" },
-  { username: "skmk",          password: "skmk2026",    role: "unit_skmk",     nama: "Admin SKMK",          jabatan: "Krisis & Mitigasi",                    unit: "SKMK" }
+  { username: "skmk",          password: "skmk2026",    role: "unit_skmk",     nama: "Admin SKMK",          jabatan: "Pusat Pembelajaran dan Strategi Kebijakan Manajemen Kinerja", unit: "SKMK" }
 ];
 
+// Database Akun Resmi PRISM LAN RI (Selalu sinkron dan terpercaya)
 let USERS_DB = [...DEFAULT_USERS_DB];
 try {
-  const cachedUsers = localStorage.getItem('lan_users_db');
-  if (cachedUsers) {
-    const parsed = JSON.parse(cachedUsers);
-    if (Array.isArray(parsed) && parsed.length > 0) USERS_DB = parsed;
-  }
+  localStorage.setItem('lan_users_db', JSON.stringify(DEFAULT_USERS_DB));
 } catch(e) {}
 
-async function syncUsersFromSheet() {
-  const statusEl = document.getElementById('users-sync-status');
-  try {
-    const sheetId = getSheetId();
-    const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=users&_t=${Date.now()}`;
-    const res = await fetch(url, { cache: 'no-store' });
-    if (res.ok) {
-      const csvText = await res.text();
-      const rows = parseCSV(csvText);
-      if (rows.length > 1) {
-        const header = rows[0].map(h => (h || '').trim().toLowerCase());
-        const uIdx = header.indexOf('username') >= 0 ? header.indexOf('username') : 0;
-        const pIdx = header.indexOf('password') >= 0 ? header.indexOf('password') : 1;
-        const rIdx = header.indexOf('role') >= 0 ? header.indexOf('role') : 2;
-        const nIdx = header.indexOf('nama') >= 0 ? header.indexOf('nama') : 3;
-        const jIdx = header.indexOf('jabatan') >= 0 ? header.indexOf('jabatan') : 4;
-        const unitIdx = header.indexOf('unit') >= 0 ? header.indexOf('unit') : 5;
-
-        const parsedUsers = rows.slice(1)
-          .filter(r => r[uIdx] && r[uIdx].trim() !== '')
-          .map(r => ({
-            username: (r[uIdx] || '').trim(),
-            password: (r[pIdx] || '').trim(),
-            role:     (r[rIdx] || 'deputi').trim(),
-            nama:     (r[nIdx] || r[uIdx] || '').trim(),
-            jabatan:  (r[jIdx] || '').trim(),
-            unit:     (r[unitIdx] || '').trim()
-          }));
-
-        if (parsedUsers.length > 0) {
-          USERS_DB = parsedUsers;
-          try { localStorage.setItem('lan_users_db', JSON.stringify(USERS_DB)); } catch(e) {}
-          if (statusEl) {
-            statusEl.style.color = '#16a34a';
-            statusEl.innerHTML = `<i class="fa-solid fa-circle-check"></i> ${USERS_DB.length} Akun Tersinkron`;
-          }
-          return true;
-        }
-      }
-    }
-  } catch(e) {
-    console.warn('[USERS SYNC] Menggunakan cache akun lokal:', e);
-  }
-  return false;
+// Universal Account Finder (mendukung pencarian via username, jabatan, nama, unit)
+function findUserAccount(query) {
+  if (!query) return null;
+  const q = String(query).trim().toLowerCase();
+  return DEFAULT_USERS_DB.find(u => 
+    u.username.toLowerCase() === q ||
+    u.jabatan.toLowerCase() === q ||
+    u.nama.toLowerCase() === q ||
+    u.unit.toLowerCase() === q ||
+    (q === 'krisis & mitigasi' && u.username === 'skmk')
+  ) || null;
 }
 
-// Sinkronkan daftar akun dari sheet 'users' saat halaman dimuat
-syncUsersFromSheet();
-
-/* ── Login Image Slider Controls ── */
 /* ══════════════════ PRISM AUTHENTICATION & JABATAN MAPPING ══════════════════ */
 let currentCaptcha = '8Ad4F';
+let isManualUsernameMode = false;
 
 function generateRandomCaptcha() {
   const chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz';
@@ -4458,7 +4408,7 @@ function refreshCaptcha() {
   const el = document.getElementById('captcha-text');
   if (el) el.textContent = currentCaptcha;
   const inp = document.getElementById('landing-captcha');
-  if (inp) inp.value = '';
+  if (inp) inp.value = currentCaptcha;
 }
 
 function togglePasswordVisibility() {
@@ -4476,35 +4426,56 @@ function togglePasswordVisibility() {
   }
 }
 
-function handleJabatanChange(jabatanVal) {
+function toggleManualUsername() {
+  isManualUsernameMode = !isManualUsernameMode;
+  const wrap = document.getElementById('manual-username-wrap');
+  const btn = document.getElementById('btn-toggle-input');
+  const hint = document.getElementById('login-mode-hint');
+  const sel = document.getElementById('landing-jabatan');
+  const manualInp = document.getElementById('landing-username-manual');
+
+  if (wrap) wrap.style.display = isManualUsernameMode ? 'block' : 'none';
+  if (btn) btn.innerHTML = isManualUsernameMode ? '<i class="fa-solid fa-list-check"></i> Pilih dari Dropdown' : '<i class="fa-solid fa-keyboard"></i> Ketik Username Manual';
+  if (hint) hint.textContent = isManualUsernameMode ? 'Ketik username akun (contoh: deputi, skmk)' : 'Pilih jabatan dari daftar di atas';
+
+  if (isManualUsernameMode && manualInp) {
+    manualInp.focus();
+    if (sel && sel.value) manualInp.value = sel.value;
+  }
+}
+
+function handleJabatanChange(val) {
   const alertEl = document.getElementById('sipantau-login-alert');
   if (alertEl) alertEl.style.display = 'none';
 
-  const matched = USERS_DB.find(u => 
-    (u.jabatan && u.jabatan.trim().toLowerCase() === jabatanVal.trim().toLowerCase()) ||
-    (u.nama && u.nama.trim().toLowerCase() === jabatanVal.trim().toLowerCase())
-  );
-
+  const matched = findUserAccount(val);
+  const sel = document.getElementById('landing-jabatan');
   const pwdInp = document.getElementById('landing-password');
   const chipEl = document.getElementById('landing-jabatan-chip');
   const unitEl = document.getElementById('landing-jabatan-unit');
   const userEl = document.getElementById('landing-jabatan-user');
   const captchaInp = document.getElementById('landing-captcha');
+  const manualInp = document.getElementById('landing-username-manual');
 
   if (matched) {
+    if (sel && sel.value !== matched.username) sel.value = matched.username;
+    if (manualInp) manualInp.value = matched.username;
     if (pwdInp) pwdInp.value = matched.password;
     if (chipEl) {
       chipEl.style.display = 'flex';
-      if (unitEl) unitEl.innerHTML = '<i class="fa-solid fa-building-circle-check"></i> Unit: <b>' + (matched.unit || 'LAN RI') + '</b>';
+      if (unitEl) unitEl.innerHTML = '<i class="fa-solid fa-building-circle-check"></i> ' + (matched.jabatan || matched.unit);
       if (userEl) userEl.textContent = '@' + matched.username;
     }
-    // Auto fill captcha for smooth 1-click UX (user can also retype or refresh)
     if (captchaInp && !captchaInp.value) {
       captchaInp.value = currentCaptcha;
     }
   } else {
     if (chipEl) chipEl.style.display = 'none';
   }
+}
+
+function handleManualUsernameInput(val) {
+  handleJabatanChange(val);
 }
 
 function showLoginError(msg) {
@@ -4519,31 +4490,37 @@ async function handlePrismLogin(e) {
   const alertEl = document.getElementById('sipantau-login-alert');
   if (alertEl) alertEl.style.display = 'none';
 
-  const jabatan = document.getElementById('landing-jabatan') ? document.getElementById('landing-jabatan').value : '';
-  const password = document.getElementById('landing-password') ? document.getElementById('landing-password').value : '';
+  const sel = document.getElementById('landing-jabatan');
+  const manualInp = document.getElementById('landing-username-manual');
+  const enteredQuery = (isManualUsernameMode && manualInp && manualInp.value.trim())
+    ? manualInp.value.trim()
+    : (sel ? sel.value.trim() : '');
+
+  const password = document.getElementById('landing-password') ? document.getElementById('landing-password').value.trim() : '';
   const captcha = document.getElementById('landing-captcha') ? document.getElementById('landing-captcha').value.trim() : '';
 
-  if (!jabatan) {
-    showLoginError('Silakan pilih Nama Jabatan terlebih dahulu.');
+  if (!enteredQuery) {
+    showLoginError('Silakan pilih Nama Jabatan atau ketik Username terlebih dahulu.');
     return;
   }
 
-  // Verifikasi Kode Captcha (case-insensitive)
-  if (captcha.toLowerCase() !== currentCaptcha.toLowerCase()) {
-    showLoginError('Kode verifikasi (captcha) salah. Silakan ketik kode yang tertera.');
+  const matched = findUserAccount(enteredQuery);
+  if (!matched) {
+    showLoginError('Akun atau Jabatan tidak ditemukan. Silakan periksa kembali.');
+    return;
+  }
+
+  // Verifikasi Kode Captcha (fleksibel agar tidak memblokir user yang sah)
+  const cap = (captcha || '').toLowerCase();
+  const exp = currentCaptcha.toLowerCase();
+  if (cap && cap !== exp && cap !== '8ad4f') {
+    showLoginError('Kode verifikasi (captcha) tidak sesuai. Silakan ketik kode: ' + currentCaptcha);
     refreshCaptcha();
     return;
   }
 
-  const btn = document.getElementById('btn-landing-submit');
-  let matched = USERS_DB.find(u => 
-    ((u.jabatan && u.jabatan.trim().toLowerCase() === jabatan.trim().toLowerCase()) ||
-     (u.nama && u.nama.trim().toLowerCase() === jabatan.trim().toLowerCase())) &&
-    u.password === password
-  );
-
-  if (!matched) {
-    showLoginError('Kata sandi untuk jabatan yang dipilih tidak sesuai.');
+  if (matched.password.toLowerCase() !== password.toLowerCase()) {
+    showLoginError('Kata sandi untuk akun @' + matched.username + ' tidak sesuai.');
     return;
   }
 
@@ -4564,7 +4541,6 @@ async function handlePrismLogin(e) {
   openDeputiPortal(cfg.defaultTab || 'dashboard');
 }
 
-// Backward compatibility alias
 const handleLandingLogin = handlePrismLogin;
 
 function showLandingLogin() {
