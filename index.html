@@ -9,6 +9,7 @@
   <link rel="shortcut icon" href="favicon.png" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
   <style>
@@ -1226,14 +1227,14 @@
         <!-- Rendered by JS: either Login button or User Profile -->
       </div>
       <div style="width:1px;height:24px;background:var(--border);margin:0 4px"></div>
-      <!-- Google Sheets Sync Badge -->
-      <div class="gs-badge disconnected" id="gs-badge" onclick="openGasModal()" title="Pengaturan Sinkronisasi Google Sheets">
+      <!-- Supabase Database Sync Badge -->
+      <div class="gs-badge" id="gs-badge" onclick="openGasModal()" title="Status & Pengaturan Database Supabase">
         <div class="gs-dot"></div>
-        <span class="gs-label" id="gs-label">Terhubung Google Sheet</span>
-        <i class="fa-solid fa-gear" style="font-size:11px;opacity:.8;margin-left:3px"></i>
+        <span class="gs-label" id="gs-label">Terhubung Supabase</span>
+        <i class="fa-solid fa-database" style="font-size:11px;opacity:.8;margin-left:3px"></i>
       </div>
       <!-- Refresh Button -->
-      <button class="btn-refresh" onclick="syncDataFromGAS()" title="Sinkronkan data dari Google Sheet">
+      <button class="btn-refresh" onclick="syncDataFromSupabase(true)" title="Sinkronkan data dari Supabase">
         <i class="fa-solid fa-rotate" id="refresh-icon"></i>
       </button>
       <!-- Tambah Agenda Button -->
@@ -1261,34 +1262,34 @@
   </div>
 </header>
 
-<!-- ══════════════════════ GOOGLE SHEETS SETTINGS MODAL ══════════════════════ -->
+<!-- ══════════════════════ SUPABASE DATABASE SETTINGS MODAL ══════════════════════ -->
 <div class="gas-modal-overlay" id="gas-modal-overlay" onclick="if(event.target===this)closeGasModal()">
   <div class="gas-modal">
     <div class="gas-modal-header">
-      <h3><i class="fa-solid fa-gear"></i> Pengaturan Koneksi Google Sheets</h3>
+      <h3><i class="fa-solid fa-database"></i> Status & Pengaturan Database Supabase</h3>
       <button class="gas-modal-close" onclick="closeGasModal()"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div class="gas-modal-body">
       <div class="gas-info-box">
-        <strong>Sinkronisasi Real-Time Langsung (Live Sync)</strong>
-        <p>Dashboard ini terhubung langsung dengan Google Spreadsheet LAN RI (Tab <em>Analis/Survei 2026</em>). Setiap kali ada pembaruan di spreadsheet, data akan langsung diperbarui di dashboard.</p>
+        <strong>Database Cloud: Supabase PostgreSQL (Aktif & Mandiri)</strong>
+        <p>Dashboard ini sekarang terhubung langsung ke database Supabase Cloud tabel <em>publikasi</em>. Seluruh pembaruan data tersimpan permanen dan tersinkronisasi secara real-time tanpa bergantung lagi pada Google Spreadsheet.</p>
       </div>
       <div class="gas-field">
-        <label>ID Spreadsheet Google</label>
-        <input type="text" id="sheet-id-input" placeholder="1dZbVC-lcYubhuDVSN-PjvZl0R6-huTFePcHDW6eJtqE"/>
+        <label>Supabase Project URL</label>
+        <input type="text" id="supabase-url-input" placeholder="https://imteghfrgddjvgkxarwi.supabase.co"/>
       </div>
       <div class="gas-field">
-        <label>GID Tab Sheet</label>
-        <input type="text" id="sheet-gid-input" placeholder="988003932"/>
-        <div class="hint">Tab 'Analis/Survei 2026' memiliki GID 988003932.</div>
+        <label>Supabase Anon / Public Key</label>
+        <input type="password" id="supabase-key-input" placeholder="eyJhbGciOi..."/>
+        <div class="hint">Kunci API publik (anon key) untuk mengakses database.</div>
       </div>
       <div style="margin: 10px 0 16px;">
-        <a id="sheet-ext-link" href="https://docs.google.com/spreadsheets/d/1dZbVC-lcYubhuDVSN-PjvZl0R6-huTFePcHDW6eJtqE/edit?gid=988003932#gid=988003932" target="_blank" style="color:var(--accent);font-size:12px;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:6px">
-          <i class="fa-solid fa-arrow-up-right-from-square"></i> Buka Google Spreadsheet di Tab Baru
+        <a id="supabase-ext-link" href="https://supabase.com/dashboard/project/imteghfrgddjvgkxarwi" target="_blank" style="color:var(--accent);font-size:12px;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:6px">
+          <i class="fa-solid fa-arrow-up-right-from-square"></i> Buka Dashboard Supabase di Tab Baru
         </a>
       </div>
       <button class="gas-test-btn" onclick="testLiveSync()">
-        <i class="fa-solid fa-rotate"></i> Uji & Sinkronkan Sekarang
+        <i class="fa-solid fa-rotate"></i> Uji Koneksi & Sinkronkan Sekarang
       </button>
       <div id="gas-test-result" class="gas-test-result"></div>
     </div>
@@ -1303,21 +1304,39 @@
 </div>
 
 <script>
-/* ══════════════ REAL-TIME GOOGLE SHEETS SYNC ══════════════ */
-const SHEET_ID_DEFAULT = '1dZbVC-lcYubhuDVSN-PjvZl0R6-huTFePcHDW6eJtqE';
-const SHEET_GID_DEFAULT = '988003932';
-const GAS_DEFAULT = 'https://script.google.com/macros/s/AKfycbxQCEUQuVnxiLE6q4ZCBD1AV6lYfLgreflkXeWPvsUfmGpPCAOhvyI5UOYjaDGkKhj5YA/exec';
+/* ══════════════ SUPABASE DATABASE INTEGRATION ══════════════ */
+const SUPABASE_URL_DEFAULT = 'https://imteghfrgddjvgkxarwi.supabase.co';
+const SUPABASE_KEY_DEFAULT = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImltdGVnaGZyZ2RkanZna3hhcndpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMxMzQ2NzYsImV4cCI6MjEwODcxMDY3Nn0.23YPuFy6PfmMdURqDR4OX1Qi6agjGrZSHgNjple3Ilo';
 
-function getSheetId() { return localStorage.getItem('lan_sheet_id') || SHEET_ID_DEFAULT; }
-function getSheetGid() { return localStorage.getItem('lan_sheet_gid') || SHEET_GID_DEFAULT; }
-function getGasUrl() { return localStorage.getItem('lan_gas_url') || GAS_DEFAULT; }
+function getSupabaseUrl() {
+  let u = localStorage.getItem('lan_supabase_url') || SUPABASE_URL_DEFAULT;
+  return u.replace(/\/+$/, '').replace(/\/rest\/v1\/?$/, '');
+}
+function getSupabaseKey() {
+  return localStorage.getItem('lan_supabase_key') || SUPABASE_KEY_DEFAULT;
+}
+
+let supabaseClient = null;
+function initSupabaseClient() {
+  try {
+    const sUrl = getSupabaseUrl();
+    const sKey = getSupabaseKey();
+    if (window.supabase && typeof window.supabase.createClient === 'function') {
+      supabaseClient = window.supabase.createClient(sUrl, sKey);
+      console.log('[SUPABASE] Client initialized successfully for:', sUrl);
+    }
+  } catch(e) {
+    console.warn('[SUPABASE] Client init error:', e);
+  }
+}
+initSupabaseClient();
 
 function setGasBadge(state, label) {
   const badge = document.getElementById('gs-badge');
   const lbl   = document.getElementById('gs-label');
   if(!badge) return;
   badge.className = 'gs-badge ' + (state || '');
-  if(lbl) lbl.textContent = label || 'Terhubung Google Sheet';
+  if(lbl) lbl.textContent = label || 'Terhubung Supabase';
 }
 
 function showNotificationToast(msg, type='success'){
@@ -1325,7 +1344,7 @@ function showNotificationToast(msg, type='success'){
   if(!toast){
     toast = document.createElement('div');
     toast.id = 'sync-toast';
-    toast.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:9999;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,0.18);display:flex;align-items:center;gap:10px;transition:all .3s ease;transform:translateY(100px);opacity:0;pointer-events:none;font-family:Inter,sans-serif;';
+    toast.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:99999;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,0.18);display:flex;align-items:center;gap:10px;transition:all .3s ease;transform:translateY(100px);opacity:0;pointer-events:none;font-family:Inter,sans-serif;';
     document.body.appendChild(toast);
   }
   const isErr = type === 'error' || type === 'warn';
@@ -1342,141 +1361,93 @@ function showNotificationToast(msg, type='success'){
   }, 4000);
 }
 
-function parseCSV(text) {
-  const rows = [];
-  let currentRow = [];
-  let currentCell = '';
-  let inQuotes = false;
-  for (let i = 0; i < text.length; i++) {
-    const c = text[i];
-    const next = text[i + 1];
-    if (c === '"') {
-      if (inQuotes && next === '"') {
-        currentCell += '"';
-        i++;
-      } else {
-        inQuotes = !inQuotes;
-      }
-    } else if (c === ',' && !inQuotes) {
-      currentRow.push(currentCell);
-      currentCell = '';
-    } else if ((c === '\r' || c === '\n') && !inQuotes) {
-      if (c === '\r' && next === '\n') i++;
-      currentRow.push(currentCell);
-      rows.push(currentRow);
-      currentRow = [];
-      currentCell = '';
-    } else {
-      currentCell += c;
-    }
-  }
-  if (currentRow.length > 0 || currentCell !== '') {
-    currentRow.push(currentCell);
-    rows.push(currentRow);
-  }
-  return rows;
-}
-
 function cleanLinks(val) {
   if (!val) return '';
   return val.split(/\r?\n/).map(s => s.trim()).filter(Boolean).join('|');
 }
 
-function normalizeRecordsFromCSV(csvText) {
-  const rows = parseCSV(csvText);
-  const dataRows = rows.slice(1).filter(r => r.length > 2 && r[2] && r[2].trim());
-  return dataRows.map((r, idx) => ({
-    no: parseInt(r[0]) || (idx + 1),
-    unit: (r[1] || '').trim(),
-    judul: (r[2] || '').trim(),
-    jenis: (r[3] || '').trim(),
-    jadwal: (r[4] || '').trim(),
-    tahun: (r[5] || '').trim(),
-    cluster: (r[6] || r[7] || '').trim(),
-    jurnal: cleanLinks(r[8]),
-    media: cleanLinks(r[9]),
-    webLAN: cleanLinks(r[10]),
-    webUnit: cleanLinks(r[11]),
-    igLAN: cleanLinks(r[12]),
-    igUnit: cleanLinks(r[13]),
-    ytLAN: cleanLinks(r[14]),
-    ytUnit: cleanLinks(r[15]),
-    ket: (r[16] || '').trim(),
-  }));
+function mapSupabaseToRaw(item) {
+  return {
+    id: item.id,
+    no: parseInt(item.no) || item.id,
+    unit: (item.unit || '').trim(),
+    judul: (item.judul || '').trim(),
+    jenis: (item.jenis || '').trim(),
+    jadwal: (item.jadwal || '').trim(),
+    tahun: String(item.tahun || '2026').trim(),
+    cluster: (item.cluster || '').trim(),
+    jurnal: cleanLinks(item.jurnal),
+    media: cleanLinks(item.media),
+    webLAN: cleanLinks(item.web_lan || item.webLAN),
+    webUnit: cleanLinks(item.web_unit || item.webUnit),
+    igLAN: cleanLinks(item.ig_lan || item.igLAN),
+    igUnit: cleanLinks(item.ig_unit || item.igUnit),
+    ytLAN: cleanLinks(item.yt_lan || item.ytLAN),
+    ytUnit: cleanLinks(item.yt_unit || item.ytUnit),
+    ket: (item.ket || '').trim(),
+    created_at: item.created_at
+  };
 }
 
-function normalizeRecordsFromGAS(records) {
-  return records.map((d, idx) => ({
-    no: d.no || (idx + 1),
-    unit: (d.unit || '').trim(),
-    judul: (d.judul || '').trim(),
-    jenis: (d.jenis || '').trim(),
-    jadwal: (d.jadwal || '').trim(),
-    tahun: (d.tahun || '').trim(),
-    cluster: (d.cluster || d.cluster1 || d.cluster2 || '').trim(),
-    jurnal: cleanLinks(d.jurnal),
-    media: cleanLinks(d.media || d.media_online),
-    webLAN: cleanLinks(d.webLAN || d.web_lan),
-    webUnit: cleanLinks(d.webUnit || d.web_unit),
-    igLAN: cleanLinks(d.igLAN || d.ig_lan),
-    igUnit: cleanLinks(d.igUnit || d.ig_unit),
-    ytLAN: cleanLinks(d.ytLAN || d.yt_lan),
-    ytUnit: cleanLinks(d.ytUnit || d.yt_unit),
-    ket: (d.ket || d.keterangan || '').trim(),
-  }));
-}
+async function syncDataFromSupabase(isManual = false) {
+  setGasBadge('syncing', 'Menyinkron Supabase…');
+  const icon = document.getElementById('refresh-icon');
+  const pIcon = document.getElementById('portal-refresh-icon');
+  if(icon) icon.classList.add('fa-spin');
+  if(pIcon) pIcon.classList.add('fa-spin');
 
-async function syncDataFromSheet(isManual = false) {
-  setGasBadge('syncing', 'Menyinkron…');
-  let newRecords = null;
-  let syncSource = 'Google Sheet Live';
+  let rows = null;
+  const sUrl = getSupabaseUrl();
+  const sKey = getSupabaseKey();
 
-  // 1. Direct fetch from Google Sheet CSV (Real-time with CORS enabled)
+  // 1. Fetch using Supabase SDK
   try {
-    const sheetId = getSheetId();
-    const sheetGid = getSheetGid();
-    const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&gid=${sheetGid}&_t=${Date.now()}`;
-    const res = await fetch(csvUrl, { cache: 'no-store' });
-    if (res.ok) {
-      const text = await res.text();
-      const parsed = normalizeRecordsFromCSV(text);
-      if (parsed && parsed.length > 0) {
-        newRecords = parsed;
-        syncSource = 'Google Sheet Live';
+    if (supabaseClient) {
+      const { data, error } = await supabaseClient
+        .from('publikasi')
+        .select('*')
+        .order('no', { ascending: true });
+      if (!error && Array.isArray(data) && data.length > 0) {
+        rows = data;
       }
     }
   } catch(e) {
-    console.warn('[SYNC] Direct Google Sheet CSV fetch failed, falling back:', e);
+    console.warn('[SUPABASE] SDK select error, trying REST fetch:', e);
   }
 
-  // 2. Fallback to GAS if direct fetch didn't return data
-  if (!newRecords) {
+  // 2. Fallback to direct Supabase REST API
+  if (!rows) {
     try {
-      const gasUrl = getGasUrl();
-      if (gasUrl) {
-        const endpoint = gasUrl + (gasUrl.includes('?') ? '&' : '?') + 'action=getData&_t=' + Date.now();
-        const res = await fetch(endpoint, { mode: 'cors', cache: 'no-store' });
-        if (res.ok) {
-          const json = await res.json();
-          const list = Array.isArray(json) ? json : (json.data || json.records || null);
-          if (list && list.length > 0) {
-            newRecords = normalizeRecordsFromGAS(list);
-            syncSource = 'Google Apps Script';
-          }
+      const endpoint = `${sUrl}/rest/v1/publikasi?select=*&order=no.asc`;
+      const res = await fetch(endpoint, {
+        headers: {
+          'apikey': sKey,
+          'Authorization': `Bearer ${sKey}`
+        },
+        cache: 'no-store'
+      });
+      if (res.ok) {
+        const json = await res.json();
+        if (Array.isArray(json) && json.length > 0) {
+          rows = json;
         }
       }
     } catch(e) {
-      console.warn('[SYNC] GAS fallback failed:', e);
+      console.warn('[SUPABASE] REST fetch failed:', e);
     }
   }
 
-  // 3. Apply new records to dashboard
-  if (newRecords && newRecords.length > 0) {
-    RAW.length = 0;
-    newRecords.forEach(d => RAW.push(d));
-    try { localStorage.setItem('lan_pub_data', JSON.stringify(newRecords)); } catch(e){}
+  if(icon) setTimeout(() => icon.classList.remove('fa-spin'), 600);
+  if(pIcon) setTimeout(() => pIcon.classList.remove('fa-spin'), 600);
 
-    // Update all views
+  if (rows && rows.length > 0) {
+    const mapped = rows.map(mapSupabaseToRaw);
+    RAW.length = 0;
+    mapped.forEach(d => RAW.push(d));
+    try { localStorage.setItem('lan_pub_data', JSON.stringify(mapped)); } catch(e){}
+
+    // Update views
+    populateDropdowns();
     applyFilters();
     renderRoadmap(filteredData);
     renderTable();
@@ -1486,56 +1457,88 @@ async function syncDataFromSheet(isManual = false) {
     }
 
     const nowStr = new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
-    setGasBadge('', `Terhubung Google Sheet (${nowStr})`);
+    setGasBadge('', `Terhubung Supabase (${nowStr})`);
 
     if (isManual) {
-      showNotificationToast(`✅ Berhasil disinkronkan langsung dari Google Sheet! (${newRecords.length} publikasi diperbarui)`, 'success');
+      showNotificationToast(`✅ Berhasil disinkronkan dari Supabase! (${rows.length} data publikasi aktif)`, 'success');
     }
-    console.log(`[SYNC] ${newRecords.length} records updated via ${syncSource} at ${nowStr}`);
+    console.log(`[SUPABASE] ${rows.length} records updated from Supabase at ${nowStr}`);
     return true;
   } else {
     const stored = localStorage.getItem('lan_pub_data');
     if (stored) {
-      setGasBadge('', 'Terhubung Google Sheet (Offline)');
+      setGasBadge('', 'Terhubung Supabase (Offline)');
     } else {
-      setGasBadge('disconnected', 'Google Sheet Terputus');
+      setGasBadge('disconnected', 'Supabase Terputus');
     }
     if (isManual) {
-      showNotificationToast('⚠️ Tidak dapat terhubung ke Google Sheet. Menampilkan data lokal.', 'warn');
+      showNotificationToast('⚠️ Tidak dapat terhubung ke Supabase. Menampilkan data lokal.', 'warn');
     }
     return false;
   }
 }
 
+// Aliases for compatibility with other buttons/calls
+const syncDataFromGAS = syncDataFromSupabase;
+const syncDataFromSheet = syncDataFromSupabase;
+
+function initSupabaseRealtime() {
+  if (!supabaseClient) return;
+  try {
+    supabaseClient
+      .channel('realtime-publikasi')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'publikasi' },
+        (payload) => {
+          console.log('[SUPABASE REALTIME EVENT]', payload);
+          syncDataFromSupabase(false);
+          showNotificationToast(`⚡ Data publikasi diperbarui secara real-time dari Supabase!`, 'success');
+        }
+      )
+      .subscribe((status) => {
+        console.log('[SUPABASE REALTIME STATUS]', status);
+      });
+  } catch(e) {
+    console.warn('[SUPABASE REALTIME ERROR]', e);
+  }
+}
+
 function openGasModal(){
-  document.getElementById('sheet-id-input').value = getSheetId();
-  document.getElementById('sheet-gid-input').value = getSheetGid();
-  document.getElementById('gas-test-result').style.display = 'none';
+  const urlInp = document.getElementById('supabase-url-input');
+  const keyInp = document.getElementById('supabase-key-input');
+  if(urlInp) urlInp.value = getSupabaseUrl();
+  if(keyInp) keyInp.value = getSupabaseKey();
+  const res = document.getElementById('gas-test-result');
+  if(res) res.style.display = 'none';
   document.getElementById('gas-modal-overlay').classList.add('open');
 }
 function closeGasModal(){ document.getElementById('gas-modal-overlay').classList.remove('open'); }
 
 async function saveGasSettings(){
-  const sId = document.getElementById('sheet-id-input').value.trim();
-  const sGid = document.getElementById('sheet-gid-input').value.trim();
-  if(sId) localStorage.setItem('lan_sheet_id', sId);
-  if(sGid) localStorage.setItem('lan_sheet_gid', sGid);
+  const sUrl = document.getElementById('supabase-url-input').value.trim();
+  const sKey = document.getElementById('supabase-key-input').value.trim();
+  if(sUrl) localStorage.setItem('lan_supabase_url', sUrl);
+  if(sKey) localStorage.setItem('lan_supabase_key', sKey);
+  initSupabaseClient();
   closeGasModal();
-  await syncDataFromSheet(true);
+  await syncDataFromSupabase(true);
 }
 
 function resetGasCache(){
   localStorage.removeItem('lan_pub_data');
-  localStorage.removeItem('lan_sheet_id');
-  localStorage.removeItem('lan_sheet_gid');
-  document.getElementById('sheet-id-input').value = SHEET_ID_DEFAULT;
-  document.getElementById('sheet-gid-input').value = SHEET_GID_DEFAULT;
-  showGasResult('Pengaturan direset ke default sheet LAN RI. Menyinkronkan ulang…', 'warn');
-  syncDataFromSheet(true);
+  localStorage.removeItem('lan_supabase_url');
+  localStorage.removeItem('lan_supabase_key');
+  document.getElementById('supabase-url-input').value = SUPABASE_URL_DEFAULT;
+  document.getElementById('supabase-key-input').value = SUPABASE_KEY_DEFAULT;
+  initSupabaseClient();
+  showGasResult('Pengaturan direset ke default Supabase LAN RI. Menyinkronkan ulang…', 'warn');
+  syncDataFromSupabase(true);
 }
 
 function showGasResult(msg, type){
   const el = document.getElementById('gas-test-result');
+  if(!el) return;
   el.style.display = 'block';
   const colors = {
     success: {bg:'#f0fdf4',color:'#16a34a',border:'#bbf7d0'},
@@ -1549,26 +1552,27 @@ function showGasResult(msg, type){
 }
 
 async function testLiveSync(){
-  showGasResult('⏳ Menghubungi Google Sheet live…', 'warn');
-  const ok = await syncDataFromSheet(false);
+  showGasResult('⏳ Menghubungi database Supabase…', 'warn');
+  const ok = await syncDataFromSupabase(false);
   if(ok){
-    showGasResult(`✅ Berhasil! ${RAW.length} data survei berhasil disinkronkan langsung dari Google Sheet.`, 'success');
+    showGasResult(`✅ Berhasil! ${RAW.length} data publikasi berhasil dimuat langsung dari Supabase.`, 'success');
   } else {
-    showGasResult('❌ Gagal menyinkronkan. Pastikan akses Google Sheet disetel "Anyone with the link".', 'error');
+    showGasResult('❌ Gagal terhubung ke Supabase. Periksa URL dan Anon Key Anda.', 'error');
   }
 }
 
 // Auto-sync immediately on page load
-syncDataFromSheet(false);
+syncDataFromSupabase(false);
+initSupabaseRealtime();
 
 // Auto-sync when user returns to this tab / window
 window.addEventListener('focus', () => {
-  syncDataFromSheet(false);
+  syncDataFromSupabase(false);
 });
 
-// Periodic background auto-sync every 30 seconds for true real-time updates
+// Periodic background auto-sync every 30 seconds
 setInterval(() => {
-  syncDataFromSheet(false);
+  syncDataFromSupabase(false);
 }, 30000);
 
 /* ── Secret admin access: click logo 5× within 3 s ── */
@@ -2092,7 +2096,7 @@ setInterval(() => {
 
         <!-- TOOLBAR FILTER RINGKAS -->
         <div class="filter-bar" style="margin-bottom:16px;padding:10px 14px;background:#fff;border:1px solid #e2e8f0;border-radius:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-          <label style="font-size:12px;font-weight:700;color:#334155"><i class="fa-solid fa-sliders" style="margin-right:5px;color:var(--accent)"></i>Filter:</label>
+          <label style="font-size:12px;font-weight:700;color:#334155"><i class="fa-solid fa-sliders" style="margin-right:5px;color:var(--accent)"></i>Filter Data:</label>
           <select id="p-year" onchange="applyPortalFilters()">
             <option value="">Semua Tahun</option>
             <option value="2025">2025</option>
@@ -2988,9 +2992,31 @@ function saveNewAgenda(e){
   renderKPIs();
   renderCharts();
   renderTable();
+  if (typeof applyPortalFilters === 'function') {
+    initPortalDropdowns();
+    applyPortalFilters();
+  }
   closeAddAgendaModal();
   document.getElementById('add-agenda-form').reset();
-  alert('Agenda baru berhasil ditambahkan!');
+
+  // Simpan permanen ke Supabase Database
+  if (supabaseClient) {
+    supabaseClient.from('publikasi').insert([{
+      no: newNo,
+      unit: unit,
+      judul: judul,
+      jenis: 'Survei',
+      jadwal: jadwal,
+      tahun: tahun,
+      cluster: cluster,
+      ket: ket
+    }]).then(({ error }) => {
+      if (error) console.error('[SUPABASE INSERT ERROR]', error);
+      else showNotificationToast('✅ Data agenda baru berhasil disimpan ke database Supabase!', 'success');
+    });
+  } else {
+    showNotificationToast('✅ Agenda baru tersimpan lokal!', 'success');
+  }
 }
 
 /* ══════════════════════════════════════════════════════════

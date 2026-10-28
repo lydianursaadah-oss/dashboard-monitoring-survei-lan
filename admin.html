@@ -9,6 +9,7 @@
   <link rel="shortcut icon" href="favicon.png" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     :root{
@@ -833,11 +834,58 @@ setInterval(()=>{
   if(document.getElementById('login-screen')?.style.display!=='none') setAdminSlide(curAdminSlide+1);
 }, 4800);
 
+/* ══ SUPABASE CLOUD DATABASE ══ */
+const SUPABASE_URL = 'https://imteghfrgddjvgkxarwi.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImltdGVnaGZyZ2RkanZna3hhcndpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMxMzQ2NzYsImV4cCI6MjEwODcxMDY3Nn0.23YPuFy6PfmMdURqDR4OX1Qi6agjGrZSHgNjple3Ilo';
+let supabaseClient = null;
+if (window.supabase) {
+  try {
+    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    console.log('[SUPABASE ADMIN] Initialized');
+  } catch(e) { console.warn(e); }
+}
+
+async function loadFromSupabase() {
+  if (!supabaseClient) return;
+  try {
+    const { data, error } = await supabaseClient.from('publikasi').select('*').order('no', { ascending: true });
+    if (!error && Array.isArray(data) && data.length > 0) {
+      DB = data.map(d => ({
+        id: d.id,
+        no: parseInt(d.no) || d.id,
+        unit: d.unit || '',
+        judul: d.judul || '',
+        jenis: d.jenis || '',
+        jadwal: d.jadwal || '',
+        tahun: String(d.tahun || '2026'),
+        cluster: d.cluster || '',
+        jurnal: d.jurnal || '',
+        media: d.media || '',
+        webLAN: d.web_lan || d.webLAN || '',
+        webUnit: d.web_unit || d.webUnit || '',
+        igLAN: d.ig_lan || d.igLAN || '',
+        igUnit: d.ig_unit || d.igUnit || '',
+        ytLAN: d.yt_lan || d.ytLAN || '',
+        ytUnit: d.yt_unit || d.ytUnit || '',
+        ket: d.ket || ''
+      }));
+      saveDB();
+      populateFilters();
+      renderStats();
+      renderDataTable();
+      console.log(`[SUPABASE ADMIN] Loaded ${DB.length} records`);
+    }
+  } catch(e) {
+    console.warn('[SUPABASE LOAD ERROR]', e);
+  }
+}
+
 /* ══ DATA ══ */
 function loadDB(){
   const raw = localStorage.getItem(LS_DATA);
   DB = raw ? JSON.parse(raw) : JSON.parse(JSON.stringify(DEFAULT_DATA));
   if(!raw) saveDB();
+  loadFromSupabase();
 }
 function saveDB(){
   localStorage.setItem(LS_DATA, JSON.stringify(DB));
@@ -1038,7 +1086,35 @@ function saveRecord(e){
     addLog(`Tambah: "${rec.judul.slice(0,50)}" (No.${rec.no})`, 'add');
   }
   saveDB();
-  showToast(id ? 'Perubahan berhasil disimpan!' : 'Publikasi baru berhasil ditambahkan!', 'success');
+
+  // Simpan / update ke database Supabase
+  if (supabaseClient) {
+    const sbRow = {
+      no: rec.no,
+      unit: rec.unit,
+      judul: rec.judul,
+      jenis: rec.jenis,
+      jadwal: rec.jadwal,
+      tahun: rec.tahun,
+      cluster: rec.cluster,
+      jurnal: rec.jurnal,
+      media: rec.media,
+      web_lan: rec.webLAN,
+      web_unit: rec.webUnit,
+      ig_lan: rec.igLAN,
+      ig_unit: rec.igUnit,
+      yt_lan: rec.ytLAN,
+      yt_unit: rec.ytUnit,
+      ket: rec.ket
+    };
+    supabaseClient.from('publikasi').upsert(sbRow, { onConflict: 'no' })
+      .then(({ error }) => {
+        if(error) console.error('[SUPABASE UPSERT ERROR]', error);
+        else console.log('[SUPABASE] Berhasil disinkronkan ke cloud');
+      });
+  }
+
+  showToast(id ? 'Perubahan berhasil disimpan & disinkron ke Supabase!' : 'Publikasi baru berhasil disimpan ke Supabase!', 'success');
   showPage('data');
 }
 
@@ -1048,8 +1124,15 @@ function deleteRecord(no){
   showConfirm('🗑️','Hapus Publikasi?',`"${d?.judul?.slice(0,60)||'Record ini'}" akan dihapus permanen.`, 'btn-danger', 'Hapus', ()=>{
     DB=DB.filter(r=>r.no!==no);
     saveDB();
+    if (supabaseClient) {
+      supabaseClient.from('publikasi').delete().eq('no', no)
+        .then(({ error }) => {
+          if(error) console.error('[SUPABASE DELETE ERROR]', error);
+          else console.log('[SUPABASE] Record dihapus dari cloud');
+        });
+    }
     addLog(`Hapus: "${d?.judul?.slice(0,50)}" (No.${no})`, 'delete');
-    showToast('Publikasi dihapus.','warn');
+    showToast('Publikasi dihapus dari lokal & Supabase.','warn');
     renderStats(); renderDataTable();
   });
 }
