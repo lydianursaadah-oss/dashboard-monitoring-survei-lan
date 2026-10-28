@@ -1356,7 +1356,7 @@ function handleJabatanChange(val) {
                 <option value="stia.jkt">Politeknik STIA LAN Jakarta</option>
                 <option value="stia.mks">Politeknik STIA LAN Makassar</option>
                 <option value="stia.bdg">Politeknik STIA LAN Bandung</option>
-                <option value="skmk">Pusat Pembelajaran dan Strategi Kebijakan Manajemen Kinerja</option>
+                <option value="skmk">Pusjar SKMK</option>
               </select>
               <i class="fa-solid fa-chevron-down prism-select-arrow"></i>
             </div>
@@ -2386,7 +2386,7 @@ window.addEventListener('focus', () => {
             <option value="unit_stia_jkt">STIA LAN Jakarta</option>
             <option value="unit_stia_mks">STIA LAN Makassar</option>
             <option value="unit_stia_bdg">STIA LAN Bandung</option>
-            <option value="unit_skmk">Pusat Pembelajaran dan Strategi Kebijakan Manajemen Kinerja (SKMK)</option>
+            <option value="unit_skmk">Pusjar SKMK</option>
           </optgroup>
         </select>
       </div>
@@ -5876,7 +5876,7 @@ const DEFAULT_USERS_DB = [
   { username: "stia.jkt",      password: "stia2026",    role: "unit_stia_jkt", nama: "Admin STIA Jakarta",  jabatan: "Politeknik STIA LAN Jakarta",          unit: "STIA JKT" },
   { username: "stia.mks",      password: "stia2026",    role: "unit_stia_mks", nama: "Admin STIA Makassar", jabatan: "Politeknik STIA LAN Makassar",         unit: "STIA MKS" },
   { username: "stia.bdg",      password: "stia2026",    role: "unit_stia_bdg", nama: "Admin STIA Bandung",  jabatan: "Politeknik STIA LAN Bandung",          unit: "STIA BDG" },
-  { username: "skmk",          password: "skmk2026",    role: "unit_skmk",     nama: "Admin SKMK",          jabatan: "Pusat Pembelajaran dan Strategi Kebijakan Manajemen Kinerja", unit: "SKMK" }
+  { username: "skmk",          password: "skmk2026",    role: "unit_skmk",     nama: "Admin SKMK",          jabatan: "Pusjar SKMK", unit: "SKMK" }
 ];
 
 // Database Akun Resmi PRISM LAN RI (Sinkron dengan Supabase & LocalStorage)
@@ -5899,7 +5899,7 @@ function findUserAccount(query) {
     (u.jabatan && u.jabatan.toLowerCase() === q) ||
     (u.nama && u.nama.toLowerCase() === q) ||
     (u.unit && u.unit.toLowerCase() === q) ||
-    (q === 'krisis & mitigasi' && u.username === 'skmk')
+    (q === 'krisis & mitigasi' && u.username === 'skmk') || (q.includes('skmk') && u.username === 'skmk')
   ) || DEFAULT_USERS_DB.find(u => 
     (u.username && u.username.toLowerCase() === q) ||
     (u.jabatan && u.jabatan.toLowerCase() === q) ||
