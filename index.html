@@ -1148,7 +1148,7 @@
         <div class="prism-alert" id="sipantau-login-alert" style="display:none"></div>
 
         <!-- FORM LOGIN -->
-        <form onsubmit="handlePrismLogin(event)" autocomplete="off">
+        <form onsubmit="event.preventDefault(); handlePrismLogin(event); return false;" autocomplete="off">
           <!-- FIELD 1: DROPDOWN NAMA JABATAN -->
           <div class="prism-form-group">
             <div class="prism-input-wrap">
@@ -1176,31 +1176,14 @@
           <div class="prism-form-group">
             <div class="prism-input-wrap">
               <i class="fa-solid fa-lock prism-icon-left"></i>
-              <input type="password" id="landing-password" placeholder="Password" required class="prism-input" autocomplete="new-password" value="" />
+              <input type="password" id="landing-password" placeholder="Password" required class="prism-input" autocomplete="new-password" value="" onkeydown="if(event.key==='Enter'){event.preventDefault();handlePrismLogin(event);}" />
               <i class="fa-regular fa-eye prism-pwd-toggle" id="toggle-pwd-icon" onclick="togglePasswordVisibility()" title="Lihat password"></i>
             </div>
           </div>
 
-          <!-- FIELD 3: VERIFICATION CODE (TIDAK OTOMATIS TERISI) -->
-          <div class="prism-captcha-row">
-            <div class="prism-input-wrap" style="flex:1">
-              <i class="fa-solid fa-shield-halved prism-icon-left"></i>
-              <input type="text" id="landing-captcha" placeholder="Verification code" required class="prism-input" maxlength="6" autocomplete="off" value="" />
-            </div>
-            <div class="prism-captcha-box" onclick="refreshCaptcha()" title="Klik untuk refresh kode verifikasi">
-              <span id="captcha-text" class="prism-captcha-text">8Ad4F</span>
-              <i class="fa-solid fa-arrows-rotate" style="font-size:11px;color:#2563eb"></i>
-            </div>
-          </div>
-
           <!-- BUTTON LOGIN -->
-          <button type="submit" class="prism-btn-submit" id="btn-landing-submit">
+          <button type="button" onclick="handlePrismLogin(event)" class="prism-btn-submit" id="btn-landing-submit">
             <i class="fa-solid fa-right-to-bracket"></i> Login
-          </button>
-
-          <!-- LINK PUBLIC DASHBOARD -->
-          <button type="button" class="prism-btn-public-link" onclick="hideLandingLogin()">
-            <i class="fa-solid fa-chart-line"></i> Lihat Dashboard Publik (Tanpa Login)
           </button>
         </form>
       </div>
@@ -2182,7 +2165,7 @@ setInterval(() => {
         <i class="fa-solid fa-bars"></i>
       </button>
       <div style="display:flex;align-items:center;gap:10px">
-        <span class="sindisa-top-title">Sistem Monitoring Publikasi LAN RI</span>
+        <span class="sindisa-top-title">PRISM — Sistem Monitoring Publikasi LAN RI</span>
       </div>
     </div>
     <div class="sindisa-topbar-right">
@@ -2191,8 +2174,8 @@ setInterval(() => {
         <span id="sindisa-header-username">Hi, User</span>
         <i class="fa-solid fa-caret-down" style="font-size:11px;opacity:.8"></i>
       </div>
-      <button class="sindisa-exit-btn" onclick="exitDeputiPortal()" title="Kembali ke Dashboard Publik">
-        <i class="fa-solid fa-arrow-left"></i> Kembali ke Dashboard Publik
+      <button class="sindisa-exit-btn" onclick="handleUserLogout()" title="Keluar / Logout" style="background:#fef2f2;color:#dc2626;border-color:#fecaca">
+        <i class="fa-solid fa-right-from-bracket"></i> Keluar / Logout
       </button>
     </div>
   </div>
@@ -2201,12 +2184,12 @@ setInterval(() => {
     <!-- SINDISA SIDEBAR -->
     <aside class="sindisa-sidebar" id="sindisa-sidebar">
       <div class="sindisa-brand">
-        <img src="favicon.png" alt="SIPANTAU" class="sindisa-logo-icon"/>
-        <span class="sindisa-brand-text">SIPANTAU</span>
+        <img src="logo-lan.png" alt="PRISM" class="sindisa-logo-icon" style="width:26px;height:26px;object-fit:contain"/>
+        <span class="sindisa-brand-text">PRISM</span>
       </div>
 
       
-      <div class="sindisa-section-title">MENU SIPANTAU</div>
+      <div class="sindisa-section-title">MENU PRISM</div>
       <ul class="sindisa-menu" id="sipantau-role-menu">
         <!-- Rendered dynamically by applyRolePermissions(user) -->
       </ul>
@@ -2227,7 +2210,7 @@ setInterval(() => {
         <div>
           <span id="sindisa-welcome-name" style="font-size:15px">Selamat Datang</span>
           <div id="sindisa-welcome-sub" style="font-size:12px;font-weight:500;color:#64748b;margin-top:2px">
-            Portal Pemantauan &amp; Publikasi Survei Lembaga Administrasi Negara Republik Indonesia
+            PRISM: Publication Review, Insights &amp; Strategic Monitoring LAN RI
           </div>
         </div>
         <div style="display:flex;gap:8px" id="sindisa-welcome-actions">
@@ -2240,12 +2223,28 @@ setInterval(() => {
         </div>
       </div>
 
-      <!-- TAB PANEL 0: DASHBOARD RINGKAS & RAPI -->
+            <!-- TAB PANEL 0: DASHBOARD INTERAKTIF PRISM -->
       <div class="sindisa-panel-box" id="sindisa-panel-dashboard" style="display:block;padding:0;border:none;box-shadow:none;background:transparent">
 
-        <!-- TOOLBAR FILTER RINGKAS -->
-        <div class="filter-bar" style="margin-bottom:16px;padding:10px 14px;background:#fff;border:1px solid #e2e8f0;border-radius:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-          <label style="font-size:12px;font-weight:700;color:#334155"><i class="fa-solid fa-sliders" style="margin-right:5px;color:var(--accent)"></i>Filter Data:</label>
+        <!-- HEADER TITLE & LIVE SYNC BUTTON -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:12px">
+          <div>
+            <h2 style="font-size:18px;font-weight:800;color:#1e293b;display:flex;align-items:center;gap:8px;margin:0">
+              <i class="fa-solid fa-chart-pie" style="color:#1e40af"></i>
+              Dashboard Interaktif Publikasi LAN RI
+            </h2>
+            <div style="font-size:12.5px;color:#64748b;margin-top:3px">
+              Sistem Monitoring dan Evaluasi Capaian Publikasi Seluruh Unit Kerja
+            </div>
+          </div>
+          <button onclick="syncDataFromSupabase(true)" style="padding:8px 16px;background:#1e40af;color:#fff;border:none;border-radius:8px;font-size:12.5px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:7px;box-shadow:0 2px 6px rgba(30,64,175,0.25)">
+            <i class="fa-solid fa-rotate" id="portal-refresh-icon"></i> Sync Supabase Live
+          </button>
+        </div>
+
+        <!-- TOOLBAR FILTER INTERAKTIF -->
+        <div class="filter-bar" style="margin-bottom:16px;padding:12px 16px;background:#fff;border:1px solid #e2e8f0;border-radius:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <label style="font-size:12px;font-weight:700;color:#334155"><i class="fa-solid fa-sliders" style="margin-right:5px;color:#1e40af"></i>Filter Data:</label>
           <select id="p-year" onchange="applyPortalFilters()">
             <option value="">Semua Tahun</option>
             <option value="2025">2025</option>
@@ -2262,18 +2261,92 @@ setInterval(() => {
             <option value="belum">Belum Selesai</option>
             <option value="overdue">⚠️ Melewati Deadline</option>
           </select>
-          <button class="filter-reset" onclick="resetPortalFilters()"><i class="fa-solid fa-rotate-left"></i> Reset</button>
-          <button onclick="syncDataFromGAS()" style="margin-left:auto;padding:6px 12px;background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe;border-radius:7px;font-size:11.5px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px">
-            <i class="fa-solid fa-rotate" id="portal-refresh-icon"></i> Sync Supabase
-          </button>
+          <button class="filter-reset" onclick="resetPortalFilters()"><i class="fa-solid fa-rotate-left"></i> Reset Filter</button>
         </div>
 
-        <!-- BARIS 1: 4 KPI CARDS RINGKAS -->
+        <!-- BARIS 1: 4 KPI CARDS -->
         <div class="kpi-grid" id="portal-kpi-grid" style="margin-bottom:16px"></div>
 
-        <!-- BARIS 2: PROGRES SURVEI AKTIF (KIRI) & STATUS + CHANNEL RINGKAS (KANAN) -->
-        <div class="grid-2" style="margin-bottom:16px;grid-template-columns:1.35fr 1fr;align-items:stretch">
-          <!-- KIRI: DAFTAR SURVEI PERLU TINDAK LANJUT / PROGRES UNIT -->
+        <!-- BARIS 2: STATUS PUBLIKASI, PUBLIKASI PER BULAN, JANGKAUAN CHANNEL -->
+        <div class="grid-3" style="margin-bottom:16px">
+          <!-- Status Publikasi -->
+          <div class="card" style="margin-bottom:0">
+            <div class="card-header" style="padding:12px 16px">
+              <span class="card-title"><i class="fa-solid fa-circle-half-stroke"></i> Status Publikasi</span>
+            </div>
+            <div class="card-body" style="padding:14px 16px">
+              <div class="chart-wrap" style="height:150px"><canvas id="portal-chart-status-donut"></canvas></div>
+              <div class="donut-legend" id="portal-donut-legend" style="margin-top:14px"></div>
+            </div>
+          </div>
+
+          <!-- Publikasi per Bulan -->
+          <div class="card" style="margin-bottom:0">
+            <div class="card-header" style="padding:12px 16px">
+              <span class="card-title"><i class="fa-solid fa-chart-bar"></i> Publikasi per Bulan (2026)</span>
+            </div>
+            <div class="card-body" style="padding:14px 16px">
+              <div class="chart-wrap" style="height:220px"><canvas id="portal-chart-monthly"></canvas></div>
+            </div>
+          </div>
+
+          <!-- Jangkauan Channel -->
+          <div class="card" style="margin-bottom:0">
+            <div class="card-header" style="padding:12px 16px">
+              <span class="card-title"><i class="fa-solid fa-bullhorn"></i> Jangkauan Channel</span>
+            </div>
+            <div class="card-body" style="padding:14px 16px">
+              <div class="channel-grid" id="portal-channel-grid"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- BARIS 3: PUBLIKASI PER UNIT & PUBLIKASI PER CLUSTER KEBIJAKAN -->
+        <div class="grid-2" style="margin-bottom:16px">
+          <div class="card" style="margin-bottom:0">
+            <div class="card-header" style="padding:12px 16px;display:flex;align-items:center;justify-content:space-between">
+              <span class="card-title"><i class="fa-solid fa-building"></i> Publikasi per Unit</span>
+              <span class="badge" id="portal-unit-badge" style="background:#eff6ff;color:#1e40af;font-size:11px">9 unit</span>
+            </div>
+            <div class="card-body" style="padding:14px 16px">
+              <div class="chart-wrap" style="height:260px"><canvas id="portal-chart-unit-bar"></canvas></div>
+            </div>
+          </div>
+          <div class="card" style="margin-bottom:0">
+            <div class="card-header" style="padding:12px 16px">
+              <span class="card-title"><i class="fa-solid fa-tags"></i> Publikasi per Cluster Kebijakan</span>
+            </div>
+            <div class="card-body" style="padding:14px 16px">
+              <div class="chart-wrap" style="height:260px"><canvas id="portal-chart-cluster-bar"></canvas></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- BARIS 4: JENIS PUBLIKASI & DISTRIBUSI JADWAL PER MINGGU -->
+        <div class="grid-2" style="margin-bottom:16px">
+          <div class="card" style="margin-bottom:0">
+            <div class="card-header" style="padding:12px 16px">
+              <span class="card-title"><i class="fa-solid fa-layer-group"></i> Jenis Publikasi</span>
+            </div>
+            <div class="card-body" style="padding:14px 16px">
+              <div class="chart-wrap" style="height:220px"><canvas id="portal-chart-type"></canvas></div>
+            </div>
+          </div>
+          <div class="card" style="margin-bottom:0">
+            <div class="card-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding:12px 16px">
+              <span class="card-title"><i class="fa-solid fa-grip"></i> Distribusi Jadwal per Minggu</span>
+              <div style="display:flex;align-items:center;gap:6px">
+                <button class="filter-reset" onclick="changePortalHeatmapYear(-1)" style="padding:3px 9px;font-size:11px"><i class="fa-solid fa-chevron-left"></i> Prev</button>
+                <span id="portal-heatmap-year-badge" style="font-size:11.5px;font-weight:800;padding:3px 10px;background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe;border-radius:14px">Tahun 2026</span>
+                <button class="filter-reset" onclick="changePortalHeatmapYear(1)" style="padding:3px 9px;font-size:11px">Next <i class="fa-solid fa-chevron-right"></i></button>
+              </div>
+            </div>
+            <div class="card-body" id="portal-heatmap-container" style="padding:14px 16px"></div>
+          </div>
+        </div>
+
+        <!-- BARIS 5: DAFTAR PROGRES / PENGINGAT JADWAL & CAPAIAN KINERJA PER UNIT -->
+        <div class="grid-2" style="margin-bottom:16px">
           <div class="card" style="margin-bottom:0;display:flex;flex-direction:column">
             <div class="card-header" style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px">
               <span class="card-title" id="portal-active-list-title">
@@ -2282,53 +2355,19 @@ setInterval(() => {
               </span>
               <span class="badge badge-red" id="portal-reminder-count">0 Terlambat</span>
             </div>
-            <div class="card-body" style="padding:12px 14px;max-height:330px;overflow-y:auto;flex:1" id="portal-reminder-list"></div>
+            <div class="card-body" style="padding:12px 14px;max-height:260px;overflow-y:auto;flex:1" id="portal-reminder-list"></div>
           </div>
 
-          <!-- KANAN: STATUS DONUT & KANAL PUBLIKASI RINGKAS -->
-          <div class="card" style="margin-bottom:0;display:flex;flex-direction:column">
-            <div class="card-header" style="padding:12px 16px">
-              <span class="card-title"><i class="fa-solid fa-circle-half-stroke"></i> Proporsi Status &amp; Jangkauan Kanal</span>
+          <div class="card" id="portal-all-units-card" style="margin-bottom:0">
+            <div class="card-header" style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px">
+              <span class="card-title" style="color:#1e40af">
+                <i class="fa-solid fa-award" style="color:#1e40af;margin-right:6px"></i>
+                Capaian Kinerja Publikasi per Unit Kerja
+              </span>
+              <span class="badge" style="background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe;font-weight:700">Skor &amp; Predikat</span>
             </div>
-            <div class="card-body" style="padding:14px 16px">
-              <div style="display:grid;grid-template-columns:130px 1fr;gap:14px;align-items:center;padding-bottom:12px;border-bottom:1px solid #f1f5f9">
-                <div class="chart-wrap" style="height:115px"><canvas id="portal-chart-status-donut"></canvas></div>
-                <div class="donut-legend" id="portal-donut-legend" style="margin-top:0"></div>
-              </div>
-              <div style="margin-top:12px">
-                <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:8px">Distribusi Kanal Publikasi</div>
-                <div class="channel-grid" id="portal-channel-grid" style="grid-template-columns:repeat(2,1fr);gap:8px"></div>
-              </div>
-            </div>
+            <div class="card-body" style="padding:12px 14px;max-height:260px;overflow-y:auto" id="portal-performance-list"></div>
           </div>
-        </div>
-
-        <!-- BARIS 3: 2 GRAFIK RINGKAS (BULANAN & CLUSTER/UNIT) -->
-        <div class="grid-2" style="margin-bottom:16px">
-          <div class="card" style="margin-bottom:0">
-            <div class="card-header" style="padding:12px 16px"><span class="card-title"><i class="fa-solid fa-chart-bar"></i> Jadwal Publikasi per Bulan (2026)</span></div>
-            <div class="card-body" style="padding:14px">
-              <div class="chart-wrap" style="height:200px"><canvas id="portal-chart-monthly"></canvas></div>
-            </div>
-          </div>
-          <div class="card" style="margin-bottom:0">
-            <div class="card-header" style="padding:12px 16px"><span class="card-title"><i class="fa-solid fa-tags"></i> Publikasi per Cluster Kebijakan</span></div>
-            <div class="card-body" style="padding:14px">
-              <div class="chart-wrap" style="height:200px"><canvas id="portal-chart-cluster-bar"></canvas></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- PANEL KINERJA ANTAR UNIT (HANYA TAMPIL UNTUK PIMPINAN / ADMIN, DISEMBUNYIKAN UNTUK UNIT KERJA) -->
-        <div class="card" id="portal-all-units-card" style="margin-bottom:0">
-          <div class="card-header" style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px">
-            <span class="card-title" style="color:#1e40af">
-              <i class="fa-solid fa-award" style="color:#1e40af;margin-right:6px"></i>
-              Capaian Kinerja Publikasi per Unit Kerja
-            </span>
-            <span class="badge" style="background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe;font-weight:700">Skor &amp; Predikat</span>
-          </div>
-          <div class="card-body" style="padding:12px 14px;max-height:240px;overflow-y:auto" id="portal-performance-list"></div>
         </div>
 
       </div><!-- /sindisa-panel-dashboard -->
@@ -4228,7 +4267,7 @@ function renderKpiListContainer(items) {
 // Default Pengumuman list as shown in Sindisa screenshot
 let DEPUTI_PENGUMUMAN = [
   { id: 1, title: "Arahan Penyelesaian Tahapan Publikasi Survei TA 2026", date: "27 Okt 2026", desc: "Seluruh unit kerja diharapkan mempercepat penyusunan instrumen dan pengolahan data sebelum batas waktu Q4." },
-  { id: 2, title: "Pemberitahuan Sinkronisasi Database Survei LAN RI (SIPANTAU)", date: "22 Okt 2026", desc: "Sistem telah terhubung langsung dengan Google Spreadsheet Analis/Survei 2026 untuk monitoring real-time." },
+  { id: 2, title: "Pemberitahuan Sinkronisasi Database Survei LAN RI (PRISM)", date: "22 Okt 2026", desc: "Sistem telah terhubung langsung dengan Google Spreadsheet Analis/Survei 2026 untuk monitoring real-time." },
   { id: 3, title: "Jadwal Review Draft Policy Brief & Policy Paper Triwulan IV", date: "15 Okt 2026", desc: "Agenda pemaparan hasil pengolahan data survei bersama Kepala Deputi dan Tim Peneliti unit kerja." }
 ];
 
@@ -4426,20 +4465,18 @@ function showLoginError(msg) {
 
 function clearLoginForm() {
   const pwd = document.getElementById('landing-password');
-  const cap = document.getElementById('landing-captcha');
   if (pwd) pwd.value = '';
-  if (cap) cap.value = '';
 }
 
-async function handlePrismLogin(e) {
-  if (e) e.preventDefault();
+function handlePrismLogin(e) {
+  if (e && e.preventDefault) e.preventDefault();
   const alertEl = document.getElementById('sipantau-login-alert');
   if (alertEl) alertEl.style.display = 'none';
 
   const sel = document.getElementById('landing-jabatan');
   const enteredQuery = sel ? sel.value.trim() : '';
-  const password = document.getElementById('landing-password') ? document.getElementById('landing-password').value.trim() : '';
-  const captcha = document.getElementById('landing-captcha') ? document.getElementById('landing-captcha').value.trim() : '';
+  const pwdInp = document.getElementById('landing-password');
+  const password = pwdInp ? pwdInp.value.trim() : '';
 
   if (!enteredQuery) {
     showLoginError('Silakan pilih Nama Jabatan terlebih dahulu.');
@@ -4449,22 +4486,7 @@ async function handlePrismLogin(e) {
 
   if (!password) {
     showLoginError('Silakan masukkan kata sandi.');
-    const pwdInp = document.getElementById('landing-password');
     if (pwdInp) pwdInp.focus();
-    return false;
-  }
-
-  if (!captcha) {
-    showLoginError('Silakan ketik kode verifikasi yang tertera di samping (' + currentCaptcha + ').');
-    const capInp = document.getElementById('landing-captcha');
-    if (capInp) capInp.focus();
-    return false;
-  }
-
-  // Verifikasi Kode Captcha (case-insensitive)
-  if (captcha.toLowerCase() !== currentCaptcha.toLowerCase()) {
-    showLoginError('Kode verifikasi salah. Silakan ketik kode yang tertera: ' + currentCaptcha);
-    refreshCaptcha();
     return false;
   }
 
@@ -4476,7 +4498,6 @@ async function handlePrismLogin(e) {
 
   if (matched.password.toLowerCase() !== password.toLowerCase()) {
     showLoginError('Kata sandi tidak sesuai untuk ' + matched.jabatan + '. Silakan periksa kembali.');
-    const pwdInp = document.getElementById('landing-password');
     if (pwdInp) pwdInp.focus();
     return false;
   }
@@ -5353,7 +5374,7 @@ function openDeputiPortal(targetTab) {
   if(subEl) {
     subEl.textContent = unitLocked
       ? `Dashboard Monitoring & Pelaporan Publikasi Survei Unit Kerja ${user.unit} — ${user.title || 'LAN RI'}`
-      : 'Portal Pemantauan & Persetujuan Publikasi Lembaga Administrasi Negara Republik Indonesia';
+      : 'PRISM: Publication Review, Insights & Strategic Monitoring LAN RI';
   }
   if(btnAcc) btnAcc.style.display = unitLocked ? 'none' : '';
   if(btnUsulan) btnUsulan.style.display = unitLocked ? '' : 'none';
