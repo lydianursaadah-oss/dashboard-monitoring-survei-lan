@@ -6763,6 +6763,32 @@ function submitSindisaActivityForm(e) {
   saveApprovals(list);
   try { localStorage.setItem('lan_pub_data', JSON.stringify(RAW)); } catch(err){}
 
+  // Push ke database Supabase agar otomatis tersimpan di 1 database pusat
+  if (typeof supabaseClient !== 'undefined' && supabaseClient) {
+    if (topikVal === '__NEW__') {
+      supabaseClient.from('publikasi').insert([{
+        no: targetSurveyNo,
+        unit: targetUnit,
+        judul: targetJudul,
+        jenis: 'Usulan Survei Unit',
+        jadwal: '2026',
+        tahun: '2026',
+        cluster: 'Tata Kelola & Manajemen ASN',
+        ket: 'Tahap ' + stageObj.name + ' - ' + summaryNote
+      }]).then(({ error }) => {
+        if (error) console.warn('[SUPABASE INSERT WARNING]', error);
+        else console.log('[SUPABASE INSERT SUCCESS] Usulan survei baru tersimpan di Supabase.');
+      });
+    } else {
+      supabaseClient.from('publikasi').update({
+        ket: (stageId === 7 ? 'Selesai - ' : ('Tahap ' + stageObj.name + ' - ')) + summaryNote
+      }).eq('no', targetSurveyNo).then(({ error }) => {
+        if (error) console.warn('[SUPABASE UPDATE WARNING]', error);
+        else console.log('[SUPABASE UPDATE SUCCESS] Progres survei terupdate di Supabase.');
+      });
+    }
+  }
+
   resetSindisaActivityForm();
   populateActTopikDropdown();
   renderSindisaAccTable();
@@ -7340,6 +7366,22 @@ function submitAccDecision(e) {
 
   saveApprovals(list);
   try { localStorage.setItem('lan_pub_data', JSON.stringify(RAW)); } catch(err){}
+
+  // Push perubahan status ACC ke database Supabase
+  if (typeof supabaseClient !== 'undefined' && supabaseClient) {
+    if (idVal.startsWith('survey-')) {
+      const surveyNo = parseInt(idVal.replace('survey-', ''));
+      const d = RAW.find(x => x.no === surveyNo);
+      if (d) {
+        supabaseClient.from('publikasi').update({
+          ket: d.ket
+        }).eq('no', surveyNo).then(({ error }) => {
+          if (error) console.warn('[SUPABASE ACC UPDATE WARNING]', error);
+          else console.log('[SUPABASE ACC UPDATE SUCCESS] Status survei terupdate di Supabase.');
+        });
+      }
+    }
+  }
 
   closeAccActionModal();
   renderSindisaAccTable();
