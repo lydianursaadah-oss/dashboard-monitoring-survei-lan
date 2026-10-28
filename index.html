@@ -1663,9 +1663,11 @@ function mapSupabaseRowToRAW(r, idx) {
   const ytUnit = r.yt_unit || r.ytUnit || '';
   const ket = (r.ket || '').trim();
 
-  const isSelesai = ket.toLowerCase().includes('selesai') && !ket.toLowerCase().includes('belum selesai');
+  const isSelesai = (r.status && r.status.toLowerCase() === 'selesai') ||
+                    (ket.toLowerCase().startsWith('selesai') || (ket.toLowerCase().includes('selesai') && !ket.toLowerCase().includes('belum')));
+
   let tahapan = 'Penyusunan instrumen';
-  const kl = ket.toLowerCase();
+  const kl = (ket || (r.status || '')).toLowerCase();
   if (isSelesai) {
     tahapan = 'Publikasi / Selesai';
   } else if (kl.includes('laporan') || kl.includes('policy brief') || kl.includes('policy paper')) {
@@ -3196,8 +3198,7 @@ window.addEventListener('focus', () => {
       <h4><i class="fa-solid fa-file-lines"></i> Keterangan</h4>
       <div class="modal-keterangan" id="modal-ket"></div>
     </div>
-    <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
-      <a href="admin.html" class="roadmap-update-btn" style="font-size:12px"><i class="fa-solid fa-pen-to-square"></i> Buka Editor Admin Panel &rarr;</a>
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;align-items:center;flex-wrap:wrap;gap:10px">
       <button onclick="closeModal()" style="padding:7px 16px;border-radius:8px;background:var(--bg3);border:1px solid var(--border);color:var(--text2);font-size:12px;cursor:pointer">Tutup</button>
     </div>
   </div>
@@ -3873,7 +3874,7 @@ const RAW = [
     "ytUnit": "",
     "status": "Belum Selesai",
     "ket": "Belum Selesai Sedang dilakukan penyebaran instrumen survei.",
-    "tahapan": "Pengumpulan data"
+    "tahapan": "Penyusunan instrumen"
   },
   {
     "no": 29,
@@ -4216,7 +4217,7 @@ const RAW = [
     "tahapan": "Pengumpulan data"
   },
   {
-    "no": 48,
+    "no": 46,
     "unit": "SKPP",
     "judul": "Penguatan kebijakan ekonomi hijau dalam mendukung hilirisasi berkelanjutan",
     "jenis": "",
@@ -4236,7 +4237,7 @@ const RAW = [
     "tahapan": "Publikasi / Selesai"
   },
   {
-    "no": 49,
+    "no": 47,
     "unit": "SKTAN",
     "judul": "Learning agility ASN dalam mendukung Pendidikan vokasi, peningkatan kualitas guru dan kesesuaian kurikulum dunia kerja",
     "jenis": "",
@@ -4256,13 +4257,13 @@ const RAW = [
     "tahapan": "Penyusunan instrumen"
   },
   {
-    "no": 50,
+    "no": 48,
     "unit": "SKPP",
     "judul": "Survei Tata Kelola dan Kualitas Pelayanan Program Bantuan Sosial",
     "jenis": "",
     "jadwal": "Desember (1)",
     "tahun": "2026",
-    "cluster": "Tata Kelola & Manajemen ASN",
+    "cluster": "",
     "jurnal": "",
     "media": "",
     "webLAN": "",
@@ -4276,13 +4277,13 @@ const RAW = [
     "tahapan": "Penyusunan instrumen"
   },
   {
-    "no": 51,
+    "no": 49,
     "unit": "SKPP",
     "judul": "Survei Integrasi Pelayanan Publik",
     "jenis": "",
     "jadwal": "Desember (2)",
     "tahun": "2026",
-    "cluster": "Tata Kelola & Manajemen ASN",
+    "cluster": "",
     "jurnal": "",
     "media": "",
     "webLAN": "",
@@ -4296,7 +4297,7 @@ const RAW = [
     "tahapan": "Penyusunan instrumen"
   },
   {
-    "no": 52,
+    "no": 50,
     "unit": "DSPK2AN",
     "judul": "Survei Indonesia Leadership Outlook 2027",
     "jenis": "Laporan",
@@ -4316,7 +4317,7 @@ const RAW = [
     "tahapan": "Penyusunan instrumen"
   },
   {
-    "no": 53,
+    "no": 51,
     "unit": "STIA JKT",
     "judul": "Pendidikan bermutu untuk SDM berdaya saing global",
     "jenis": "",
@@ -4374,6 +4375,45 @@ const CHANNEL_DEFS = [
 
 function hasLink(val){ return val && val.trim() !== "" && val.trim() !== "-"; }
 function countLinks(val){ if(!hasLink(val)) return 0; return val.split("|").filter(v=>hasLink(v)).length; }
+
+function resolveChannelUrl(field, cellVal, item) {
+  if (!cellVal) return '#';
+  const trimmed = cellVal.trim();
+  const urlMatch = trimmed.match(/https?:\/\/[^\s\n\r"']+/i);
+  if (urlMatch) return urlMatch[0];
+
+  const judulEncoded = encodeURIComponent(item && item.judul ? item.judul : 'LAN RI');
+  const unit = (item && item.unit) ? item.unit.toUpperCase() : '';
+
+  if (field === 'igLAN') {
+    return 'https://www.instagram.com/humas_lan/';
+  } else if (field === 'igUnit') {
+    if (unit.includes('STIA JKT')) return 'https://www.instagram.com/stialan_jakarta/';
+    if (unit.includes('STIA BDG')) return 'https://www.instagram.com/stialanbandung/';
+    if (unit.includes('STIA MKS')) return 'https://www.instagram.com/stialanmakassar/';
+    if (unit.includes('PUSJAR') || unit.includes('SKMK')) return 'https://www.instagram.com/pusjar.lanri/';
+    return 'https://www.instagram.com/explore/tags/lanri/';
+  } else if (field === 'ytLAN') {
+    return `https://www.youtube.com/results?search_query=LAN+RI+${judulEncoded}`;
+  } else if (field === 'ytUnit') {
+    if (unit.includes('STIA JKT')) return 'https://www.youtube.com/@PoliteknikSTIALANJakarta';
+    if (unit.includes('STIA BDG')) return 'https://www.youtube.com/@poltekstialanbandung';
+    if (unit.includes('STIA MKS')) return 'https://www.youtube.com/@politeknikstialanmakassar';
+    return `https://www.youtube.com/results?search_query=${encodeURIComponent(unit)}+LAN+RI`;
+  } else if (field === 'webLAN') {
+    return 'https://lan.go.id/';
+  } else if (field === 'webUnit') {
+    if (unit.includes('STIA JKT')) return 'https://stialan.ac.id/';
+    if (unit.includes('STIA BDG')) return 'https://stialanbandung.ac.id/';
+    if (unit.includes('STIA MKS')) return 'https://poltekstialan.ac.id/';
+    return 'https://lan.go.id/';
+  } else if (field === 'jurnal') {
+    return 'https://ejournal.lan.go.id/';
+  } else if (field === 'media') {
+    return `https://www.google.com/search?q=${judulEncoded}`;
+  }
+  return 'https://lan.go.id/';
+}
 
 function getStatus(d){
   const k = (d.ket||"").toLowerCase().trim();
@@ -5289,340 +5329,22 @@ function openModal(idx){
   ];
   document.getElementById('modal-meta').innerHTML=meta.map(m=>`<span class="badge" style="background:${m.bg};color:${m.tc};border:none;font-size:11px;padding:4px 10px">${m.l}: <strong>${m.v}</strong></span>`).join('');
   const st=getStatus(d);
-  document.getElementById('modal-channels').innerHTML=[statusBadge(st),(st==='belum'?renderStageBadge(d):''),...CHANNEL_DEFS.map(cd=>{ if(!hasLink(d[cd.field])) return `<span class="badge badge-gray" style="opacity:.45">${cd.label}</span>`; const cnt=countLinks(d[cd.field]); return `<span class="badge" style="background:${cd.bg};color:${cd.color};border:1px solid ${cd.border}">${cd.label}${cnt>1?` ×${cnt}`:''}</span>`; })].join('');
-  const ks=document.getElementById('modal-ket-section'); if(d.ket){ks.style.display='block';document.getElementById('modal-ket').textContent=d.ket;}else{ks.style.display='none';}
-  document.getElementById('modal-overlay').classList.add('open');
-}
-function closeModal(e){ if(!e||e.target===document.getElementById('modal-overlay')) document.getElementById('modal-overlay').classList.remove('open'); }
-
-/* ══════════════════════════════════════════════════════════
-   TAB NAVIGATION
-   ══════════════════════════════════════════════════════════ */
-document.querySelectorAll('.nav-tab').forEach(tab=>{
-  tab.addEventListener('click',()=>{
-    document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
-    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-    tab.classList.add('active');
-    const id=tab.dataset.tab;
-    document.getElementById(`page-${id}`)?.classList.add('active');
-    if(id==='records') renderTable();
-    if(id==='timeline') renderRoadmap(filteredData);
-    if(id==='overview') renderCharts();
-  });
-});
-
-/* ══════════════════════════════════════════════════════════
-   INIT — load from localStorage (admin edits), fallback to RAW
-   ══════════════════════════════════════════════════════════ */
-if (typeof ChartDataLabels !== 'undefined' && typeof Chart !== 'undefined' && typeof Chart.register === 'function') {
-  try { Chart.register(ChartDataLabels); } catch(e){ console.warn('ChartDataLabels register warning:', e); }
-}
-const hd = document.getElementById('header-date');
-if(hd) hd.textContent = new Date().toLocaleDateString('id-ID',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
-
-// Load data: validate quality before using localStorage
-// If GAS data is bad (all ket empty = all "planned"), restore defaults
-(function(){
-  try {
-    const stored = localStorage.getItem('lan_pub_data');
-    if(stored){
-      const parsed = JSON.parse(stored);
-      if(Array.isArray(parsed) && parsed.length >= 50 && parsed[0].judul){
-        RAW.length = 0;
-        parsed.forEach(d => RAW.push(d));
-        console.log('[DATA] Loaded', parsed.length, 'records from localStorage.');
-      } else {
-        localStorage.setItem('lan_pub_data', JSON.stringify(RAW));
+  document.getElementById('modal-channels').innerHTML = [
+    statusBadge(st),
+    (st === 'belum' ? renderStageBadge(d) : ''),
+    ...CHANNEL_DEFS.map(cd => {
+      const val = d[cd.field];
+      if (!hasLink(val)) {
+        return `<span class="badge badge-gray" style="opacity:.45;cursor:not-allowed;" title="Belum dipublikasikan di ${cd.label}">${cd.label}</span>`;
       }
-    } else {
-      localStorage.setItem('lan_pub_data', JSON.stringify(RAW));
-    }
-  } catch(e){ console.warn('localStorage data error, using default:', e); }
-})();
-
-
-/* ══════════════════════════════════════════════════════════
-   7 TAHAPAN SURVEI MODEL & LOGIC
-   1. Persiapan
-   2. Penyusunan instrumen
-   3. Pengumpulan data
-   4. Pengolahan data
-   5. Penyusunan laporan
-   6. Publikasi
-   7. Selesai
-   ══════════════════════════════════════════════════════════ */
-const SURVEY_STAGES = [
-  { id: 1, name: "Persiapan",           cls: "stage-1", icon: "fa-compass" },
-  { id: 2, name: "Penyusunan instrumen", cls: "stage-2", icon: "fa-pen-ruler" },
-  { id: 3, name: "Pengumpulan data",    cls: "stage-3", icon: "fa-database" },
-  { id: 4, name: "Pengolahan data",     cls: "stage-4", icon: "fa-chart-pie" },
-  { id: 5, name: "Penyusunan laporan",  cls: "stage-5", icon: "fa-file-lines" },
-  { id: 6, name: "Publikasi",           cls: "stage-6", icon: "fa-bullhorn" },
-  { id: 7, name: "Selesai",             cls: "stage-7", icon: "fa-circle-check" },
-];
-
-function getStageInfo(d) {
-  const st = getStatus(d);
-  if(st === 'selesai') return SURVEY_STAGES[6]; // stage 7 (Selesai)
-
-  const k = ((d.ket || '') + ' ' + (d.tahapan || '')).toLowerCase();
-  if(k.includes('persiapan') || k.includes('tahap persiapan')) return SURVEY_STAGES[0];
-  if(k.includes('instrumen') || k.includes('penyusunan instrumen') || k.includes('penyebaran instrumen')) return SURVEY_STAGES[1];
-  if(k.includes('pengumpulan data') || k.includes('responden') || k.includes('kuesioner')) return SURVEY_STAGES[2];
-  if(k.includes('pengolahan') || k.includes('analisis data') || k.includes('olah data')) return SURVEY_STAGES[3];
-  if(k.includes('laporan') || k.includes('policy brief') || k.includes('policy paper') || k.includes('draft')) return SURVEY_STAGES[4];
-  if(k.includes('publikasi') || k.includes('infografis') || k.includes('podcast') || k.includes('webinar')) return SURVEY_STAGES[5];
-
-  // Default for unfinished
-  return SURVEY_STAGES[1]; // default stage 2
-}
-
-function renderStageBadge(d) {
-  const stage = getStageInfo(d);
-  return `<span class="stage-badge ${stage.cls}"><i class="fa-solid ${stage.icon}" style="font-size:9.5px"></i> ${stage.name}</span>`;
-}
-
-function renderStageDots(d) {
-  const stage = getStageInfo(d);
-  let html = '<div class="stage-timeline-mini" title="Tahapan: ' + stage.name + ' (Tahap ' + stage.id + '/7)">';
-  for(let i=1; i<=7; i++) {
-    const isFilled = i <= stage.id;
-    const isPulse = i === stage.id && stage.id < 7;
-    html += `<div class="stage-dot ${isFilled ? 'filled' : ''} ${isPulse ? 'active-pulse' : ''}"></div>`;
-  }
-  html += '</div>';
-  return html;
-}
-
-/* ══════════════════════════════════════════════════════════
-   USER AUTHENTICATION & SESSION MANAGEMENT
-   ══════════════════════════════════════════════════════════ */
-function getCurrentUser() {
-  try {
-    const u = localStorage.getItem('lan_current_user');
-    return u ? JSON.parse(u) : null;
-  } catch(e) { return null; }
-}
-
-function setCurrentUser(user) {
-  if(!user) localStorage.removeItem('lan_current_user');
-  else localStorage.setItem('lan_current_user', JSON.stringify(user));
-  renderAuthNav();
-}
-
-function openLoginModal() {
-  showLandingLogin();
-}
-function closeLoginModal() {
-  document.getElementById('login-modal-overlay').classList.remove('open');
-}
-
-function toggleLoginPresets(role) {
-  const uInput = document.getElementById('login-username');
-  const pInput = document.getElementById('login-password');
-  if(role === 'deputi') {
-    uInput.value = 'deputi';
-    pInput.value = 'deputi2026';
-  } else {
-    uInput.value = 'admin';
-    pInput.value = 'admin2026';
-  }
-}
-
-function handleUserLogin(e) {
-  e.preventDefault();
-  const role = document.getElementById('login-role').value;
-  const username = document.getElementById('login-username').value.trim();
-
-  // Format display name dynamically from username
-  const formattedName = username ? username.toUpperCase() : (role === 'deputi' ? 'KEPALA DEPUTI' : 'ADMIN');
-  let userObj = {
-    name: formattedName,
-    title: role === 'deputi' ? 'Kepala Deputi Bidang Kajian Kebijakan' : 'Admin Publikasi & Data',
-    role: role,
-    username: username,
-    avatar: 'favicon.png',
-    loginTime: new Date().toISOString()
-  };
-
-  setCurrentUser(userObj);
-  closeLoginModal();
-
-  if(role === 'deputi') {
-    openDeputiPortal();
-  } else {
-    window.location.href = 'admin.html';
-  }
-}
-
-function handleUserLogout() {
-  setCurrentUser(null);
-  exitDeputiPortal();
-  showLandingLogin();
-}
-
-function toggleUserDropdown(e) {
-  if(e) e.stopPropagation();
-  const menu = document.getElementById('user-dropdown-menu');
-  if(menu) menu.classList.toggle('show');
-}
-window.addEventListener('click', () => {
-  const menu = document.getElementById('user-dropdown-menu');
-  if(menu) menu.classList.remove('show');
-});
-
-function renderAuthNav() {
-  const container = document.getElementById('nav-auth-container');
-  if(!container) return;
-  const user = getCurrentUser();
-
-  if(!user) {
-    container.innerHTML = `
-      <button class="btn-login-nav" onclick="openLoginModal()" title="Login Pejabat / Admin">
-        <i class="fa-solid fa-user-lock"></i> Masuk / Login
-      </button>
-    `;
-  } else {
-    const isDeputi = user.role === 'deputi';
-    container.innerHTML = `
-      <div class="user-profile-btn" onclick="toggleUserDropdown(event)" title="Profil Pengguna">
-        <div class="user-avatar-img"><i class="fa-solid fa-user"></i></div>
-        <span class="user-name-text">Hi, ${user.name.split(' ')[0]}</span>
-        <i class="fa-solid fa-chevron-down" style="font-size:10px;color:var(--text3)"></i>
-        
-        <div class="user-dropdown-menu" id="user-dropdown-menu">
-          <div class="user-dropdown-header">
-            <div class="ud-name">${user.name}</div>
-            <div class="ud-role">${user.title}</div>
-          </div>
-          ${isDeputi ? `
-            <div class="user-dropdown-item" onclick="openDeputiPortal()">
-              <i class="fa-solid fa-gauge-high"></i> <strong>Buka Portal Deputi</strong>
-            </div>
-            <div class="user-dropdown-item" onclick="openDeputiPortal('acc')">
-              <i class="fa-solid fa-clipboard-check"></i> Persetujuan (ACC)
-            </div>
-          ` : `
-            <div class="user-dropdown-item" onclick="window.location.href='admin.html'">
-              <i class="fa-solid fa-table-cells"></i> Editor Admin Panel
-            </div>
-          `}
-          <div class="user-dropdown-divider"></div>
-          <div class="user-dropdown-item" onclick="handleUserLogout()" style="color:#dc2626">
-            <i class="fa-solid fa-right-from-bracket" style="color:#dc2626"></i> Keluar / Logout
-          </div>
-        </div>
-      </div>
-    `;
-  }
-}
-
-/* ══════════════════════════════════════════════════════════
-   CLICKABLE KPI NUMBERS -> LIST SURVEYS MODAL
-   ══════════════════════════════════════════════════════════ */
-let activeKpiItems = [];
-
-function openKpiList(type) {
-  if(type === 'unit') return;
-  const modal = document.getElementById('kpi-list-modal');
-  const iconBox = document.getElementById('kpi-modal-icon');
-  const titleEl = document.getElementById('kpi-modal-title');
-  const subEl = document.getElementById('kpi-modal-subtitle');
-  const searchInput = document.getElementById('kpi-modal-search');
-  if(searchInput) searchInput.value = '';
-
-  const isPortal = document.getElementById('deputi-portal-view') && document.getElementById('deputi-portal-view').classList.contains('active');
-  const sourceData = isPortal ? portalFilteredData : filteredData;
-
-  let list = [];
-  let title = '';
-  let sub = '';
-  let color = '#2563eb';
-  let bg = '#eff6ff';
-  let icon = 'fa-file-lines';
-
-  if(type === 'total') {
-    list = [...sourceData];
-    title = 'Daftar Seluruh Publikasi Survei';
-    sub = 'Total ' + list.length + ' survei terdata di sistem';
-    color = '#2563eb'; bg = '#eff6ff'; icon = 'fa-file-lines';
-  } else if(type === 'selesai') {
-    list = sourceData.filter(d => getStatus(d) === 'selesai');
-    title = 'Daftar Survei yang Telah Selesai';
-    sub = list.length + ' survei telah terpublikasi dan selesai';
-    color = '#16a34a'; bg = '#f0fdf4'; icon = 'fa-circle-check';
-  } else if(type === 'belum') {
-    list = sourceData.filter(d => getStatus(d) === 'belum');
-    title = 'Daftar Survei Belum Selesai (Dalam Proses)';
-    sub = list.length + ' survei sedang dalam proses tahapan pengerjaan';
-    color = '#dc2626'; bg = '#fef2f2'; icon = 'fa-hourglass-half';
-  } else if(type === 'unit') {
-    list = sourceData.filter(d => d.tahun === '2026');
-    title = 'Daftar Publikasi Survei Unit Kerja 2026';
-    sub = list.length + ' publikasi aktif dijadwalkan tahun 2026';
-    color = '#7c3aed'; bg = '#f5f3ff'; icon = 'fa-building';
-  }
-
-  activeKpiItems = list;
-  iconBox.style.color = color;
-  iconBox.style.background = bg;
-  iconBox.innerHTML = `<i class="fa-solid ${icon}"></i>`;
-  titleEl.textContent = title;
-  subEl.textContent = sub;
-
-  renderKpiListContainer(activeKpiItems);
-  modal.classList.add('open');
-}
-
-function closeKpiListModal() {
-  document.getElementById('kpi-list-modal').classList.remove('open');
-}
-
-function filterKpiListModal(query) {
-  const q = (query || '').toLowerCase().trim();
-  const filtered = activeKpiItems.filter(d => {
-    return (d.judul || '').toLowerCase().includes(q) ||
-           (d.unit || '').toLowerCase().includes(q) ||
-           (d.cluster || '').toLowerCase().includes(q) ||
-           (d.ket || '').toLowerCase().includes(q);
-  });
-  renderKpiListContainer(filtered);
-}
-
-function renderKpiListContainer(items) {
-  const container = document.getElementById('kpi-modal-items-container');
-  const countEl = document.getElementById('kpi-modal-count');
-  if(countEl) countEl.textContent = items.length + ' survei';
-
-  if(!items.length) {
-    container.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text3);font-size:13px">Tidak ada survei yang sesuai filter</div>';
-    return;
-  }
-
-  container.innerHTML = items.map(d => {
-    const st = getStatus(d);
-    const stage = getStageInfo(d);
-    const uc = UNIT_COLORS[getPrimaryUnit(d.unit)] || UNIT_COLORS['MULTI'];
-    const idx = RAW.findIndex(x => x.no === d.no);
-
-    return `
-      <div class="kpi-modal-item" onclick="closeKpiListModal(); openModal(${idx})">
-        <div style="flex:1;min-width:0">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap">
-            <span class="badge" style="background:${uc.bg};color:${uc.text};font-weight:700">${d.unit}</span>
-            <span style="font-size:11px;color:var(--text3);font-weight:600"><i class="fa-regular fa-calendar"></i> ${d.jadwal || '-'} (${d.tahun || '2026'})</span>
-            ${renderStageBadge(d)}
-          </div>
-          <div style="font-size:13px;font-weight:700;color:var(--text1);line-height:1.4">${d.judul}</div>
-          ${d.ket ? `<div style="font-size:11.5px;color:var(--text2);margin-top:3px">${d.ket.slice(0, 110)}${d.ket.length>110?'...':''}</div>` : ''}
-        </div>
-        <div style="text-align:right;flex-shrink:0">
-          ${statusBadge(st)}
-          <div style="margin-top:6px;font-size:11px;color:var(--accent);font-weight:600">Lihat Detail &rarr;</div>
-        </div>
-      </div>
-    `;
-  }).join('');
+      const cnt = countLinks(val);
+      const targetUrl = resolveChannelUrl(cd.field, val, d);
+      return `<a href="${targetUrl}" target="_blank" rel="noopener noreferrer" class="badge" style="background:${cd.bg};color:${cd.color};border:1px solid ${cd.border};text-decoration:none;cursor:pointer;display:inline-flex;align-items:center;gap:5px;font-weight:700;transition:all .15s ease;" title="Klik untuk membuka publikasi di ${cd.label}">
+        ${cd.label}${cnt > 1 ? ` ×${cnt}` : ''}
+        <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:9.5px;opacity:.85"></i>
+      </a>`;
+    })
+  ].join('');
 }
 
 /* ══════════════════════════════════════════════════════════
