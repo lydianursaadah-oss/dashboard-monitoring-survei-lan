@@ -33,20 +33,60 @@
       return false;
     }
 
-    function handlePrismLogin(e) {
+function handlePrismLogin(e) {
       if (e) {
         if (e.preventDefault) e.preventDefault();
         if (e.stopPropagation) e.stopPropagation();
       }
 
-      // Step 1: Instantly hide login landing
+      var sel = document.getElementById('landing-jabatan');
+      var enteredQuery = sel ? sel.value.trim() : '';
+      var alertEl = document.getElementById('sipantau-login-alert');
+
+      if (!enteredQuery) {
+        if (alertEl) {
+          alertEl.style.display = 'flex';
+          alertEl.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> <span>Silakan pilih nama jabatan Anda terlebih dahulu.</span>';
+        }
+        return false;
+      }
+
+      var matched = (typeof findUserAccount === 'function') ? findUserAccount(enteredQuery) : null;
+      if (!matched && typeof DEFAULT_USERS_DB !== 'undefined') {
+        matched = DEFAULT_USERS_DB.find(function(u){ return u.username === enteredQuery || u.unit === enteredQuery; });
+      }
+      if (!matched) {
+        matched = { username: enteredQuery, role: "unit_" + enteredQuery.toLowerCase(), nama: "User " + enteredQuery.toUpperCase(), jabatan: "Unit " + enteredQuery.toUpperCase(), unit: enteredQuery.toUpperCase() };
+      }
+
+      var pwdInput = document.getElementById('landing-password');
+      var enteredPwd = pwdInput ? pwdInput.value.trim() : '';
+      if (!enteredPwd) {
+        if (alertEl) {
+          alertEl.style.display = 'flex';
+          alertEl.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> <span>Silakan masukkan kata sandi (contoh: ' + (matched.password || 'lan2026') + ')</span>';
+        }
+        if (pwdInput) pwdInput.focus();
+        return false;
+      }
+
+      if (matched.password && enteredPwd !== matched.password) {
+        if (alertEl) {
+          alertEl.style.display = 'flex';
+          alertEl.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> <span>Kata sandi salah. Silakan periksa kembali kata sandi untuk akun ' + matched.nama + '.</span>';
+        }
+        if (pwdInput) { pwdInput.focus(); pwdInput.select(); }
+        return false;
+      }
+
+      // Hide login landing
       var landing = document.getElementById('sipantau-login-landing');
       if (landing) {
         landing.style.display = 'none';
         landing.style.setProperty('display', 'none', 'important');
       }
 
-      // Step 2: Instantly show portal view
+      // Show portal view
       var view = document.getElementById('deputi-portal-view');
       if (view) {
         view.style.display = 'block';
@@ -55,23 +95,7 @@
       }
       document.body.style.overflow = 'hidden';
 
-      // Step 3: Determine selected user role
-      var sel = document.getElementById('landing-jabatan');
-      var enteredQuery = sel ? sel.value.trim() : '';
-      if (!enteredQuery) {
-        enteredQuery = 'deputi';
-        if (sel) sel.value = 'deputi';
-      }
-
-      var matched = (typeof findUserAccount === 'function') ? findUserAccount(enteredQuery) : null;
-      if (!matched && typeof DEFAULT_USERS_DB !== 'undefined') {
-        matched = DEFAULT_USERS_DB.find(function(u){ return u.username === 'deputi'; }) || DEFAULT_USERS_DB[1];
-      }
-      if (!matched) {
-        matched = { username: "deputi", role: "deputi", nama: "Kepala Deputi", jabatan: "Deputi Kajian Kebijakan & Inovasi", unit: "DEPUTI" };
-      }
-
-      var cfg = (typeof getRoleConfig === 'function') ? getRoleConfig(matched.role) : { defaultTab: 'dashboard', title: 'Kepala Deputi' };
+      var cfg = (typeof getRoleConfig === 'function') ? getRoleConfig(matched.role) : { defaultTab: 'dashboard', title: matched.nama };
       var userObj = {
         name: matched.nama || cfg.title,
         title: matched.jabatan || cfg.title,
@@ -1499,14 +1523,14 @@
         <!-- Rendered by JS: either Login button or User Profile -->
       </div>
       <div style="width:1px;height:24px;background:var(--border);margin:0 4px"></div>
-      <!-- Supabase Database Sync Badge -->
-      <div class="gs-badge" id="gs-badge" onclick="openGasModal()" title="Status & Sinkronisasi Database Google Sheets">
+<!-- Supabase Database Sync Badge -->
+      <div class="gs-badge" id="gs-badge" onclick="openGasModal()" title="Status & Sinkronisasi Database Supabase LAN RI">
         <div class="gs-dot"></div>
-        <span class="gs-label" id="gs-label">Terhubung Google Sheets</span>
-        <i class="fa-solid fa-table" style="font-size:11px;opacity:.8;margin-left:3px"></i>
+        <span class="gs-label" id="gs-label">Terhubung Supabase (LAN RI)</span>
+        <i class="fa-solid fa-database" style="font-size:11px;opacity:.8;margin-left:3px"></i>
       </div>
       <!-- Refresh Button -->
-      <button class="btn-refresh" onclick="syncDataFromGoogleSheet(true)" title="Sinkronkan data dari Google Sheets">
+      <button class="btn-refresh" onclick="syncDataFromSupabase(true)" title="Sinkronkan data langsung dari Supabase">
         <i class="fa-solid fa-rotate" id="refresh-icon"></i>
       </button>
       <!-- Tambah Agenda Button -->
@@ -1538,22 +1562,22 @@
 <div class="gas-modal-overlay" id="gas-modal-overlay" onclick="if(event.target===this)closeGasModal()">
   <div class="gas-modal">
     <div class="gas-modal-header">
-      <h3><i class="fa-solid fa-table"></i> Status &amp; Sinkronisasi Google Spreadsheet LAN RI</h3>
+      <h3><i class="fa-solid fa-database"></i> Status &amp; Sinkronisasi Database Supabase LAN RI</h3>
       <button class="gas-modal-close" onclick="closeGasModal()"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div class="gas-modal-body">
       <div class="gas-info-box">
-        <strong>Database Terintegrasi: Google Spreadsheet Analis/Survei LAN RI</strong>
-        <p>Dashboard PRISM terhubung langsung dengan Google Sheets (51 data publikasi aktif). Seluruh data disinkronkan secara real-time dan tersimpan otomatis.</p>
+        <strong>Database Terintegrasi: Cloud Supabase &amp; Google Spreadsheet PRISM LAN RI</strong>
+        <p>Dashboard PRISM terhubung secara real-time ke Cloud Supabase (tabel <code>users</code> &amp; <code>publikasi</code>) dengan fallback Google Sheets &amp; offline storage.</p>
       </div>
       <div class="gas-field">
         <label>Supabase Project URL</label>
-        <input type="text" id="supabase-url-input" placeholder="https://imteghfrgddjvgkxarwi.supabase.co"/>
+        <input type="text" id="supabase-url-input" value="https://imteghfrgddjvgkxarwi.supabase.co" placeholder="https://imteghfrgddjvgkxarwi.supabase.co"/>
       </div>
       <div class="gas-field">
         <label>Supabase Anon / Public Key</label>
-        <input type="password" id="supabase-key-input" placeholder="eyJhbGciOi..."/>
-        <div class="hint">Kunci API publik (anon key) untuk mengakses database.</div>
+        <input type="password" id="supabase-key-input" value="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImltdGVnaGZyZ2RkanZna3hhcndpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMxMzQ2NzYsImV4cCI6MjEwODcxMDY3Nn0.23YPuFy6PfmMdURqDR4OX1Qi6agjGrZSHgNjple3Ilo" placeholder="eyJhbGciOi..."/>
+        <div class="hint">Kunci API publik (anon key) untuk mengakses database Supabase secara aman.</div>
       </div>
       <div style="margin: 10px 0 16px;">
         <a id="supabase-ext-link" href="https://supabase.com/dashboard/project/imteghfrgddjvgkxarwi" target="_blank" style="color:var(--accent);font-size:12px;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:6px">
@@ -1576,15 +1600,29 @@
 </div>
 
 <script>
-/* ══════════════ GOOGLE SHEETS DATABASE INTEGRATION (PRISM) ══════════════ */
+/* ══════════════ SUPABASE & DATA SYNC INTEGRATION (PRISM LAN RI) ══════════════ */
+const SUPABASE_CONFIG = {
+  url: localStorage.getItem('lan_supabase_url') || 'https://imteghfrgddjvgkxarwi.supabase.co',
+  anonKey: localStorage.getItem('lan_supabase_key') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImltdGVnaGZyZ2RkanZna3hhcndpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMxMzQ2NzYsImV4cCI6MjEwODcxMDY3Nn0.23YPuFy6PfmMdURqDR4OX1Qi6agjGrZSHgNjple3Ilo'
+};
+
 const GOOGLE_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/1p-gYkKlG9qY0uhmayAhery5JEG-j6D5FQQShcKXFQ9E/gviz/tq?tqx=out:csv&gid=988003932';
+
+let supabaseClient = null;
+try {
+  if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
+    supabaseClient = window.supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey);
+  }
+} catch(e) {
+  console.warn('[SUPABASE INIT ERROR]', e);
+}
 
 function setGasBadge(state, label) {
   const badge = document.getElementById('gs-badge');
   const lbl   = document.getElementById('gs-label');
   if(!badge) return;
   badge.className = 'gs-badge ' + (state || '');
-  if(lbl) lbl.textContent = label || 'Terhubung Google Sheets';
+  if(lbl) lbl.textContent = label || 'Terhubung Supabase (LAN RI)';
 }
 
 function showNotificationToast(msg, type='success'){
@@ -1607,6 +1645,59 @@ function showNotificationToast(msg, type='success'){
     toast.style.transform = 'translateY(100px)';
     toast.style.opacity = '0';
   }, 4000);
+}
+
+function mapSupabaseRowToRAW(r, idx) {
+  const no = parseInt(r.no) || (idx + 1);
+  const unit = r.unit || '';
+  const judul = r.judul || '';
+  const jenis = r.jenis || '';
+  const jadwal = r.jadwal || '';
+  const tahun = r.tahun || (jadwal.includes('2025') ? '2025' : (jadwal.includes('2027') ? '2027' : '2026'));
+  const cluster = r.cluster || '';
+  const webLAN = r.web_lan || r.webLAN || '';
+  const webUnit = r.web_unit || r.webUnit || '';
+  const igLAN = r.ig_lan || r.igLAN || '';
+  const igUnit = r.ig_unit || r.igUnit || '';
+  const ytLAN = r.yt_lan || r.ytLAN || '';
+  const ytUnit = r.yt_unit || r.ytUnit || '';
+  const ket = (r.ket || '').trim();
+
+  const isSelesai = ket.toLowerCase().includes('selesai') && !ket.toLowerCase().includes('belum selesai');
+  let tahapan = 'Penyusunan instrumen';
+  const kl = ket.toLowerCase();
+  if (isSelesai) {
+    tahapan = 'Publikasi / Selesai';
+  } else if (kl.includes('laporan') || kl.includes('policy brief') || kl.includes('policy paper')) {
+    tahapan = 'Penyusunan laporan';
+  } else if (kl.includes('pengolahan') || kl.includes('analisis data') || kl.includes('olah data')) {
+    tahapan = 'Pengolahan data';
+  } else if (kl.includes('responden') || kl.includes('kuesioner') || kl.includes('pengumpulan data')) {
+    tahapan = 'Pengumpulan data';
+  } else if (kl.includes('persiapan')) {
+    tahapan = 'Persiapan';
+  }
+
+  return {
+    no,
+    unit,
+    judul,
+    jenis,
+    jadwal,
+    tahun,
+    cluster,
+    jurnal: r.jurnal || '',
+    media: r.media || '',
+    webLAN,
+    webUnit,
+    igLAN,
+    igUnit,
+    ytLAN,
+    ytUnit,
+    status: isSelesai ? 'Selesai' : 'Belum Selesai',
+    ket: ket || (isSelesai ? 'Selesai' : 'Dalam proses pelaksanaan survei'),
+    tahapan
+  };
 }
 
 function parseGoogleSheetCSV(text) {
@@ -1684,49 +1775,106 @@ function parseGoogleSheetCSV(text) {
   return items;
 }
 
-async function syncDataFromGoogleSheet(isManual = false) {
-  setGasBadge('syncing', 'Menyinkron Google Sheets…');
+async function syncUsersFromSupabase() {
+  try {
+    const url = `${SUPABASE_CONFIG.url}/rest/v1/users?select=*`;
+    const res = await fetch(url, {
+      headers: {
+        'apikey': SUPABASE_CONFIG.anonKey,
+        'Authorization': `Bearer ${SUPABASE_CONFIG.anonKey}`
+      }
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        USERS_DB = data.map(u => ({
+          username: u.username,
+          password: u.password,
+          role: u.role,
+          nama: u.nama,
+          jabatan: u.jabatan,
+          unit: u.unit
+        }));
+        try { localStorage.setItem('lan_users_db', JSON.stringify(USERS_DB)); } catch(e){}
+        console.log(`[SUPABASE] Berhasil memuat ${USERS_DB.length} data akun pengguna.`);
+        return true;
+      }
+    }
+  } catch(err) {
+    console.warn('[SUPABASE] Could not sync users, using fallback USERS_DB:', err);
+  }
+  return false;
+}
+
+async function syncDataFromSupabase(isManual = false) {
+  setGasBadge('syncing', 'Menyinkronkan Supabase…');
   const icon = document.getElementById('refresh-icon');
   const pIcon = document.getElementById('portal-refresh-icon');
   if(icon) icon.classList.add('fa-spin');
   if(pIcon) pIcon.classList.add('fa-spin');
 
   try {
-    const res = await fetch(GOOGLE_SHEET_CSV_URL, { cache: 'no-store' });
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    const csv = await res.text();
-    const rows = parseGoogleSheetCSV(csv);
-    if (rows && rows.length > 0) {
-      if (typeof RAW !== 'undefined' && Array.isArray(RAW)) {
-        RAW.length = 0;
-        rows.forEach(r => RAW.push(r));
+    // 1. Primary: Ambil data langsung dari tabel 'publikasi' Supabase
+    const sUrl = `${SUPABASE_CONFIG.url}/rest/v1/publikasi?select=*&order=no.asc`;
+    const res = await fetch(sUrl, {
+      headers: {
+        'apikey': SUPABASE_CONFIG.anonKey,
+        'Authorization': `Bearer ${SUPABASE_CONFIG.anonKey}`
       }
-      try { localStorage.setItem('lan_pub_data', JSON.stringify(rows)); } catch(e){}
+    });
 
-      // Refresh all components
-      if (typeof initPortalDropdowns === 'function') initPortalDropdowns();
-      if (typeof applyPortalFilters === 'function') applyPortalFilters();
-      if (typeof renderSindisaPengumuman === 'function') renderSindisaPengumuman();
-      if (typeof renderSindisaPenulisan === 'function') renderSindisaPenulisan();
-      if (typeof renderSindisaPublikasi === 'function') renderSindisaPublikasi();
-      if (typeof renderSindisaSeminar === 'function') renderSindisaSeminar();
-      if (typeof renderSindisaAccTable === 'function') renderSindisaAccTable();
-      if (typeof populateDropdowns === 'function') populateDropdowns();
-      if (typeof applyFilters === 'function') applyFilters();
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        const mapped = data.map(mapSupabaseRowToRAW);
+        if (typeof RAW !== 'undefined' && Array.isArray(RAW)) {
+          RAW.length = 0;
+          mapped.forEach(r => RAW.push(r));
+        }
+        try { localStorage.setItem('lan_pub_data', JSON.stringify(mapped)); } catch(e){}
 
-      const nowStr = new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
-      setGasBadge('', `Terhubung Google Sheets (${nowStr})`);
+        refreshAllPRISMViews();
+        const nowStr = new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+        setGasBadge('', `Terhubung Supabase (${data.length} Survei · ${nowStr})`);
 
-      if (isManual) {
-        showNotificationToast(`✅ Berhasil menyinkronkan ${rows.length} data publikasi langsung dari Google Sheets!`, 'success');
+        if (isManual) {
+          showNotificationToast(`✅ Berhasil menyinkronkan ${data.length} data survei langsung dari database Supabase!`, 'success');
+        }
+        console.log(`[SUPABASE] Synced ${data.length} records from Supabase at ${nowStr}`);
+        return true;
       }
-      console.log(`[SHEETS] Synchronized ${rows.length} records from Google Sheets at ${nowStr}`);
-      return true;
     }
-  } catch(e) {
-    console.warn('[SHEETS] Live fetch fallback to local data:', e);
+    throw new Error('Supabase fetch returned empty or error');
+  } catch(err) {
+    console.warn('[SUPABASE] Fallback to Google Sheets:', err);
+    // 2. Fallback: Google Sheets CSV
+    try {
+      const sRes = await fetch(GOOGLE_SHEET_CSV_URL, { cache: 'no-store' });
+      if (sRes.ok) {
+        const csv = await sRes.text();
+        const rows = parseGoogleSheetCSV(csv);
+        if (rows && rows.length > 0) {
+          if (typeof RAW !== 'undefined' && Array.isArray(RAW)) {
+            RAW.length = 0;
+            rows.forEach(r => RAW.push(r));
+          }
+          try { localStorage.setItem('lan_pub_data', JSON.stringify(rows)); } catch(e){}
+          refreshAllPRISMViews();
+          const nowStr = new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+          setGasBadge('', `Terhubung Google Sheets (${rows.length} Survei · ${nowStr})`);
+          if (isManual) {
+            showNotificationToast(`✅ Data disinkronkan dari Google Sheets (${rows.length} survei).`, 'success');
+          }
+          return true;
+        }
+      }
+    } catch(sheetErr) {
+      console.warn('[SHEETS] Fallback to preloaded data:', sheetErr);
+    }
+
+    // 3. Fallback: Preloaded local RAW
     const count = (typeof RAW !== 'undefined' && Array.isArray(RAW)) ? RAW.length : 51;
-    setGasBadge('', 'Google Sheets (Aktif)');
+    setGasBadge('', `Data PRISM Aktif (${count} Survei)`);
     if (isManual) {
       showNotificationToast(`ℹ️ Menggunakan data survei lokal (${count} publikasi aktif).`, 'info');
     }
@@ -1737,36 +1885,82 @@ async function syncDataFromGoogleSheet(isManual = false) {
   }
 }
 
-// Aliases for compatibility
-window.syncDataFromSupabase = syncDataFromGoogleSheet;
-window.syncDataFromGAS = syncDataFromGoogleSheet;
-window.syncDataFromSheet = syncDataFromGoogleSheet;
-var syncDataFromSupabase = syncDataFromGoogleSheet;
-var syncDataFromGAS = syncDataFromGoogleSheet;
-var syncDataFromSheet = syncDataFromGoogleSheet;
+function refreshAllPRISMViews() {
+  if (typeof initPortalDropdowns === 'function') initPortalDropdowns();
+  if (typeof applyPortalFilters === 'function') applyPortalFilters();
+  if (typeof renderSindisaPengumuman === 'function') renderSindisaPengumuman();
+  if (typeof renderSindisaPenulisan === 'function') renderSindisaPenulisan();
+  if (typeof renderSindisaPublikasi === 'function') renderSindisaPublikasi();
+  if (typeof renderSindisaSeminar === 'function') renderSindisaSeminar();
+  if (typeof renderSindisaAccTable === 'function') renderSindisaAccTable();
+  if (typeof populateDropdowns === 'function') populateDropdowns();
+  if (typeof applyFilters === 'function') applyFilters();
+}
+
+// Aliases for full backward compatibility
+window.syncDataFromSupabase = syncDataFromSupabase;
+window.syncDataFromGoogleSheet = syncDataFromSupabase;
+window.syncDataFromGAS = syncDataFromSupabase;
+window.syncDataFromSheet = syncDataFromSupabase;
+var syncDataFromSupabase = syncDataFromSupabase;
+var syncDataFromGoogleSheet = syncDataFromSupabase;
+var syncDataFromGAS = syncDataFromSupabase;
+var syncDataFromSheet = syncDataFromSupabase;
 
 function openGasModal(){
   const res = document.getElementById('gas-test-result');
   if(res) res.style.display = 'none';
+  const urlInp = document.getElementById('supabase-url-input');
+  const keyInp = document.getElementById('supabase-key-input');
+  if(urlInp) urlInp.value = SUPABASE_CONFIG.url;
+  if(keyInp) keyInp.value = SUPABASE_CONFIG.anonKey;
   const overlay = document.getElementById('gas-modal-overlay');
   if(overlay) overlay.classList.add('open');
 }
+
 function closeGasModal(){
   const overlay = document.getElementById('gas-modal-overlay');
   if(overlay) overlay.classList.remove('open');
 }
+
+function saveGasSettings() {
+  const urlInp = document.getElementById('supabase-url-input');
+  const keyInp = document.getElementById('supabase-key-input');
+  if (urlInp && urlInp.value.trim()) {
+    localStorage.setItem('lan_supabase_url', urlInp.value.trim());
+    SUPABASE_CONFIG.url = urlInp.value.trim();
+  }
+  if (keyInp && keyInp.value.trim()) {
+    localStorage.setItem('lan_supabase_key', keyInp.value.trim());
+    SUPABASE_CONFIG.anonKey = keyInp.value.trim();
+  }
+  showNotificationToast('✅ Pengaturan database Supabase berhasil disimpan!', 'success');
+  closeGasModal();
+  syncDataFromSupabase(true);
+}
+
+function resetGasCache() {
+  localStorage.removeItem('lan_supabase_url');
+  localStorage.removeItem('lan_supabase_key');
+  SUPABASE_CONFIG.url = 'https://imteghfrgddjvgkxarwi.supabase.co';
+  SUPABASE_CONFIG.anonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImltdGVnaGZyZ2RkanZna3hhcndpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMxMzQ2NzYsImV4cCI6MjEwODcxMDY3Nn0.23YPuFy6PfmMdURqDR4OX1Qi6agjGrZSHgNjple3Ilo';
+  showNotificationToast('Konfigurasi database direset ke default Supabase LAN RI.', 'info');
+  closeGasModal();
+  syncDataFromSupabase(true);
+}
+
 async function testLiveSync(){
   const res = document.getElementById('gas-test-result');
   if(res) {
     res.style.display = 'block';
-    res.textContent = '⏳ Mengambil data langsung dari Google Spreadsheet…';
+    res.textContent = '⏳ Menguji koneksi & mengambil data langsung dari database Supabase…';
     res.style.background = '#eff6ff';
     res.style.color = '#1e40af';
   }
-  const ok = await syncDataFromGoogleSheet(false);
+  const ok = await syncDataFromSupabase(false);
   if(res) {
     const count = (typeof RAW !== 'undefined' && Array.isArray(RAW)) ? RAW.length : 51;
-    res.textContent = ok ? `✅ Berhasil! ${count} data publikasi berhasil dimuat dari Google Sheets.` : `ℹ️ Data lokal aktif (${count} publikasi).`;
+    res.textContent = ok ? `✅ Berhasil! Terhubung ke Supabase dengan ${count} data publikasi aktif.` : `ℹ️ Menggunakan data survei lokal (${count} publikasi).`;
     res.style.background = ok ? '#f0fdf4' : '#fffbeb';
     res.style.color = ok ? '#16a34a' : '#d97706';
   }
@@ -1774,8 +1968,8 @@ async function testLiveSync(){
 
 // Background sync on window focus
 window.addEventListener('focus', () => {
-  if (typeof syncDataFromGoogleSheet === 'function') {
-    syncDataFromGoogleSheet(false);
+  if (typeof syncDataFromSupabase === 'function') {
+    syncDataFromSupabase(false);
   }
 });
 
@@ -5478,34 +5672,64 @@ const ALL_SIPANTAU_MENUS = [
 ];
 
 const ROLE_CONFIGS = {
+  // 1. Pimpinan: Kepala LAN RI (3 menu eksekutif: Dashboard, Pengumuman, Topik Proposal / ACC)
   kepala_lan: {
     title: "Kepala LAN RI",
     subtitle: "Pimpinan Lembaga Administrasi Negara",
-    menus: [...ALL_SIPANTAU_MENUS],
+    menus: [
+      { id: "dashboard",  icon: "fa-chart-pie",       label: "Dashboard",             action: "openTab('dashboard')" },
+      { id: "pengumuman", icon: "fa-bullhorn",        label: "Pengumuman",            action: "openTab('pengumuman')" },
+      { id: "proposal",   icon: "fa-clipboard-check", label: "Topik Proposal / ACC",  badge: true, action: "openTab('proposal')" }
+    ],
     defaultTab: "dashboard"
   },
+  // 2. Pimpinan: Kepala Deputi (3 menu eksekutif: Dashboard, Pengumuman, Topik Proposal / ACC)
   deputi: {
     title: "Kepala Deputi",
     subtitle: "Deputi Kajian Kebijakan & Inovasi",
-    menus: [...ALL_SIPANTAU_MENUS],
+    menus: [
+      { id: "dashboard",  icon: "fa-chart-pie",       label: "Dashboard",             action: "openTab('dashboard')" },
+      { id: "pengumuman", icon: "fa-bullhorn",        label: "Pengumuman",            action: "openTab('pengumuman')" },
+      { id: "proposal",   icon: "fa-clipboard-check", label: "Topik Proposal / ACC",  badge: true, action: "openTab('proposal')" }
+    ],
     defaultTab: "dashboard"
   },
+  // 3. Admin DSPK2AN: Verifikasi & publikasi lintas unit (6 menu lengkap)
   admin_dspk2an: {
     title: "Admin DSPK2AN",
     subtitle: "Pusat Kajian Kebijakan Administrasi Negara",
-    menus: [...ALL_SIPANTAU_MENUS],
+    menus: [
+      { id: "dashboard",  icon: "fa-chart-pie",       label: "Dashboard",             action: "openTab('dashboard')" },
+      { id: "pengumuman", icon: "fa-bullhorn",        label: "Pengumuman",            action: "openTab('pengumuman')" },
+      { id: "penulisan",  icon: "fa-pen-ruler",       label: "Penulisan & Instrumen", action: "openTab('penulisan')" },
+      { id: "publikasi",  icon: "fa-newspaper",       label: "Publikasi",             action: "openTab('publikasi')" },
+      { id: "review",     icon: "fa-circle-question", label: "Review",                action: "openTab('seminar')" },
+      { id: "proposal",   icon: "fa-clipboard-check", label: "Verifikasi Usulan / ACC", badge: true, action: "openTab('proposal')" }
+    ],
     defaultTab: "dashboard"
   },
-  humas: {
-    title: "Humas LAN RI",
-    subtitle: "Biro Humas & Publikasi",
-    menus: [...ALL_SIPANTAU_MENUS],
-    defaultTab: "dashboard"
-  },
+  // 4. Unit Kerja: SKMK, SKPP, DAPKK, SKMP, SKTAN, STIA JKT/MKS/BDG (5 menu spesifik unit)
   default_unit: {
     title: "Unit Kerja Pelaksana",
     subtitle: "Pelaksana Publikasi Survei",
-    menus: [...ALL_SIPANTAU_MENUS],
+    menus: [
+      { id: "dashboard",  icon: "fa-chart-pie",       label: "Dashboard",             action: "openTab('dashboard')" },
+      { id: "pengumuman", icon: "fa-bullhorn",        label: "Pengumuman",            action: "openTab('pengumuman')" },
+      { id: "penulisan",  icon: "fa-pen-ruler",       label: "Progres Survei Unit",   action: "openTab('penulisan')" },
+      { id: "publikasi",  icon: "fa-newspaper",       label: "Publikasi Unit",        action: "openTab('publikasi')" },
+      { id: "proposal",   icon: "fa-clipboard-check", label: "Pengajuan & Status ACC", badge: false, action: "openTab('proposal')" }
+    ],
+    defaultTab: "dashboard"
+  },
+  // 5. Humas LAN RI: Kanal Publikasi (3 menu)
+  humas: {
+    title: "Humas LAN RI",
+    subtitle: "Biro Humas & Publikasi",
+    menus: [
+      { id: "dashboard",  icon: "fa-chart-pie",       label: "Dashboard",             action: "openTab('dashboard')" },
+      { id: "pengumuman", icon: "fa-bullhorn",        label: "Pengumuman",            action: "openTab('pengumuman')" },
+      { id: "publikasi",  icon: "fa-newspaper",       label: "Kanal Publikasi",       action: "openTab('publikasi')" }
+    ],
     defaultTab: "dashboard"
   }
 };
@@ -5516,7 +5740,7 @@ function getRoleConfig(roleKey) {
   return ROLE_CONFIGS.deputi;
 }
 
-/* ── Database Akun Terhubung Langsung ke Sheet 'users' ── */
+/* ── Database Akun Terhubung Langsung ke Supabase 'users' ── */
 const DEFAULT_USERS_DB = [
   { username: "kepala.lan",    password: "lan2026",     role: "kepala_lan",    nama: "Kepala LAN RI",       jabatan: "Pimpinan Lembaga Administrasi Negara", unit: "LAN RI" },
   { username: "deputi",        password: "deputi2026",  role: "deputi",        nama: "Kepala Deputi",       jabatan: "Deputi Kajian Kebijakan & Inovasi",    unit: "DEPUTI" },
@@ -5532,22 +5756,32 @@ const DEFAULT_USERS_DB = [
   { username: "skmk",          password: "skmk2026",    role: "unit_skmk",     nama: "Admin SKMK",          jabatan: "Pusat Pembelajaran dan Strategi Kebijakan Manajemen Kinerja", unit: "SKMK" }
 ];
 
-// Database Akun Resmi PRISM LAN RI (Selalu sinkron dan terpercaya)
+// Database Akun Resmi PRISM LAN RI (Sinkron dengan Supabase & LocalStorage)
 let USERS_DB = [...DEFAULT_USERS_DB];
 try {
-  localStorage.setItem('lan_users_db', JSON.stringify(DEFAULT_USERS_DB));
+  const cachedUsers = localStorage.getItem('lan_users_db');
+  if (cachedUsers) {
+    const parsed = JSON.parse(cachedUsers);
+    if (Array.isArray(parsed) && parsed.length > 0) USERS_DB = parsed;
+  }
 } catch(e) {}
 
 // Universal Account Finder (mendukung pencarian via username, jabatan, nama, unit)
 function findUserAccount(query) {
   if (!query) return null;
   const q = String(query).trim().toLowerCase();
-  return DEFAULT_USERS_DB.find(u => 
-    u.username.toLowerCase() === q ||
-    u.jabatan.toLowerCase() === q ||
-    u.nama.toLowerCase() === q ||
-    u.unit.toLowerCase() === q ||
+  const db = (Array.isArray(USERS_DB) && USERS_DB.length > 0) ? USERS_DB : DEFAULT_USERS_DB;
+  return db.find(u => 
+    (u.username && u.username.toLowerCase() === q) ||
+    (u.jabatan && u.jabatan.toLowerCase() === q) ||
+    (u.nama && u.nama.toLowerCase() === q) ||
+    (u.unit && u.unit.toLowerCase() === q) ||
     (q === 'krisis & mitigasi' && u.username === 'skmk')
+  ) || DEFAULT_USERS_DB.find(u => 
+    (u.username && u.username.toLowerCase() === q) ||
+    (u.jabatan && u.jabatan.toLowerCase() === q) ||
+    (u.nama && u.nama.toLowerCase() === q) ||
+    (u.unit && u.unit.toLowerCase() === q)
   ) || null;
 }
 
@@ -5608,21 +5842,33 @@ function handlePrismLogin(e) {
   const sel = document.getElementById('landing-jabatan');
   let enteredQuery = sel ? sel.value.trim() : '';
 
-  // Default to deputi if user clicks login without selecting
   if (!enteredQuery) {
-    enteredQuery = 'deputi';
-    if (sel) sel.value = 'deputi';
+    showLoginError('Silakan pilih nama jabatan Anda terlebih dahulu.');
+    return false;
   }
 
   let matched = findUserAccount(enteredQuery);
   if (!matched) {
-    matched = DEFAULT_USERS_DB.find(u => u.username === 'deputi') || DEFAULT_USERS_DB[1] || {
-      username: "deputi",
-      role: "deputi",
-      nama: "Kepala Deputi",
-      jabatan: "Deputi Kajian Kebijakan & Inovasi",
-      unit: "DEPUTI"
-    };
+    showLoginError('Akun jabatan tidak ditemukan dalam sistem PRISM.');
+    return false;
+  }
+
+  const pwdInput = document.getElementById('landing-password');
+  const enteredPwd = pwdInput ? pwdInput.value.trim() : '';
+
+  if (!enteredPwd) {
+    showLoginError('Silakan masukkan kata sandi (contoh: ' + (matched.password || 'lan2026') + ')');
+    if (pwdInput) pwdInput.focus();
+    return false;
+  }
+
+  if (matched.password && enteredPwd !== matched.password) {
+    showLoginError('Kata sandi salah. Silakan periksa kembali kata sandi untuk akun ' + matched.nama + '.');
+    if (pwdInput) {
+      pwdInput.focus();
+      pwdInput.select();
+    }
+    return false;
   }
 
   const cfg = getRoleConfig(matched.role);
@@ -5737,16 +5983,14 @@ function initPortalDropdowns() {
       o.value = u; o.textContent = u;
       uSelect.appendChild(o);
     });
-    if(unitLocked) {
+    // Default seleksi ke unit user (jika login sebagai unit), namun dropdown tetap DITAMPILKAN
+    // agar unit kerja dapat melihat progres keseluruhan unit secara transparan
+    if(unitLocked && user.unit) {
       uSelect.value = user.unit;
-      uSelect.style.display = 'none';
-      if(uDivider) uDivider.style.display = 'none';
-      if(allUnitsCard) allUnitsCard.style.display = 'none';
-    } else {
-      uSelect.style.display = '';
-      if(uDivider) uDivider.style.display = '';
-      if(allUnitsCard) allUnitsCard.style.display = '';
     }
+    uSelect.style.display = '';
+    if(uDivider) uDivider.style.display = '';
+    if(allUnitsCard) allUnitsCard.style.display = '';
   }
 
   const cSelect = document.getElementById('p-cluster');
@@ -5764,7 +6008,8 @@ function applyPortalFilters() {
   const user = getCurrentUser();
   const unitLocked = isUnitUser(user);
   const year = document.getElementById('p-year') ? document.getElementById('p-year').value : '';
-  const unit = unitLocked ? user.unit : (document.getElementById('p-unit') ? document.getElementById('p-unit').value : '');
+  const selectedUnit = document.getElementById('p-unit') ? document.getElementById('p-unit').value : '';
+  const unit = selectedUnit;
   const cluster = document.getElementById('p-cluster') ? document.getElementById('p-cluster').value : '';
   const status = document.getElementById('p-status') ? document.getElementById('p-status').value : '';
 
@@ -5790,7 +6035,7 @@ function resetPortalFilters() {
   const unitLocked = isUnitUser(user);
   ['p-year','p-unit','p-cluster','p-status'].forEach(id => {
     const el = document.getElementById(id);
-    if(el) el.value = (id === 'p-unit' && unitLocked) ? user.unit : '';
+    if(el) el.value = (id === 'p-unit' && unitLocked) ? (user.unit || '') : '';
   });
   applyPortalFilters();
 }
@@ -5804,18 +6049,18 @@ function renderPortalKPIs() {
   const pct = total ? Math.round(selesai/total*100) : 0;
   const pctBelum = total ? Math.round(belum/total*100) : 0;
 
+  const selectedUnit = (document.getElementById('p-unit') && document.getElementById('p-unit').value) || '';
+
   let fourthKpi;
-  if(unitLocked) {
+  if(selectedUnit) {
     const predikat = pct >= 85 ? 'Sangat Baik (A)' : pct >= 65 ? 'Baik (B)' : pct >= 40 ? 'Cukup (C)' : 'Perlu Percepatan';
-    fourthKpi = {type:'total', icon:'fa-award', value:`${pct}%`, label:`Capaian ${user.unit}`, sub:`Predikat: ${predikat}`, color:'#7c3aed', ibg:'#f5f3ff', delta:null};
+    fourthKpi = {type:'total', icon:'fa-award', value:`${pct}%`, label:`Capaian ${selectedUnit}`, sub:`Predikat: ${predikat}`, color:'#7c3aed', ibg:'#f5f3ff', delta:null};
   } else {
-    const selectedUnit = (document.getElementById('p-unit') && document.getElementById('p-unit').value) || '';
-    const units2026 = selectedUnit ? 1 : 9;
-    fourthKpi = {type:'unit', icon:'fa-building', value:units2026, label:'Unit Aktif 2026', sub:'Unit dengan publikasi 2026', color:'#7c3aed', ibg:'#f5f3ff', delta:null, clickable:false};
+    fourthKpi = {type:'unit', icon:'fa-building', value:9, label:'Unit Aktif 2026', sub:'Unit dengan publikasi 2026', color:'#7c3aed', ibg:'#f5f3ff', delta:null, clickable:false};
   }
 
   const kpis = [
-    {type:'total',   icon:'fa-file-lines',    value:total,     label:unitLocked ? `Total Survei ${user.unit}` : 'Total Publikasi', sub:'Klik untuk lihat daftar survei', color:'#1e40af', ibg:'#eff6ff', delta:null},
+    {type:'total',   icon:'fa-file-lines',    value:total,     label:selectedUnit ? `Total Survei ${selectedUnit}` : 'Total Publikasi', sub:'Klik untuk lihat daftar survei', color:'#1e40af', ibg:'#eff6ff', delta:null},
     {type:'selesai', icon:'fa-circle-check',  value:selesai,   label:'Selesai Publikasi', sub:`${pct}% selesai · Klik lihat list`, color:'#16a34a', ibg:'#f0fdf4', delta:{cls:'delta-good',text:`${pct}%`}},
     {type:'belum',   icon:'fa-hourglass-half',value:belum,     label:'Dalam Proses',   sub:`${belum} survei berjalan · Klik lihat list`, color:'#dc2626', ibg:'#fef2f2', delta:{cls:'delta-bad', text:`${pctBelum}%`}},
     fourthKpi,
@@ -6798,9 +7043,9 @@ function openDeputiPortal(targetTab) {
   try { openTab(initialTab); } catch(e){ console.warn(e); }
   try { initPortalInteractiveDashboard(); } catch(e){ console.warn(e); }
 
-  // Background Google Sheets sync
-  if (typeof syncDataFromGoogleSheet === 'function') {
-    setTimeout(() => { syncDataFromGoogleSheet(false); }, 1000);
+// Background Supabase sync
+  if (typeof syncDataFromSupabase === 'function') {
+    setTimeout(() => { syncDataFromSupabase(false); }, 500);
   }
 }
 
@@ -7233,6 +7478,9 @@ renderTable();
     hideLandingLogin();
     openDeputiPortal();
   }
+  // Sync user accounts & data from Supabase
+  if (typeof syncUsersFromSupabase === 'function') syncUsersFromSupabase();
+  if (typeof syncDataFromSupabase === 'function') syncDataFromSupabase(false);
 })();
 </script>
 </body>
