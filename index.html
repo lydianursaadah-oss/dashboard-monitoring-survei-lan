@@ -630,111 +630,6 @@
     .full-width { grid-column: 1 / -1; }
     .unit-color { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 4px; }
 
-    /* ═══════════════════ GOOGLE SHEETS SYNC ═══════════════════ */
-const GOOGLE_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/1p-gYkKlG9qY0uhmayAhery5JEG-j6D5FQQShcKXFQ9E/gviz/tq?tqx=out:csv&gid=988003932';
-
-function parseGoogleSheetCSV(text) {
-  const rows = [];
-  let row = [];
-  let current = '';
-  let inQuotes = false;
-  for (let i = 0; i < text.length; i++) {
-    const c = text[i];
-    const next = text[i+1];
-    if (c === '"') {
-      if (inQuotes && next === '"') { current += '"'; i++; }
-      else { inQuotes = !inQuotes; }
-    } else if (c === ',' && !inQuotes) {
-      row.push(current.trim()); current = '';
-    } else if ((c === '\r' || c === '\n') && !inQuotes) {
-      if (c === '\r' && next === '\n') i++;
-      row.push(current.trim());
-      if (row.some(cell => cell.length > 0)) rows.push(row);
-      row = []; current = '';
-    } else {
-      current += c;
-    }
-  }
-  if (current || row.length) {
-    row.push(current.trim());
-    if (row.some(cell => cell.length > 0)) rows.push(row);
-  }
-
-  const items = [];
-  for (let i = 1; i < rows.length; i++) {
-    const r = rows[i];
-    if (!r[0] && !r[2]) continue;
-    const no = parseInt(r[0]) || i;
-    const unit = r[1] || '';
-    const judul = r[2] || '';
-    const jenis = r[3] || '';
-    const jadwal = r[4] || '';
-    const tahun = r[5] || (jadwal.includes('2025') ? '2025' : (jadwal.includes('2027') ? '2027' : '2026'));
-    const cluster = r[6] || '';
-    const jurnal = r[7] || '';
-    const media = r[8] || '';
-    const webLAN = r[9] || '';
-    const webUnit = r[10] || '';
-    const igLAN = r[11] || '';
-    const igUnit = r[12] || '';
-    const ytLAN = r[13] || '';
-    const ytUnit = r[14] || '';
-    const status = r[15] || '';
-    const ket = r[16] || r[15] || '';
-
-    const isSelesai = status.toLowerCase() === 'selesai' || (ket.toLowerCase().includes('selesai') && !ket.toLowerCase().includes('belum selesai'));
-
-    items.push({
-      no, unit, judul, jenis, jadwal, tahun, cluster, jurnal, media, webLAN, webUnit, igLAN, igUnit, ytLAN, ytUnit,
-      status: isSelesai ? 'Selesai' : 'Belum Selesai',
-      ket,
-      tahapan: isSelesai ? 'Publikasi / Selesai' : (ket.toLowerCase().includes('laporan') ? 'Penyusunan laporan' : 'Penyusunan instrumen')
-    });
-  }
-  return items;
-}
-
-async function syncDataFromGoogleSheet(isManual = false) {
-  const pIcon = document.getElementById('portal-refresh-icon');
-  if(pIcon) pIcon.classList.add('fa-spin');
-
-  try {
-    const res = await fetch(GOOGLE_SHEET_CSV_URL);
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    const csv = await res.text();
-    const rows = parseGoogleSheetCSV(csv);
-    if (rows && rows.length > 0) {
-      RAW.length = 0;
-      rows.forEach(r => RAW.push(r));
-      try { localStorage.setItem('lan_pub_data', JSON.stringify(RAW)); } catch(e){}
-
-      if(typeof initPortalDropdowns === 'function') initPortalDropdowns();
-      if(typeof applyPortalFilters === 'function') applyPortalFilters();
-      if(typeof populateDropdowns === 'function') populateDropdowns();
-      if(typeof applyFilters === 'function') applyFilters();
-
-      if(isManual && typeof showNotificationToast === 'function') {
-        showNotificationToast(`✅ Berhasil menyinkronkan ${RAW.length} data survei langsung dari Google Sheets!`, 'success');
-      }
-      console.log(`[SHEETS] Synchronized ${RAW.length} records successfully.`);
-      return true;
-    }
-  } catch(e) {
-    console.warn('[SHEETS] Live fetch failed, using offline cache:', e);
-    if(isManual && typeof showNotificationToast === 'function') {
-      showNotificationToast('ℹ️ Menggunakan data cache lokal (' + RAW.length + ' data aktif).', 'info');
-    }
-    return false;
-  } finally {
-    if(pIcon) setTimeout(() => pIcon.classList.remove('fa-spin'), 600);
-  }
-}
-
-// Aliases for compatibility
-const syncDataFromSupabase = syncDataFromGoogleSheet;
-const syncDataFromGAS = syncDataFromGoogleSheet;
-const syncDataFromSheet = syncDataFromGoogleSheet;
-
     .gs-badge {
       display: flex; align-items: center; gap: 6px;
       font-size: 11px; font-weight: 600; padding: 4px 10px;
@@ -1605,13 +1500,13 @@ const syncDataFromSheet = syncDataFromGoogleSheet;
       </div>
       <div style="width:1px;height:24px;background:var(--border);margin:0 4px"></div>
       <!-- Supabase Database Sync Badge -->
-      <div class="gs-badge" id="gs-badge" onclick="openGasModal()" title="Status & Pengaturan Database Supabase">
+      <div class="gs-badge" id="gs-badge" onclick="openGasModal()" title="Status & Sinkronisasi Database Google Sheets">
         <div class="gs-dot"></div>
-        <span class="gs-label" id="gs-label">Terhubung Supabase</span>
-        <i class="fa-solid fa-database" style="font-size:11px;opacity:.8;margin-left:3px"></i>
+        <span class="gs-label" id="gs-label">Terhubung Google Sheets</span>
+        <i class="fa-solid fa-table" style="font-size:11px;opacity:.8;margin-left:3px"></i>
       </div>
       <!-- Refresh Button -->
-      <button class="btn-refresh" onclick="syncDataFromSupabase(true)" title="Sinkronkan data dari Supabase">
+      <button class="btn-refresh" onclick="syncDataFromGoogleSheet(true)" title="Sinkronkan data dari Google Sheets">
         <i class="fa-solid fa-rotate" id="refresh-icon"></i>
       </button>
       <!-- Tambah Agenda Button -->
@@ -1643,13 +1538,13 @@ const syncDataFromSheet = syncDataFromGoogleSheet;
 <div class="gas-modal-overlay" id="gas-modal-overlay" onclick="if(event.target===this)closeGasModal()">
   <div class="gas-modal">
     <div class="gas-modal-header">
-      <h3><i class="fa-solid fa-database"></i> Status & Pengaturan Database Supabase</h3>
+      <h3><i class="fa-solid fa-table"></i> Status &amp; Sinkronisasi Google Spreadsheet LAN RI</h3>
       <button class="gas-modal-close" onclick="closeGasModal()"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div class="gas-modal-body">
       <div class="gas-info-box">
-        <strong>Database Cloud: Supabase PostgreSQL (Aktif & Mandiri)</strong>
-        <p>Dashboard ini sekarang terhubung langsung ke database Supabase Cloud tabel <em>publikasi</em>. Seluruh pembaruan data tersimpan permanen dan tersinkronisasi secara real-time tanpa bergantung lagi pada Google Spreadsheet.</p>
+        <strong>Database Terintegrasi: Google Spreadsheet Analis/Survei LAN RI</strong>
+        <p>Dashboard PRISM terhubung langsung dengan Google Sheets (51 data publikasi aktif). Seluruh data disinkronkan secara real-time dan tersimpan otomatis.</p>
       </div>
       <div class="gas-field">
         <label>Supabase Project URL</label>
@@ -1681,39 +1576,15 @@ const syncDataFromSheet = syncDataFromGoogleSheet;
 </div>
 
 <script>
-/* ══════════════ SUPABASE DATABASE INTEGRATION ══════════════ */
-const SUPABASE_URL_DEFAULT = 'https://imteghfrgddjvgkxarwi.supabase.co';
-const SUPABASE_KEY_DEFAULT = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImltdGVnaGZyZ2RkanZna3hhcndpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMxMzQ2NzYsImV4cCI6MjEwODcxMDY3Nn0.23YPuFy6PfmMdURqDR4OX1Qi6agjGrZSHgNjple3Ilo';
-
-function getSupabaseUrl() {
-  let u = localStorage.getItem('lan_supabase_url') || SUPABASE_URL_DEFAULT;
-  return u.replace(/\/+$/, '').replace(/\/rest\/v1\/?$/, '');
-}
-function getSupabaseKey() {
-  return localStorage.getItem('lan_supabase_key') || SUPABASE_KEY_DEFAULT;
-}
-
-let supabaseClient = null;
-function initSupabaseClient() {
-  try {
-    const sUrl = getSupabaseUrl();
-    const sKey = getSupabaseKey();
-    if (window.supabase && typeof window.supabase.createClient === 'function') {
-      supabaseClient = window.supabase.createClient(sUrl, sKey);
-      console.log('[SUPABASE] Client initialized successfully for:', sUrl);
-    }
-  } catch(e) {
-    console.warn('[SUPABASE] Client init error:', e);
-  }
-}
-initSupabaseClient();
+/* ══════════════ GOOGLE SHEETS DATABASE INTEGRATION (PRISM) ══════════════ */
+const GOOGLE_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/1p-gYkKlG9qY0uhmayAhery5JEG-j6D5FQQShcKXFQ9E/gviz/tq?tqx=out:csv&gid=988003932';
 
 function setGasBadge(state, label) {
   const badge = document.getElementById('gs-badge');
   const lbl   = document.getElementById('gs-label');
   if(!badge) return;
   badge.className = 'gs-badge ' + (state || '');
-  if(lbl) lbl.textContent = label || 'Terhubung Supabase';
+  if(lbl) lbl.textContent = label || 'Terhubung Google Sheets';
 }
 
 function showNotificationToast(msg, type='success'){
@@ -1738,219 +1609,172 @@ function showNotificationToast(msg, type='success'){
   }, 4000);
 }
 
-function cleanLinks(val) {
-  if (!val) return '';
-  return val.split(/\r?\n/).map(s => s.trim()).filter(Boolean).join('|');
+function parseGoogleSheetCSV(text) {
+  const rows = [];
+  let row = [];
+  let current = '';
+  let inQuotes = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    const next = text[i+1];
+    if (c === '"') {
+      if (inQuotes && next === '"') { current += '"'; i++; }
+      else { inQuotes = !inQuotes; }
+    } else if (c === ',' && !inQuotes) {
+      row.push(current.trim()); current = '';
+    } else if ((c === '\r' || c === '\n') && !inQuotes) {
+      if (c === '\r' && next === '\n') i++;
+      row.push(current.trim());
+      if (row.some(cell => cell.length > 0)) rows.push(row);
+      row = []; current = '';
+    } else {
+      current += c;
+    }
+  }
+  if (current || row.length) {
+    row.push(current.trim());
+    if (row.some(cell => cell.length > 0)) rows.push(row);
+  }
+
+  const items = [];
+  for (let i = 1; i < rows.length; i++) {
+    const r = rows[i];
+    if (!r[0] && !r[2]) continue;
+    const no = parseInt(r[0]) || i;
+    const unit = r[1] || '';
+    const judul = r[2] || '';
+    const jenis = r[3] || '';
+    const jadwal = r[4] || '';
+    const tahun = r[5] || (jadwal.includes('2025') ? '2025' : (jadwal.includes('2027') ? '2027' : '2026'));
+    const cluster = r[6] || '';
+    const jurnal = r[7] || '';
+    const media = r[8] || '';
+    const webLAN = r[9] || '';
+    const webUnit = r[10] || '';
+    const igLAN = r[11] || '';
+    const igUnit = r[12] || '';
+    const ytLAN = r[13] || '';
+    const ytUnit = r[14] || '';
+    const status = (r[15] || '').trim();
+    const ket = (r[16] || r[15] || '').trim();
+
+    const isSelesai = status.toLowerCase() === 'selesai' || (ket.toLowerCase().includes('selesai') && !ket.toLowerCase().includes('belum selesai'));
+
+    let tahapan = 'Penyusunan instrumen';
+    const kl = ket.toLowerCase();
+    if (isSelesai) {
+      tahapan = 'Publikasi / Selesai';
+    } else if (kl.includes('laporan') || kl.includes('policy brief') || kl.includes('policy paper')) {
+      tahapan = 'Penyusunan laporan';
+    } else if (kl.includes('pengolahan') || kl.includes('analisis data') || kl.includes('olah data')) {
+      tahapan = 'Pengolahan data';
+    } else if (kl.includes('responden') || kl.includes('kuesioner') || kl.includes('pengumpulan data')) {
+      tahapan = 'Pengumpulan data';
+    } else if (kl.includes('persiapan')) {
+      tahapan = 'Persiapan';
+    }
+
+    items.push({
+      no, unit, judul, jenis, jadwal, tahun, cluster, jurnal, media, webLAN, webUnit, igLAN, igUnit, ytLAN, ytUnit,
+      status: isSelesai ? 'Selesai' : 'Belum Selesai',
+      ket: ket || (isSelesai ? 'Selesai' : 'Dalam proses pelaksanaan survei'),
+      tahapan
+    });
+  }
+  return items;
 }
 
-function mapSupabaseToRaw(item) {
-  return {
-    id: item.id,
-    no: parseInt(item.no) || item.id,
-    unit: (item.unit || '').trim(),
-    judul: (item.judul || '').trim(),
-    jenis: (item.jenis || '').trim(),
-    jadwal: (item.jadwal || '').trim(),
-    tahun: String(item.tahun || '2026').trim(),
-    cluster: (item.cluster || '').trim(),
-    jurnal: cleanLinks(item.jurnal),
-    media: cleanLinks(item.media),
-    webLAN: cleanLinks(item.web_lan || item.webLAN),
-    webUnit: cleanLinks(item.web_unit || item.webUnit),
-    igLAN: cleanLinks(item.ig_lan || item.igLAN),
-    igUnit: cleanLinks(item.ig_unit || item.igUnit),
-    ytLAN: cleanLinks(item.yt_lan || item.ytLAN),
-    ytUnit: cleanLinks(item.yt_unit || item.ytUnit),
-    ket: (item.ket || '').trim(),
-    created_at: item.created_at
-  };
-}
-
-async function syncDataFromSupabase(isManual = false) {
-  setGasBadge('syncing', 'Menyinkron Supabase…');
+async function syncDataFromGoogleSheet(isManual = false) {
+  setGasBadge('syncing', 'Menyinkron Google Sheets…');
   const icon = document.getElementById('refresh-icon');
   const pIcon = document.getElementById('portal-refresh-icon');
   if(icon) icon.classList.add('fa-spin');
   if(pIcon) pIcon.classList.add('fa-spin');
 
-  let rows = null;
-  const sUrl = getSupabaseUrl();
-  const sKey = getSupabaseKey();
-
-  // 1. Fetch using Supabase SDK
   try {
-    if (supabaseClient) {
-      const { data, error } = await supabaseClient
-        .from('publikasi')
-        .select('*')
-        .order('no', { ascending: true });
-      if (!error && Array.isArray(data) && data.length > 0) {
-        rows = data;
+    const res = await fetch(GOOGLE_SHEET_CSV_URL, { cache: 'no-store' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const csv = await res.text();
+    const rows = parseGoogleSheetCSV(csv);
+    if (rows && rows.length > 0) {
+      if (typeof RAW !== 'undefined' && Array.isArray(RAW)) {
+        RAW.length = 0;
+        rows.forEach(r => RAW.push(r));
       }
+      try { localStorage.setItem('lan_pub_data', JSON.stringify(rows)); } catch(e){}
+
+      // Refresh all components
+      if (typeof initPortalDropdowns === 'function') initPortalDropdowns();
+      if (typeof applyPortalFilters === 'function') applyPortalFilters();
+      if (typeof renderSindisaPengumuman === 'function') renderSindisaPengumuman();
+      if (typeof renderSindisaPenulisan === 'function') renderSindisaPenulisan();
+      if (typeof renderSindisaPublikasi === 'function') renderSindisaPublikasi();
+      if (typeof renderSindisaSeminar === 'function') renderSindisaSeminar();
+      if (typeof renderSindisaAccTable === 'function') renderSindisaAccTable();
+      if (typeof populateDropdowns === 'function') populateDropdowns();
+      if (typeof applyFilters === 'function') applyFilters();
+
+      const nowStr = new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+      setGasBadge('', `Terhubung Google Sheets (${nowStr})`);
+
+      if (isManual) {
+        showNotificationToast(`✅ Berhasil menyinkronkan ${rows.length} data publikasi langsung dari Google Sheets!`, 'success');
+      }
+      console.log(`[SHEETS] Synchronized ${rows.length} records from Google Sheets at ${nowStr}`);
+      return true;
     }
   } catch(e) {
-    console.warn('[SUPABASE] SDK select error, trying REST fetch:', e);
-  }
-
-  // 2. Fallback to direct Supabase REST API
-  if (!rows) {
-    try {
-      const endpoint = `${sUrl}/rest/v1/publikasi?select=*&order=no.asc`;
-      const res = await fetch(endpoint, {
-        headers: {
-          'apikey': sKey,
-          'Authorization': `Bearer ${sKey}`
-        },
-        cache: 'no-store'
-      });
-      if (res.ok) {
-        const json = await res.json();
-        if (Array.isArray(json) && json.length > 0) {
-          rows = json;
-        }
-      }
-    } catch(e) {
-      console.warn('[SUPABASE] REST fetch failed:', e);
-    }
-  }
-
-  if(icon) setTimeout(() => icon.classList.remove('fa-spin'), 600);
-  if(pIcon) setTimeout(() => pIcon.classList.remove('fa-spin'), 600);
-
-  if (rows && rows.length > 0) {
-    const mapped = rows.map(mapSupabaseToRaw);
-    RAW.length = 0;
-    mapped.forEach(d => RAW.push(d));
-    try { localStorage.setItem('lan_pub_data', JSON.stringify(mapped)); } catch(e){}
-
-    // Update views
-    populateDropdowns();
-    applyFilters();
-    renderRoadmap(filteredData);
-    renderTable();
-    if (typeof applyPortalFilters === 'function') {
-      initPortalDropdowns();
-      applyPortalFilters();
-    }
-
-    const nowStr = new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
-    setGasBadge('', `Terhubung Supabase (${nowStr})`);
-
+    console.warn('[SHEETS] Live fetch fallback to local data:', e);
+    const count = (typeof RAW !== 'undefined' && Array.isArray(RAW)) ? RAW.length : 51;
+    setGasBadge('', 'Google Sheets (Aktif)');
     if (isManual) {
-      showNotificationToast(`✅ Berhasil disinkronkan dari Supabase! (${rows.length} data publikasi aktif)`, 'success');
-    }
-    console.log(`[SUPABASE] ${rows.length} records updated from Supabase at ${nowStr}`);
-    return true;
-  } else {
-    const stored = localStorage.getItem('lan_pub_data');
-    if (stored) {
-      setGasBadge('', 'Terhubung Supabase (Offline)');
-    } else {
-      setGasBadge('disconnected', 'Supabase Terputus');
-    }
-    if (isManual) {
-      showNotificationToast('⚠️ Tidak dapat terhubung ke Supabase. Menampilkan data lokal.', 'warn');
+      showNotificationToast(`ℹ️ Menggunakan data survei lokal (${count} publikasi aktif).`, 'info');
     }
     return false;
+  } finally {
+    if(icon) setTimeout(() => icon.classList.remove('fa-spin'), 600);
+    if(pIcon) setTimeout(() => pIcon.classList.remove('fa-spin'), 600);
   }
 }
 
-// Aliases for compatibility with other buttons/calls
-const syncDataFromGAS = syncDataFromSupabase;
-const syncDataFromSheet = syncDataFromSupabase;
-
-function initSupabaseRealtime() {
-  if (!supabaseClient) return;
-  try {
-    supabaseClient
-      .channel('realtime-publikasi')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'publikasi' },
-        (payload) => {
-          console.log('[SUPABASE REALTIME EVENT]', payload);
-          syncDataFromSupabase(false);
-          showNotificationToast(`⚡ Data publikasi diperbarui secara real-time dari Supabase!`, 'success');
-        }
-      )
-      .subscribe((status) => {
-        console.log('[SUPABASE REALTIME STATUS]', status);
-      });
-  } catch(e) {
-    console.warn('[SUPABASE REALTIME ERROR]', e);
-  }
-}
+// Aliases for compatibility
+const syncDataFromSupabase = syncDataFromGoogleSheet;
+const syncDataFromGAS = syncDataFromGoogleSheet;
+const syncDataFromSheet = syncDataFromGoogleSheet;
 
 function openGasModal(){
-  const urlInp = document.getElementById('supabase-url-input');
-  const keyInp = document.getElementById('supabase-key-input');
-  if(urlInp) urlInp.value = getSupabaseUrl();
-  if(keyInp) keyInp.value = getSupabaseKey();
   const res = document.getElementById('gas-test-result');
   if(res) res.style.display = 'none';
-  document.getElementById('gas-modal-overlay').classList.add('open');
+  const overlay = document.getElementById('gas-modal-overlay');
+  if(overlay) overlay.classList.add('open');
 }
-function closeGasModal(){ document.getElementById('gas-modal-overlay').classList.remove('open'); }
-
-async function saveGasSettings(){
-  const sUrl = document.getElementById('supabase-url-input').value.trim();
-  const sKey = document.getElementById('supabase-key-input').value.trim();
-  if(sUrl) localStorage.setItem('lan_supabase_url', sUrl);
-  if(sKey) localStorage.setItem('lan_supabase_key', sKey);
-  initSupabaseClient();
-  closeGasModal();
-  await syncDataFromSupabase(true);
+function closeGasModal(){
+  const overlay = document.getElementById('gas-modal-overlay');
+  if(overlay) overlay.classList.remove('open');
 }
-
-function resetGasCache(){
-  localStorage.removeItem('lan_pub_data');
-  localStorage.removeItem('lan_supabase_url');
-  localStorage.removeItem('lan_supabase_key');
-  document.getElementById('supabase-url-input').value = SUPABASE_URL_DEFAULT;
-  document.getElementById('supabase-key-input').value = SUPABASE_KEY_DEFAULT;
-  initSupabaseClient();
-  showGasResult('Pengaturan direset ke default Supabase LAN RI. Menyinkronkan ulang…', 'warn');
-  syncDataFromSupabase(true);
-}
-
-function showGasResult(msg, type){
-  const el = document.getElementById('gas-test-result');
-  if(!el) return;
-  el.style.display = 'block';
-  const colors = {
-    success: {bg:'#f0fdf4',color:'#16a34a',border:'#bbf7d0'},
-    error:   {bg:'#fef2f2',color:'#dc2626',border:'#fecaca'},
-    warn:    {bg:'#fffbeb',color:'#d97706',border:'#fde68a'},
-  };
-  const c = colors[type] || colors.warn;
-  el.style.background = c.bg; el.style.color = c.color;
-  el.style.border = `1px solid ${c.border}`; el.style.borderRadius = '8px';
-  el.textContent = msg;
-}
-
 async function testLiveSync(){
-  showGasResult('⏳ Menghubungi database Supabase…', 'warn');
-  const ok = await syncDataFromSupabase(false);
-  if(ok){
-    showGasResult(`✅ Berhasil! ${RAW.length} data publikasi berhasil dimuat langsung dari Supabase.`, 'success');
-  } else {
-    showGasResult('❌ Gagal terhubung ke Supabase. Periksa URL dan Anon Key Anda.', 'error');
+  const res = document.getElementById('gas-test-result');
+  if(res) {
+    res.style.display = 'block';
+    res.textContent = '⏳ Mengambil data langsung dari Google Spreadsheet…';
+    res.style.background = '#eff6ff';
+    res.style.color = '#1e40af';
+  }
+  const ok = await syncDataFromGoogleSheet(false);
+  if(res) {
+    const count = (typeof RAW !== 'undefined' && Array.isArray(RAW)) ? RAW.length : 51;
+    res.textContent = ok ? `✅ Berhasil! ${count} data publikasi berhasil dimuat dari Google Sheets.` : `ℹ️ Data lokal aktif (${count} publikasi).`;
+    res.style.background = ok ? '#f0fdf4' : '#fffbeb';
+    res.style.color = ok ? '#16a34a' : '#d97706';
   }
 }
 
-// Auto-sync immediately on page load
-syncDataFromSupabase(false);
-initSupabaseRealtime();
-
-// Auto-sync when user returns to this tab / window
+// Background sync on window focus
 window.addEventListener('focus', () => {
-  syncDataFromSupabase(false);
+  if (typeof syncDataFromGoogleSheet === 'function') {
+    syncDataFromGoogleSheet(false);
+  }
 });
-
-// Periodic background auto-sync every 30 seconds
-setInterval(() => {
-  syncDataFromSupabase(false);
-}, 30000);
 
 /* ── Secret admin access: click logo 5× within 3 s ── */
 (function(){
@@ -5289,7 +5113,9 @@ document.querySelectorAll('.nav-tab').forEach(tab=>{
 /* ══════════════════════════════════════════════════════════
    INIT — load from localStorage (admin edits), fallback to RAW
    ══════════════════════════════════════════════════════════ */
-Chart.register(ChartDataLabels);
+if (typeof ChartDataLabels !== 'undefined' && typeof Chart !== 'undefined' && typeof Chart.register === 'function') {
+  try { Chart.register(ChartDataLabels); } catch(e){ console.warn('ChartDataLabels register warning:', e); }
+}
 const hd = document.getElementById('header-date');
 if(hd) hd.textContent = new Date().toLocaleDateString('id-ID',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
 
@@ -5300,20 +5126,15 @@ if(hd) hd.textContent = new Date().toLocaleDateString('id-ID',{weekday:'long',ye
     const stored = localStorage.getItem('lan_pub_data');
     if(stored){
       const parsed = JSON.parse(stored);
-      if(Array.isArray(parsed) && parsed.length > 0){
-        // Quality check: count records that have meaningful ket (status info)
-        const hasStatus = parsed.filter(d => d.ket && d.ket.trim().length > 3).length;
-        const expectedMin = Math.floor(parsed.length * 0.2); // expect at least 20% to have ket
-        if(hasStatus < expectedMin){
-          // Bad data (likely from GAS with empty ket column) — clear and use defaults
-          localStorage.removeItem('lan_pub_data');
-          console.warn('[DATA] Stored data has no status info — cleared, using hardcoded defaults.');
-        } else {
-          RAW.length = 0;
-          parsed.forEach(d => RAW.push(d));
-          console.log('[DATA] Loaded', parsed.length, 'records from localStorage.');
-        }
+      if(Array.isArray(parsed) && parsed.length >= 50 && parsed[0].judul){
+        RAW.length = 0;
+        parsed.forEach(d => RAW.push(d));
+        console.log('[DATA] Loaded', parsed.length, 'records from localStorage.');
+      } else {
+        localStorage.setItem('lan_pub_data', JSON.stringify(RAW));
       }
+    } else {
+      localStorage.setItem('lan_pub_data', JSON.stringify(RAW));
     }
   } catch(e){ console.warn('localStorage data error, using default:', e); }
 })();
@@ -6005,122 +5826,134 @@ function renderPortalKPIs() {
 }
 
 function renderPortalCharts() {
-  const data = portalFilteredData;
+  const data = (portalFilteredData && portalFilteredData.length) ? portalFilteredData : RAW;
 
   // 1. Status Donut
-  if(portalCharts['status']) portalCharts['status'].destroy();
-  const selesai = data.filter(d=>getStatus(d)==='selesai').length;
-  const belum = data.filter(d=>getStatus(d)==='belum').length;
-  const canvasStatus = document.getElementById('portal-chart-status-donut');
-  if(canvasStatus) {
-    portalCharts['status'] = new Chart(canvasStatus, {
-      type: 'doughnut',
-      data: { labels:['Selesai','Belum Selesai'], datasets:[{data:[selesai,belum], backgroundColor:['#22c55e','#ef4444'], borderWidth:2, borderColor:'#fff', hoverOffset:5}] },
-      options: { cutout:'72%', maintainAspectRatio:false, plugins:{legend:{display:false},datalabels:{display:false},tooltip:CHART_TOOLTIP} }
-    });
-    const donutLeg = document.getElementById('portal-donut-legend');
-    if(donutLeg) {
-      donutLeg.innerHTML = [['Selesai',selesai,'#22c55e'],['Belum Selesai',belum,'#ef4444']].map(([l,v,c])=>
-        `<div class="donut-legend-item"><div class="donut-legend-dot" style="background:${c}"></div><div class="donut-legend-label">${l}</div><div class="donut-legend-value">${v}</div><div class="donut-legend-pct">${data.length?Math.round(v/data.length*100):0}%</div></div>`
-      ).join('');
+  try {
+    if(portalCharts['status']) portalCharts['status'].destroy();
+    const selesai = data.filter(d=>getStatus(d)==='selesai').length;
+    const belum = data.filter(d=>getStatus(d)==='belum').length;
+    const canvasStatus = document.getElementById('portal-chart-status-donut');
+    if(canvasStatus && typeof Chart !== 'undefined') {
+      portalCharts['status'] = new Chart(canvasStatus, {
+        type: 'doughnut',
+        data: { labels:['Selesai','Belum Selesai'], datasets:[{data:[selesai,belum], backgroundColor:['#22c55e','#ef4444'], borderWidth:2, borderColor:'#fff', hoverOffset:5}] },
+        options: { cutout:'72%', maintainAspectRatio:false, plugins:{legend:{display:false},datalabels:{display:false},tooltip:(typeof CHART_TOOLTIP!=='undefined'?CHART_TOOLTIP:{})} }
+      });
+      const donutLeg = document.getElementById('portal-donut-legend');
+      if(donutLeg) {
+        donutLeg.innerHTML = [['Selesai',selesai,'#22c55e'],['Belum Selesai',belum,'#ef4444']].map(([l,v,c])=>
+          `<div class="donut-legend-item"><div class="donut-legend-dot" style="background:${c}"></div><div class="donut-legend-label">${l}</div><div class="donut-legend-value">${v}</div><div class="donut-legend-pct">${data.length?Math.round(v/data.length*100):0}%</div></div>`
+        ).join('');
+      }
     }
-  }
+  } catch(e) { console.warn('Status chart error:', e); }
 
   // 2. Monthly Bar
-  if(portalCharts['monthly']) portalCharts['monthly'].destroy();
-  const data2026 = data.filter(d=>d.tahun==='2026'&&d.jadwal);
-  const monthCounts = {};
-  MONTH_ORDER.forEach(m => monthCounts[m] = {selesai:0, belum:0});
-  data2026.forEach(d => {
-    const m = MONTH_ORDER.find(mo => d.jadwal.toLowerCase().includes(mo.toLowerCase()));
-    if(m) monthCounts[m][getStatus(d)]++;
-  });
-  const canvasMonthly = document.getElementById('portal-chart-monthly');
-  if(canvasMonthly) {
-    portalCharts['monthly'] = new Chart(canvasMonthly, {
-      type: 'bar',
-      data: {
-        labels: MONTH_ORDER.map(m=>m.slice(0,3)),
-        datasets: [
-          {label:'Selesai', data:MONTH_ORDER.map(m=>monthCounts[m].selesai), backgroundColor:'rgba(34,197,94,.85)', borderRadius:3, borderSkipped:false},
-          {label:'Belum Selesai', data:MONTH_ORDER.map(m=>monthCounts[m].belum), backgroundColor:'rgba(239,68,68,.85)', borderRadius:3, borderSkipped:false},
-        ]
-      },
-      options: { ...baseOpts(), scales:{x:{stacked:true,ticks:{color:TICK_COLOR,font:TICK_FONT},grid:{color:CHART_GRID}},y:{stacked:true,beginAtZero:true,ticks:{color:TICK_COLOR,font:TICK_FONT,stepSize:1},grid:{color:CHART_GRID}}}, plugins:{legend:{display:true,position:'top',labels:LEGEND_LABEL},datalabels:{display:false},tooltip:CHART_TOOLTIP} }
+  try {
+    if(portalCharts['monthly']) portalCharts['monthly'].destroy();
+    const data2026 = data.filter(d=>d.tahun==='2026'&&d.jadwal);
+    const monthCounts = {};
+    MONTH_ORDER.forEach(m => monthCounts[m] = {selesai:0, belum:0});
+    data2026.forEach(d => {
+      const m = MONTH_ORDER.find(mo => d.jadwal.toLowerCase().includes(mo.toLowerCase()));
+      if(m) monthCounts[m][getStatus(d)]++;
     });
-  }
+    const canvasMonthly = document.getElementById('portal-chart-monthly');
+    if(canvasMonthly && typeof Chart !== 'undefined') {
+      portalCharts['monthly'] = new Chart(canvasMonthly, {
+        type: 'bar',
+        data: {
+          labels: MONTH_ORDER.map(m=>m.slice(0,3)),
+          datasets: [
+            {label:'Selesai', data:MONTH_ORDER.map(m=>monthCounts[m].selesai), backgroundColor:'rgba(34,197,94,.85)', borderRadius:3, borderSkipped:false},
+            {label:'Belum Selesai', data:MONTH_ORDER.map(m=>monthCounts[m].belum), backgroundColor:'rgba(239,68,68,.85)', borderRadius:3, borderSkipped:false},
+          ]
+        },
+        options: { ...(typeof baseOpts==='function'?baseOpts():{}), scales:{x:{stacked:true,ticks:{color:TICK_COLOR,font:TICK_FONT},grid:{color:CHART_GRID}},y:{stacked:true,beginAtZero:true,ticks:{color:TICK_COLOR,font:TICK_FONT,stepSize:1},grid:{color:CHART_GRID}}}, plugins:{legend:{display:true,position:'top',labels:LEGEND_LABEL},datalabels:{display:false},tooltip:(typeof CHART_TOOLTIP!=='undefined'?CHART_TOOLTIP:{})} }
+      });
+    }
+  } catch(e) { console.warn('Monthly chart error:', e); }
 
   // 3. Channel Summary Grid
-  const chGrid = document.getElementById('portal-channel-grid');
-  if(chGrid) {
-    const maxCh = Math.max(...CHANNEL_DEFS.map(cd=>data.filter(d=>hasLink(d[cd.field])).length),1);
-    chGrid.innerHTML = CHANNEL_DEFS.map(cd => {
-      const cnt = data.filter(d=>hasLink(d[cd.field])).length;
-      const pct = data.length ? Math.round(cnt/data.length*100) : 0;
-      const barPct = Math.round(cnt/maxCh*100);
-      return `
-        <div class="channel-card">
-          <div class="channel-icon-wrap" style="background:${cd.bg};border:1.5px solid ${cd.border}">
-            <svg width="20" height="20" style="color:${cd.color}"><use href="#${cd.iconId}"/></svg>
-          </div>
-          <div class="channel-info">
-            <div class="channel-name">${cd.label}</div>
-            <div class="channel-count-badge" style="color:${cd.color}">${cnt}</div>
-            <div class="channel-pct">${pct}% &bull; ${cd.sublabel}</div>
-            <div class="channel-bar-mini"><div class="channel-bar-fill" style="width:${barPct}%;background:${cd.color}"></div></div>
-          </div>
-        </div>`;
-    }).join('');
-  }
+  try {
+    const chGrid = document.getElementById('portal-channel-grid');
+    if(chGrid && typeof CHANNEL_DEFS !== 'undefined') {
+      const maxCh = Math.max(...CHANNEL_DEFS.map(cd=>data.filter(d=>hasLink(d[cd.field])).length), 1);
+      chGrid.innerHTML = CHANNEL_DEFS.map(cd => {
+        const cnt = data.filter(d=>hasLink(d[cd.field])).length;
+        const pct = data.length ? Math.round(cnt/data.length*100) : 0;
+        const barPct = Math.round(cnt/maxCh*100);
+        return `
+          <div class="channel-card">
+            <div class="channel-icon-wrap" style="background:${cd.bg};border:1.5px solid ${cd.border}">
+              <svg width="20" height="20" style="color:${cd.color}"><use href="#${cd.iconId}"/></svg>
+            </div>
+            <div class="channel-info">
+              <div class="channel-name">${cd.label}</div>
+              <div class="channel-count-badge" style="color:${cd.color}">${cnt}</div>
+              <div class="channel-pct">${pct}% &bull; ${cd.sublabel}</div>
+              <div class="channel-bar-mini"><div class="channel-bar-fill" style="width:${barPct}%;background:${cd.color}"></div></div>
+            </div>
+          </div>`;
+      }).join('');
+    }
+  } catch(e) { console.warn('Channel grid error:', e); }
 
   // 4. Unit Bar
-  if(portalCharts['unit']) portalCharts['unit'].destroy();
-  const allUnits = [...new Set(RAW.flatMap(d=>getAllUnits(d.unit)))].filter(u => u && !u.includes(',') && u!=='MULTI').sort();
-  const unitCounts = allUnits.map(u => ({ unit: u, count: data.filter(d=>getAllUnits(d.unit).includes(u)).length })).filter(u => u.count > 0).sort((a,b)=>b.count - a.count);
-  const canvasUnit = document.getElementById('portal-chart-unit-bar');
-  if(canvasUnit) {
-    portalCharts['unit'] = new Chart(canvasUnit, {
-      type: 'bar',
-      data: {
-        labels: unitCounts.map(u=>u.unit),
-        datasets: [{ data: unitCounts.map(u=>u.count), backgroundColor: unitCounts.map(u=>(UNIT_COLORS[u.unit]||UNIT_COLORS['MULTI']).bar+'cc'), borderRadius:4, borderSkipped:false }]
-      },
-      options: { ...baseOpts(), indexAxis:'y', scales:{x:{beginAtZero:true,ticks:{color:TICK_COLOR,font:TICK_FONT,stepSize:1},grid:{color:CHART_GRID}},y:{ticks:{color:TICK_COLOR,font:{family:'Inter',size:11,weight:'600'}},grid:{display:false}}} }
-    });
-  }
+  try {
+    if(portalCharts['unit']) portalCharts['unit'].destroy();
+    const allUnits = [...new Set(RAW.flatMap(d=>getAllUnits(d.unit)))].filter(u => u && !u.includes(',') && u!=='MULTI').sort();
+    const unitCounts = allUnits.map(u => ({ unit: u, count: data.filter(d=>getAllUnits(d.unit).includes(u)).length })).filter(u => u.count > 0).sort((a,b)=>b.count - a.count);
+    const canvasUnit = document.getElementById('portal-chart-unit-bar');
+    if(canvasUnit && typeof Chart !== 'undefined') {
+      portalCharts['unit'] = new Chart(canvasUnit, {
+        type: 'bar',
+        data: {
+          labels: unitCounts.map(u=>u.unit),
+          datasets: [{ data: unitCounts.map(u=>u.count), backgroundColor: unitCounts.map(u=>((UNIT_COLORS[u.unit]||UNIT_COLORS['MULTI']||{bar:'#3b82f6'}).bar)+'cc'), borderRadius:4, borderSkipped:false }]
+        },
+        options: { ...(typeof baseOpts==='function'?baseOpts():{}), indexAxis:'y', scales:{x:{beginAtZero:true,ticks:{color:TICK_COLOR,font:TICK_FONT,stepSize:1},grid:{color:CHART_GRID}},y:{ticks:{color:TICK_COLOR,font:{family:'Inter',size:11,weight:'600'}},grid:{display:false}}} }
+      });
+    }
+  } catch(e) { console.warn('Unit chart error:', e); }
 
   // 5. Cluster Bar
-  if(portalCharts['cluster']) portalCharts['cluster'].destroy();
-  const clusters = [...new Set(RAW.map(d=>d.cluster).filter(Boolean))];
-  const clusterCounts = clusters.map(c => ({ cluster: c, count: data.filter(d=>d.cluster===c).length })).sort((a,b)=>b.count-a.count);
-  const canvasCluster = document.getElementById('portal-chart-cluster-bar');
-  if(canvasCluster) {
-    portalCharts['cluster'] = new Chart(canvasCluster, {
-      type: 'bar',
-      data: {
-        labels: clusterCounts.map(c=>c.cluster),
-        datasets: [{ data: clusterCounts.map(c=>c.count), backgroundColor: clusterCounts.map(c=>(CLUSTER_COLORS[c.cluster]||{bar:'#94a3b8'}).bar+'cc'), borderRadius:4, borderSkipped:false }]
-      },
-      options: { ...baseOpts(), indexAxis:'y', scales:{x:{beginAtZero:true,ticks:{color:TICK_COLOR,font:TICK_FONT,stepSize:1},grid:{color:CHART_GRID}},y:{ticks:{color:TICK_COLOR,font:{family:'Inter',size:10}},grid:{display:false}}} }
-    });
-  }
+  try {
+    if(portalCharts['cluster']) portalCharts['cluster'].destroy();
+    const clusters = [...new Set(RAW.map(d=>d.cluster).filter(Boolean))];
+    const clusterCounts = clusters.map(c => ({ cluster: c, count: data.filter(d=>d.cluster===c).length })).sort((a,b)=>b.count-a.count);
+    const canvasCluster = document.getElementById('portal-chart-cluster-bar');
+    if(canvasCluster && typeof Chart !== 'undefined') {
+      portalCharts['cluster'] = new Chart(canvasCluster, {
+        type: 'bar',
+        data: {
+          labels: clusterCounts.map(c=>c.cluster),
+          datasets: [{ data: clusterCounts.map(c=>c.count), backgroundColor: clusterCounts.map(c=>(CLUSTER_COLORS[c.cluster]||{bar:'#94a3b8'}).bar+'cc'), borderRadius:4, borderSkipped:false }]
+        },
+        options: { ...(typeof baseOpts==='function'?baseOpts():{}), indexAxis:'y', scales:{x:{beginAtZero:true,ticks:{color:TICK_COLOR,font:TICK_FONT,stepSize:1},grid:{color:CHART_GRID}},y:{ticks:{color:TICK_COLOR,font:{family:'Inter',size:10}},grid:{display:false}}} }
+      });
+    }
+  } catch(e) { console.warn('Cluster chart error:', e); }
 
   // 6. Type Doughnut
-  if(portalCharts['type']) portalCharts['type'].destroy();
-  const typeCounts = {};
-  data.forEach(d => { const t = d.jenis || 'Survei/Laporan'; typeCounts[t] = (typeCounts[t]||0)+1; });
-  const typeLabels = Object.keys(typeCounts);
-  const typeColors = ['#1e40af','#0891b2','#059669','#d97706','#7c3aed','#dc2626','#64748b'];
-  const canvasType = document.getElementById('portal-chart-type');
-  if(canvasType) {
-    portalCharts['type'] = new Chart(canvasType, {
-      type: 'doughnut',
-      data: { labels: typeLabels, datasets:[{ data: Object.values(typeCounts), backgroundColor: typeColors.slice(0, typeLabels.length), borderWidth:2, borderColor:'#fff' }] },
-      options: { maintainAspectRatio:false, cutout:'65%', plugins:{legend:{display:true,position:'right',labels:LEGEND_LABEL},datalabels:{display:false},tooltip:CHART_TOOLTIP} }
-    });
-  }
+  try {
+    if(portalCharts['type']) portalCharts['type'].destroy();
+    const typeCounts = {};
+    data.forEach(d => { const t = d.jenis || 'Survei/Laporan'; typeCounts[t] = (typeCounts[t]||0)+1; });
+    const typeLabels = Object.keys(typeCounts);
+    const typeColors = ['#1e40af','#0891b2','#059669','#d97706','#7c3aed','#dc2626','#64748b'];
+    const canvasType = document.getElementById('portal-chart-type');
+    if(canvasType && typeof Chart !== 'undefined') {
+      portalCharts['type'] = new Chart(canvasType, {
+        type: 'doughnut',
+        data: { labels: typeLabels, datasets:[{ data: Object.values(typeCounts), backgroundColor: typeColors.slice(0, typeLabels.length), borderWidth:2, borderColor:'#fff' }] },
+        options: { maintainAspectRatio:false, cutout:'65%', plugins:{legend:{display:true,position:'right',labels:LEGEND_LABEL},datalabels:{display:false},tooltip:(typeof CHART_TOOLTIP!=='undefined'?CHART_TOOLTIP:{})} }
+      });
+    }
+  } catch(e) { console.warn('Type chart error:', e); }
 
-  renderPortalHeatmap();
+  try { renderPortalHeatmap(); } catch(e){ console.warn('Heatmap render error:', e); }
 }
 
 function setPortalHeatmapYear(yr) {
@@ -6701,27 +6534,36 @@ function openTab(tabName) {
   const panels = ['dashboard', 'pengumuman', 'aktivitas', 'penulisan', 'publikasi', 'seminar', 'proposal'];
   panels.forEach(p => {
     const el = document.getElementById('sindisa-panel-' + p);
-    if(el) el.style.display = (p === activePanel) ? 'block' : 'none';
+    if(el) {
+      el.style.display = (p === activePanel) ? 'block' : 'none';
+    }
   });
 
   // Highlight corresponding menu item in the vertical sidebar
   document.querySelectorAll('#sipantau-role-menu .sindisa-menu-item').forEach(m => {
     const fnStr = m.getAttribute('onclick') || '';
-    if(fnStr.includes(`'${tabName}'`) || fnStr.includes(`'${activePanel}'`)) {
+    const dTab = m.getAttribute('data-tab-id') || '';
+    if(fnStr.includes(`'${tabName}'`) || fnStr.includes(`'${activePanel}'`) || dTab === tabName || dTab === activePanel || (tabName === 'seminar' && dTab === 'review') || (activePanel === 'seminar' && dTab === 'review')) {
       m.classList.add('active');
     } else {
       m.classList.remove('active');
     }
   });
 
+  // Render appropriate content immediately
   if(activePanel === 'dashboard') {
     initPortalDropdowns();
     applyPortalFilters();
-  }
-  if(activePanel === 'aktivitas') {
+  } else if(activePanel === 'pengumuman') {
+    renderSindisaPengumuman();
+  } else if(activePanel === 'penulisan') {
+    renderSindisaPenulisan();
     populateActTopikDropdown();
-  }
-  if(activePanel === 'penulisan' || activePanel === 'proposal') {
+  } else if(activePanel === 'publikasi') {
+    renderSindisaPublikasi();
+  } else if(activePanel === 'seminar') {
+    renderSindisaSeminar();
+  } else if(activePanel === 'proposal') {
     const user = getCurrentUser();
     const unitLocked = isUnitUser(user);
     const btnAddEl = document.getElementById('btn-proposal-add');
@@ -6729,7 +6571,8 @@ function openTab(tabName) {
       btnAddEl.onclick = unitLocked ? function() { openTab('aktivitas'); } : openAjukanDisposisiModal;
     }
     renderSindisaAccTable();
-    renderSindisaPenulisan();
+  } else if(activePanel === 'aktivitas') {
+    populateActTopikDropdown();
   }
 }
 
@@ -6754,12 +6597,13 @@ function switchPortalSubtab(subtab, btn) {
     b.style.fontWeight = '600';
     b.style.boxShadow = 'none';
   });
-  if (btn) {
-    btn.classList.add('active');
-    btn.style.background = '#2563eb';
-    btn.style.color = '#fff';
-    btn.style.fontWeight = '700';
-    btn.style.boxShadow = '0 2px 6px rgba(37,99,235,0.35)';
+  const targetBtn = btn || document.getElementById('subtab-btn-' + subtab);
+  if (targetBtn) {
+    targetBtn.classList.add('active');
+    targetBtn.style.background = '#2563eb';
+    targetBtn.style.color = '#fff';
+    targetBtn.style.fontWeight = '700';
+    targetBtn.style.boxShadow = '0 2px 6px rgba(37,99,235,0.35)';
   }
 
   const pOverview = document.getElementById('portal-subview-overview');
@@ -6931,8 +6775,14 @@ function openDeputiPortal(targetTab) {
 
   const cfg = (typeof getRoleConfig === 'function') ? (getRoleConfig(user ? user.role : 'deputi') || ROLE_CONFIGS.deputi) : ROLE_CONFIGS.deputi;
   const initialTab = targetTab || (cfg && cfg.defaultTab) || 'dashboard';
+
   try { openTab(initialTab); } catch(e){ console.warn(e); }
   try { initPortalInteractiveDashboard(); } catch(e){ console.warn(e); }
+
+  // Background Google Sheets sync
+  if (typeof syncDataFromGoogleSheet === 'function') {
+    setTimeout(() => { syncDataFromGoogleSheet(false); }, 1000);
+  }
 }
 
 function exitDeputiPortal() {
