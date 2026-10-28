@@ -1148,58 +1148,44 @@
         <div class="prism-alert" id="sipantau-login-alert" style="display:none"></div>
 
         <!-- FORM LOGIN -->
-        <form onsubmit="handlePrismLogin(event)">
+        <form onsubmit="handlePrismLogin(event)" autocomplete="off">
           <!-- FIELD 1: DROPDOWN NAMA JABATAN -->
           <div class="prism-form-group">
             <div class="prism-input-wrap">
               <i class="fa-solid fa-user-tie prism-icon-left"></i>
               <select id="landing-jabatan" class="prism-select" onchange="handleJabatanChange(this.value)" required>
-                <option value="" disabled selected>Pilih Nama Jabatan / Akun...</option>
-                <option value="kepala.lan">Pimpinan Lembaga Administrasi Negara — (@kepala.lan)</option>
-                <option value="deputi">Deputi Kajian Kebijakan &amp; Inovasi — (@deputi)</option>
-                <option value="admin.dspk2an">Pengelola Survei &amp; Publikasi DSPK2AN — (@admin.dspk2an)</option>
-                <option value="humas.lan">Biro Humas &amp; Publikasi — (@humas.lan)</option>
-                <option value="skpp">Pusat Kajian Kebijakan — (@skpp)</option>
-                <option value="dapkk">Aparatur &amp; Kelembagaan — (@dapkk)</option>
-                <option value="skmp">Manajemen Publik — (@skmp)</option>
-                <option value="sktan">Tata Administrasi Negara — (@sktan)</option>
-                <option value="stia.jkt">Politeknik STIA LAN Jakarta — (@stia.jkt)</option>
-                <option value="stia.mks">Politeknik STIA LAN Makassar — (@stia.mks)</option>
-                <option value="stia.bdg">Politeknik STIA LAN Bandung — (@stia.bdg)</option>
-                <option value="skmk">Pusat Pembelajaran dan Strategi Kebijakan Manajemen Kinerja — (@skmk)</option>
+                <option value="" disabled selected>Pilih Nama Jabatan...</option>
+                <option value="kepala.lan">Pimpinan Lembaga Administrasi Negara</option>
+                <option value="deputi">Deputi Kajian Kebijakan &amp; Inovasi</option>
+                <option value="admin.dspk2an">Pengelola Survei &amp; Publikasi DSPK2AN</option>
+                <option value="humas.lan">Biro Humas &amp; Publikasi</option>
+                <option value="skpp">Pusat Kajian Kebijakan</option>
+                <option value="dapkk">Aparatur &amp; Kelembagaan</option>
+                <option value="skmp">Manajemen Publik</option>
+                <option value="sktan">Tata Administrasi Negara</option>
+                <option value="stia.jkt">Politeknik STIA LAN Jakarta</option>
+                <option value="stia.mks">Politeknik STIA LAN Makassar</option>
+                <option value="stia.bdg">Politeknik STIA LAN Bandung</option>
+                <option value="skmk">Pusat Pembelajaran dan Strategi Kebijakan Manajemen Kinerja</option>
               </select>
               <i class="fa-solid fa-chevron-down prism-select-arrow"></i>
             </div>
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:5px;font-size:11px">
-              <span id="login-mode-hint" style="color:#64748b">Pilih jabatan dari daftar di atas</span>
-              <a href="javascript:void(0)" onclick="toggleManualUsername()" id="btn-toggle-input" style="color:#2563eb;font-weight:600;text-decoration:none"><i class="fa-solid fa-keyboard"></i> Ketik Username Manual</a>
-            </div>
-            <div id="manual-username-wrap" style="display:none;margin-top:8px;position:relative">
-              <i class="fa-solid fa-at prism-icon-left"></i>
-              <input type="text" id="landing-username-manual" placeholder="Ketik username (contoh: deputi, skmk, kepala.lan...)" class="prism-input" oninput="handleManualUsernameInput(this.value)" autocomplete="username" />
-            </div>
           </div>
 
-          <!-- JABATAN INFO CHIP (AUTO-DISPLAYED) -->
-          <div id="landing-jabatan-chip" class="prism-jabatan-chip" style="display:none">
-            <span id="landing-jabatan-unit"><i class="fa-solid fa-building-circle-check"></i> Unit: LAN RI</span>
-            <span id="landing-jabatan-user" style="font-weight:700">@kepala.lan</span>
-          </div>
-
-          <!-- FIELD 2: PASSWORD -->
+          <!-- FIELD 2: PASSWORD (TIDAK OTOMATIS TERISI) -->
           <div class="prism-form-group">
             <div class="prism-input-wrap">
               <i class="fa-solid fa-lock prism-icon-left"></i>
-              <input type="password" id="landing-password" placeholder="Password" required class="prism-input" autocomplete="current-password" />
+              <input type="password" id="landing-password" placeholder="Password" required class="prism-input" autocomplete="new-password" value="" />
               <i class="fa-regular fa-eye prism-pwd-toggle" id="toggle-pwd-icon" onclick="togglePasswordVisibility()" title="Lihat password"></i>
             </div>
           </div>
 
-          <!-- FIELD 3: VERIFICATION CODE (CAPTCHA) -->
+          <!-- FIELD 3: VERIFICATION CODE (TIDAK OTOMATIS TERISI) -->
           <div class="prism-captcha-row">
             <div class="prism-input-wrap" style="flex:1">
               <i class="fa-solid fa-shield-halved prism-icon-left"></i>
-              <input type="text" id="landing-captcha" placeholder="Verification code" value="8Ad4F" required class="prism-input" maxlength="6" autocomplete="off" />
+              <input type="text" id="landing-captcha" placeholder="Verification code" required class="prism-input" maxlength="6" autocomplete="off" value="" />
             </div>
             <div class="prism-captcha-box" onclick="refreshCaptcha()" title="Klik untuk refresh kode verifikasi">
               <span id="captcha-text" class="prism-captcha-text">8Ad4F</span>
@@ -1221,7 +1207,7 @@
 
       <!-- FOOTER NOTE -->
       <div style="font-size:10.5px;color:#94a3b8;text-align:center;padding-top:10px;border-top:1px solid #f1f5f9">
-        Lembaga Administrasi Negara Republik Indonesia &bull; Terhubung Database Supabase
+        Lembaga Administrasi Negara Republik Indonesia
       </div>
     </div>
 
@@ -4392,7 +4378,6 @@ function findUserAccount(query) {
 
 /* ══════════════════ PRISM AUTHENTICATION & JABATAN MAPPING ══════════════════ */
 let currentCaptcha = '8Ad4F';
-let isManualUsernameMode = false;
 
 function generateRandomCaptcha() {
   const chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz';
@@ -4408,7 +4393,7 @@ function refreshCaptcha() {
   const el = document.getElementById('captcha-text');
   if (el) el.textContent = currentCaptcha;
   const inp = document.getElementById('landing-captcha');
-  if (inp) inp.value = currentCaptcha;
+  if (inp) inp.value = '';
 }
 
 function togglePasswordVisibility() {
@@ -4426,56 +4411,10 @@ function togglePasswordVisibility() {
   }
 }
 
-function toggleManualUsername() {
-  isManualUsernameMode = !isManualUsernameMode;
-  const wrap = document.getElementById('manual-username-wrap');
-  const btn = document.getElementById('btn-toggle-input');
-  const hint = document.getElementById('login-mode-hint');
-  const sel = document.getElementById('landing-jabatan');
-  const manualInp = document.getElementById('landing-username-manual');
-
-  if (wrap) wrap.style.display = isManualUsernameMode ? 'block' : 'none';
-  if (btn) btn.innerHTML = isManualUsernameMode ? '<i class="fa-solid fa-list-check"></i> Pilih dari Dropdown' : '<i class="fa-solid fa-keyboard"></i> Ketik Username Manual';
-  if (hint) hint.textContent = isManualUsernameMode ? 'Ketik username akun (contoh: deputi, skmk)' : 'Pilih jabatan dari daftar di atas';
-
-  if (isManualUsernameMode && manualInp) {
-    manualInp.focus();
-    if (sel && sel.value) manualInp.value = sel.value;
-  }
-}
-
 function handleJabatanChange(val) {
   const alertEl = document.getElementById('sipantau-login-alert');
   if (alertEl) alertEl.style.display = 'none';
-
-  const matched = findUserAccount(val);
-  const sel = document.getElementById('landing-jabatan');
-  const pwdInp = document.getElementById('landing-password');
-  const chipEl = document.getElementById('landing-jabatan-chip');
-  const unitEl = document.getElementById('landing-jabatan-unit');
-  const userEl = document.getElementById('landing-jabatan-user');
-  const captchaInp = document.getElementById('landing-captcha');
-  const manualInp = document.getElementById('landing-username-manual');
-
-  if (matched) {
-    if (sel && sel.value !== matched.username) sel.value = matched.username;
-    if (manualInp) manualInp.value = matched.username;
-    if (pwdInp) pwdInp.value = matched.password;
-    if (chipEl) {
-      chipEl.style.display = 'flex';
-      if (unitEl) unitEl.innerHTML = '<i class="fa-solid fa-building-circle-check"></i> ' + (matched.jabatan || matched.unit);
-      if (userEl) userEl.textContent = '@' + matched.username;
-    }
-    if (captchaInp && !captchaInp.value) {
-      captchaInp.value = currentCaptcha;
-    }
-  } else {
-    if (chipEl) chipEl.style.display = 'none';
-  }
-}
-
-function handleManualUsernameInput(val) {
-  handleJabatanChange(val);
+  // Password & Verification code are intentionally left empty for the user to fill manually
 }
 
 function showLoginError(msg) {
@@ -4485,43 +4424,61 @@ function showLoginError(msg) {
   alertEl.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> <span>' + msg + '</span>';
 }
 
+function clearLoginForm() {
+  const pwd = document.getElementById('landing-password');
+  const cap = document.getElementById('landing-captcha');
+  if (pwd) pwd.value = '';
+  if (cap) cap.value = '';
+}
+
 async function handlePrismLogin(e) {
-  e.preventDefault();
+  if (e) e.preventDefault();
   const alertEl = document.getElementById('sipantau-login-alert');
   if (alertEl) alertEl.style.display = 'none';
 
   const sel = document.getElementById('landing-jabatan');
-  const manualInp = document.getElementById('landing-username-manual');
-  const enteredQuery = (isManualUsernameMode && manualInp && manualInp.value.trim())
-    ? manualInp.value.trim()
-    : (sel ? sel.value.trim() : '');
-
+  const enteredQuery = sel ? sel.value.trim() : '';
   const password = document.getElementById('landing-password') ? document.getElementById('landing-password').value.trim() : '';
   const captcha = document.getElementById('landing-captcha') ? document.getElementById('landing-captcha').value.trim() : '';
 
   if (!enteredQuery) {
-    showLoginError('Silakan pilih Nama Jabatan atau ketik Username terlebih dahulu.');
-    return;
+    showLoginError('Silakan pilih Nama Jabatan terlebih dahulu.');
+    if (sel) sel.focus();
+    return false;
+  }
+
+  if (!password) {
+    showLoginError('Silakan masukkan kata sandi.');
+    const pwdInp = document.getElementById('landing-password');
+    if (pwdInp) pwdInp.focus();
+    return false;
+  }
+
+  if (!captcha) {
+    showLoginError('Silakan ketik kode verifikasi yang tertera di samping (' + currentCaptcha + ').');
+    const capInp = document.getElementById('landing-captcha');
+    if (capInp) capInp.focus();
+    return false;
+  }
+
+  // Verifikasi Kode Captcha (case-insensitive)
+  if (captcha.toLowerCase() !== currentCaptcha.toLowerCase()) {
+    showLoginError('Kode verifikasi salah. Silakan ketik kode yang tertera: ' + currentCaptcha);
+    refreshCaptcha();
+    return false;
   }
 
   const matched = findUserAccount(enteredQuery);
   if (!matched) {
-    showLoginError('Akun atau Jabatan tidak ditemukan. Silakan periksa kembali.');
-    return;
-  }
-
-  // Verifikasi Kode Captcha (fleksibel agar tidak memblokir user yang sah)
-  const cap = (captcha || '').toLowerCase();
-  const exp = currentCaptcha.toLowerCase();
-  if (cap && cap !== exp && cap !== '8ad4f') {
-    showLoginError('Kode verifikasi (captcha) tidak sesuai. Silakan ketik kode: ' + currentCaptcha);
-    refreshCaptcha();
-    return;
+    showLoginError('Data akun jabatan tidak ditemukan. Silakan pilih kembali dari dropdown.');
+    return false;
   }
 
   if (matched.password.toLowerCase() !== password.toLowerCase()) {
-    showLoginError('Kata sandi untuk akun @' + matched.username + ' tidak sesuai.');
-    return;
+    showLoginError('Kata sandi tidak sesuai untuk ' + matched.jabatan + '. Silakan periksa kembali.');
+    const pwdInp = document.getElementById('landing-password');
+    if (pwdInp) pwdInp.focus();
+    return false;
   }
 
   const cfg = getRoleConfig(matched.role);
@@ -4539,6 +4496,7 @@ async function handlePrismLogin(e) {
   setCurrentUser(userObj);
   hideLandingLogin();
   openDeputiPortal(cfg.defaultTab || 'dashboard');
+  return false;
 }
 
 const handleLandingLogin = handlePrismLogin;
@@ -4548,6 +4506,7 @@ function showLandingLogin() {
   if (landing) landing.style.display = 'flex';
   const alertEl = document.getElementById('sipantau-login-alert');
   if (alertEl) alertEl.style.display = 'none';
+  clearLoginForm();
   document.body.style.overflow = 'hidden';
 }
 
@@ -4556,6 +4515,10 @@ function hideLandingLogin() {
   if (landing) landing.style.display = 'none';
   document.body.style.overflow = '';
 }
+
+// Pastikan password & captcha selalu kosong saat halaman pertama kali dimuat
+window.addEventListener('DOMContentLoaded', clearLoginForm);
+window.addEventListener('pageshow', clearLoginForm);
 
 function renderSidebarForRole(user) {
   const menuContainer = document.getElementById('sipantau-role-menu');
