@@ -4416,24 +4416,6 @@ function findUserAccount(query) {
 }
 
 /* ══════════════════ PRISM AUTHENTICATION & JABATAN MAPPING ══════════════════ */
-let currentCaptcha = '8Ad4F';
-
-function generateRandomCaptcha() {
-  const chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz';
-  let str = '';
-  for (let i = 0; i < 5; i++) {
-    str += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return str;
-}
-
-function refreshCaptcha() {
-  currentCaptcha = generateRandomCaptcha();
-  const el = document.getElementById('captcha-text');
-  if (el) el.textContent = currentCaptcha;
-  const inp = document.getElementById('landing-captcha');
-  if (inp) inp.value = '';
-}
 
 function togglePasswordVisibility() {
   const inp = document.getElementById('landing-password');
@@ -4537,7 +4519,7 @@ function hideLandingLogin() {
   document.body.style.overflow = '';
 }
 
-// Pastikan password & captcha selalu kosong saat halaman pertama kali dimuat
+// Pastikan password selalu kosong saat halaman pertama kali dimuat
 window.addEventListener('DOMContentLoaded', clearLoginForm);
 window.addEventListener('pageshow', clearLoginForm);
 
