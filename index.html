@@ -64,7 +64,7 @@ function handlePrismLogin(e) {
       if (!enteredPwd) {
         if (alertEl) {
           alertEl.style.display = 'flex';
-          alertEl.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> <span>Silakan masukkan kata sandi (contoh: ' + (matched.password || 'lan2026') + ')</span>';
+          alertEl.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> <span>Silakan masukkan kata sandi Anda.</span>';
         }
         if (pwdInput) pwdInput.focus();
         return false;
@@ -1338,7 +1338,7 @@ function handlePrismLogin(e) {
           <div class="prism-form-group">
             <div class="prism-input-wrap" style="position:relative;display:flex;align-items:center;">
               <i class="fa-solid fa-lock prism-icon-left" style="pointer-events:none;"></i>
-              <input type="password" id="landing-password" placeholder="Password (contoh: lan2026)" class="prism-input" autocomplete="off" value="" style="padding-right:44px;" onkeydown="if(event.key==='Enter'){event.preventDefault();handlePrismLogin(event);}" />
+              <input type="password" id="landing-password" placeholder="Password" class="prism-input" autocomplete="off" value="" style="padding-right:44px;" onkeydown="if(event.key==='Enter'){event.preventDefault();handlePrismLogin(event);}" />
               <div class="prism-pwd-toggle" id="toggle-pwd-btn" onclick="togglePasswordVisibility(event)" role="button" tabindex="0" title="Lihat/Sembunyikan kata sandi" aria-label="Lihat kata sandi">
                 <i class="fa-solid fa-eye" id="toggle-pwd-icon"></i>
               </div>
@@ -5944,7 +5944,7 @@ function handlePrismLogin(e) {
   const enteredPwd = pwdInput ? pwdInput.value.trim() : '';
 
   if (!enteredPwd) {
-    showLoginError('Silakan masukkan kata sandi (contoh: ' + (matched.password || 'lan2026') + ')');
+    showLoginError('Silakan masukkan kata sandi Anda.');
     if (pwdInput) pwdInput.focus();
     return false;
   }
