@@ -36,24 +36,12 @@
 function handleJabatanChange(val) {
       var alertEl = document.getElementById('sipantau-login-alert');
       if (alertEl) alertEl.style.display = 'none';
-      var uInput = document.getElementById('landing-username');
-      if (uInput && val) uInput.value = val;
-      var pInput = document.getElementById('landing-password');
-      if (pInput) pInput.focus();
+      // Kolom username dan password tetap dibiarkan kosong agar pengguna mengisinya sendiri secara manual
     }
 
     function handleUsernameInput(val) {
       var alertEl = document.getElementById('sipantau-login-alert');
       if (alertEl) alertEl.style.display = 'none';
-      var sel = document.getElementById('landing-jabatan');
-      if (!sel || !val) return;
-      var q = val.trim().toLowerCase();
-      for (var i = 0; i < sel.options.length; i++) {
-        if (sel.options[i].value && sel.options[i].value.toLowerCase() === q) {
-          sel.selectedIndex = i;
-          break;
-        }
-      }
     }
 
     function handlePrismLogin(e) {
@@ -1378,7 +1366,7 @@ function handleJabatanChange(val) {
           <div class="prism-form-group">
             <div class="prism-input-wrap" style="position:relative;display:flex;align-items:center;">
               <i class="fa-solid fa-user prism-icon-left" style="pointer-events:none;"></i>
-              <input type="text" id="landing-username" placeholder="Username" class="prism-input" autocomplete="username" value="" oninput="handleUsernameInput(this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('landing-password').focus();}" />
+              <input type="text" id="landing-username" placeholder="Username" class="prism-input" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" value="" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('landing-password').focus();}" />
             </div>
           </div>
 
@@ -1386,7 +1374,7 @@ function handleJabatanChange(val) {
           <div class="prism-form-group">
             <div class="prism-input-wrap" style="position:relative;display:flex;align-items:center;">
               <i class="fa-solid fa-lock prism-icon-left" style="pointer-events:none;"></i>
-              <input type="password" id="landing-password" placeholder="Password" class="prism-input" autocomplete="off" value="" style="padding-right:44px;" onkeydown="if(event.key==='Enter'){event.preventDefault();handlePrismLogin(event);}" />
+              <input type="password" id="landing-password" placeholder="Password" class="prism-input" autocomplete="new-password" value="" style="padding-right:44px;" onkeydown="if(event.key==='Enter'){event.preventDefault();handlePrismLogin(event);}" />
               <div class="prism-pwd-toggle" id="toggle-pwd-btn" onclick="togglePasswordVisibility(event)" role="button" tabindex="0" title="Lihat/Sembunyikan kata sandi" aria-label="Lihat kata sandi">
                 <i class="fa-solid fa-eye" id="toggle-pwd-icon"></i>
               </div>
@@ -5951,24 +5939,12 @@ function togglePasswordVisibility(e) {
 function handleJabatanChange(val) {
   const alertEl = document.getElementById('sipantau-login-alert');
   if (alertEl) alertEl.style.display = 'none';
-  const uInput = document.getElementById('landing-username');
-  if (uInput && val) uInput.value = val;
-  const pInput = document.getElementById('landing-password');
-  if (pInput) pInput.focus();
+  // Kolom username dan password tetap dibiarkan kosong agar pengguna mengisinya sendiri secara manual
 }
 
 function handleUsernameInput(val) {
   const alertEl = document.getElementById('sipantau-login-alert');
   if (alertEl) alertEl.style.display = 'none';
-  const sel = document.getElementById('landing-jabatan');
-  if (!sel || !val) return;
-  const q = val.trim().toLowerCase();
-  for (let i = 0; i < sel.options.length; i++) {
-    if (sel.options[i].value && sel.options[i].value.toLowerCase() === q) {
-      sel.selectedIndex = i;
-      break;
-    }
-  }
 }
 
 function showLoginError(msg) {
@@ -6074,9 +6050,14 @@ function hideLandingLogin() {
   document.body.style.overflow = '';
 }
 
-// Pastikan password selalu kosong saat halaman pertama kali dimuat
+// Pastikan form login selalu bersih & kosong saat halaman pertama kali dibuka
+clearLoginForm();
 window.addEventListener('DOMContentLoaded', clearLoginForm);
+window.addEventListener('load', clearLoginForm);
 window.addEventListener('pageshow', clearLoginForm);
+setTimeout(clearLoginForm, 60);
+setTimeout(clearLoginForm, 250);
+setTimeout(clearLoginForm, 600);
 
 function renderSidebarForRole(user) {
   const menuContainer = document.getElementById('sipantau-role-menu');
