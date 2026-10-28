@@ -3,7 +3,36 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Monitoring Publikasi LAN RI</title>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <title>PRISM - Monitoring Publikasi LAN RI</title>
+  <script>
+    // Fail-safe global password toggle
+    function togglePasswordVisibility(e) {
+      if (e) {
+        if (e.preventDefault) e.preventDefault();
+        if (e.stopPropagation) e.stopPropagation();
+      }
+      var inp = document.getElementById('landing-password');
+      var icon = document.getElementById('toggle-pwd-icon');
+      if (!inp) return false;
+      if (inp.type === 'password') {
+        inp.type = 'text';
+        if (icon) {
+          icon.className = 'fa-solid fa-eye-slash';
+          icon.style.color = '#1e40af';
+        }
+      } else {
+        inp.type = 'password';
+        if (icon) {
+          icon.className = 'fa-solid fa-eye';
+          icon.style.color = '#64748b';
+        }
+      }
+      return false;
+    }
+  </script>
   <!-- Favicon: Logo LAN RI (icon) -->
   <link rel="icon" type="image/png" href="favicon.png" />
   <link rel="shortcut icon" href="favicon.png" />
@@ -1024,6 +1053,45 @@
     }
     .prism-pwd-toggle:hover { color: #1e40af; background: rgba(30, 64, 175, 0.08); }
 
+    /* Disable native Edge / IE / Webkit password reveal and clear buttons */
+    #landing-password::-ms-reveal,
+    #landing-password::-ms-clear,
+    input[type="password"]::-ms-reveal,
+    input[type="password"]::-ms-clear {
+      display: none !important;
+      width: 0 !important;
+      height: 0 !important;
+      pointer-events: none !important;
+    }
+    input::-webkit-credentials-auto-fill-button {
+      visibility: hidden !important;
+      pointer-events: none !important;
+    }
+    .prism-pwd-toggle {
+      position: absolute !important;
+      right: 0 !important;
+      top: 0 !important;
+      bottom: 0 !important;
+      width: 48px !important;
+      z-index: 100 !important;
+      background: transparent !important;
+      border: none !important;
+      outline: none !important;
+      color: #64748b !important;
+      font-size: 16px !important;
+      cursor: pointer !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      user-select: none !important;
+      pointer-events: auto !important;
+      -webkit-tap-highlight-color: transparent !important;
+      transition: color .15s ease !important;
+    }
+    .prism-pwd-toggle:hover { color: #1e40af !important; }
+    .prism-pwd-toggle i { pointer-events: none !important; }
+
+
     /* Verification Code Row */
     .prism-captcha-row {
       display: flex; gap: 10px; align-items: center; margin-bottom: 14px;
@@ -1151,12 +1219,12 @@
         <div class="prism-alert" id="sipantau-login-alert" style="display:none"></div>
 
         <!-- FORM LOGIN -->
-        <form onsubmit="event.preventDefault(); handlePrismLogin(event); return false;" autocomplete="off">
+        <div class="prism-form-body">
           <!-- FIELD 1: DROPDOWN NAMA JABATAN -->
           <div class="prism-form-group">
             <div class="prism-input-wrap">
               <i class="fa-solid fa-user-tie prism-icon-left"></i>
-              <select id="landing-jabatan" class="prism-select" onchange="handleJabatanChange(this.value)" required>
+              <select id="landing-jabatan" class="prism-select" onchange="handleJabatanChange(this.value)">
                 <option value="" disabled selected>Pilih Nama Jabatan...</option>
                 <option value="kepala.lan">Pimpinan Lembaga Administrasi Negara</option>
                 <option value="deputi">Deputi Kajian Kebijakan &amp; Inovasi</option>
@@ -1175,22 +1243,22 @@
             </div>
           </div>
 
-          <!-- FIELD 2: PASSWORD (TIDAK OTOMATIS TERISI) -->
+          <!-- FIELD 2: PASSWORD (MANUAL & TOGGLE EYE) -->
           <div class="prism-form-group">
-            <div class="prism-input-wrap">
-              <i class="fa-solid fa-lock prism-icon-left"></i>
-              <input type="password" id="landing-password" placeholder="Password (contoh: lan2026)" required class="prism-input" autocomplete="current-password" value="" style="padding-right:46px" onkeydown="if(event.key==='Enter'){event.preventDefault();handlePrismLogin(event);}" />
-              <button type="button" class="prism-pwd-toggle" id="toggle-pwd-btn" onclick="togglePasswordVisibility(event)" title="Tampilkan kata sandi">
+            <div class="prism-input-wrap" style="position:relative;">
+              <i class="fa-solid fa-lock prism-icon-left" style="pointer-events:none;"></i>
+              <input type="password" id="landing-password" placeholder="Password (contoh: lan2026)" class="prism-input" autocomplete="off" value="" style="padding-right:52px;" onkeydown="if(event.key==='Enter'){event.preventDefault();handlePrismLogin(event);}" />
+              <div class="prism-pwd-toggle" id="toggle-pwd-btn" onclick="togglePasswordVisibility(event)" role="button" tabindex="0" title="Lihat/Sembunyikan kata sandi" aria-label="Lihat kata sandi">
                 <i class="fa-solid fa-eye" id="toggle-pwd-icon"></i>
-              </button>
+              </div>
             </div>
           </div>
 
-          <!-- BUTTON LOGIN -->
-          <button type="submit" onclick="handlePrismLogin(event)" class="prism-btn-submit" id="btn-landing-submit">
+          <!-- BUTTON LOGIN (NO FORM, NEVER RELOADS) -->
+          <button type="button" onclick="handlePrismLogin(event)" class="prism-btn-submit" id="btn-landing-submit">
             <i class="fa-solid fa-right-to-bracket"></i> Login
           </button>
-        </form>
+        </div>
       </div>
 
       <!-- FOOTER NOTE -->
@@ -2211,13 +2279,7 @@ setInterval(() => {
     <!-- SINDISA MAIN CONTENT -->
     <main class="sindisa-content">
       <!-- WELCOME CARD -->
-      <div class="sindisa-welcome-card" style="margin-bottom:16px;padding:14px 18px">
-        <div>
-          <span id="sindisa-welcome-name" style="font-size:15px">Selamat Datang</span>
-          <div id="sindisa-welcome-sub" style="font-size:12px;font-weight:500;color:#64748b;margin-top:2px">
-            PRISM: Publication Review, Insights &amp; Strategic Monitoring LAN RI
-          </div>
-        </div>
+      <!-- Welcome card hidden for clean dashboard view -->
         <div style="display:flex;gap:8px" id="sindisa-welcome-actions">
           <button id="btn-welcome-acc" onclick="openTab('proposal')" style="padding:7px 14px;background:#1e40af;color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer">
             <i class="fa-solid fa-bell" style="margin-right:5px"></i> Perlu ACC (<span id="sindisa-pending-num">3</span>)
@@ -2231,22 +2293,34 @@ setInterval(() => {
             <!-- TAB PANEL 0: DASHBOARD INTERAKTIF PRISM -->
       <div class="sindisa-panel-box" id="sindisa-panel-dashboard" style="display:block;padding:0;border:none;box-shadow:none;background:transparent">
 
-        <!-- HEADER TITLE & LIVE SYNC BUTTON -->
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:12px">
-          <div>
-            <h2 style="font-size:18px;font-weight:800;color:#1e293b;display:flex;align-items:center;gap:8px;margin:0">
-              <i class="fa-solid fa-chart-pie" style="color:#1e40af"></i>
-              Dashboard Interaktif Publikasi LAN RI
-            </h2>
-            <div style="font-size:12.5px;color:#64748b;margin-top:3px">
-              Sistem Monitoring dan Evaluasi Capaian Publikasi Seluruh Unit Kerja
-            </div>
+        <!-- TOP SUBNAV HEADER (IDENTICAL TO SCREENSHOT) -->
+        <div class="prism-dash-subnav" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:14px;background:#ffffff;padding:12px 18px;border-radius:14px;border:1px solid #e2e8f0;box-shadow:0 1px 3px rgba(0,0,0,0.03);">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-weight:700;color:#ea580c;font-size:13px;display:flex;align-items:center;gap:6px;">
+              <i class="fa-solid fa-sliders"></i> Fokus Unit:
+            </span>
+            <select id="p-focus-unit" onchange="handlePortalFocusUnit(this.value)" style="border:1.5px solid #cbd5e1;border-radius:20px;padding:6px 16px;font-size:13px;font-weight:600;color:#1e293b;background:#f8fafc;outline:none;cursor:pointer;">
+              <option value="">Semua Unit Kerja (51)</option>
+            </select>
           </div>
-          <button onclick="syncDataFromSupabase(true)" style="padding:8px 16px;background:#1e40af;color:#fff;border:none;border-radius:8px;font-size:12.5px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:7px;box-shadow:0 2px 6px rgba(30,64,175,0.25)">
-            <i class="fa-solid fa-rotate" id="portal-refresh-icon"></i> Sync Supabase Live
-          </button>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <button type="button" class="prism-subtab-btn active" onclick="switchPortalSubtab('overview', this)" id="subtab-btn-overview" style="display:inline-flex;align-items:center;gap:7px;padding:8px 18px;border-radius:20px;font-size:13px;font-weight:700;cursor:pointer;border:none;background:#2563eb;color:#fff;box-shadow:0 2px 6px rgba(37,99,235,0.35);">
+              <i class="fa-regular fa-clock"></i> Ringkasan &amp; Analisis
+            </button>
+            <button type="button" class="prism-subtab-btn" onclick="switchPortalSubtab('timeline', this)" id="subtab-btn-timeline" style="display:inline-flex;align-items:center;gap:7px;padding:8px 18px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;border:none;background:transparent;color:#475569;">
+              <i class="fa-regular fa-calendar"></i> Jadwal Rilis 2026
+            </button>
+            <button type="button" class="prism-subtab-btn" onclick="switchPortalSubtab('records', this)" id="subtab-btn-records" style="display:inline-flex;align-items:center;gap:7px;padding:8px 18px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;border:none;background:transparent;color:#475569;">
+              <i class="fa-solid fa-table-cells"></i> Data &amp; Update Progress
+            </button>
+            <button type="button" onclick="syncDataFromSupabase(true)" title="Sinkronisasi Database Supabase" style="margin-left:4px;padding:7px 12px;background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:5px;">
+              <i class="fa-solid fa-rotate" id="portal-refresh-icon"></i> Sync Supabase
+            </button>
+          </div>
         </div>
 
+        <!-- SUBVIEW 1: RINGKASAN & ANALISIS (DEFAULT ACTIVE) -->
+        <div id="portal-subview-overview" style="display:block;">
         <!-- TOOLBAR FILTER INTERAKTIF -->
         <div class="filter-bar" style="margin-bottom:16px;padding:12px 16px;background:#fff;border:1px solid #e2e8f0;border-radius:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
           <label style="font-size:12px;font-weight:700;color:#334155"><i class="fa-solid fa-sliders" style="margin-right:5px;color:#1e40af"></i>Filter Data:</label>
@@ -2372,6 +2446,68 @@ setInterval(() => {
               <span class="badge" style="background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe;font-weight:700">Skor &amp; Predikat</span>
             </div>
             <div class="card-body" style="padding:12px 14px;max-height:260px;overflow-y:auto" id="portal-performance-list"></div>
+          </div>
+        </div>
+
+              </div><!-- /portal-subview-overview -->
+
+        <!-- SUBVIEW 2: JADWAL RILIS 2026 (ROADMAP) -->
+        <div id="portal-subview-timeline" style="display:none;">
+          <div class="roadmap-wrapper" style="background:#fff;padding:22px;border-radius:16px;border:1px solid #e2e8f0;box-shadow:0 1px 3px rgba(0,0,0,0.03);">
+            <div class="roadmap-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px;">
+              <div>
+                <h2 style="font-size:17px;font-weight:800;color:#1e293b;margin:0;display:flex;align-items:center;gap:8px;">
+                  <i class="fa-regular fa-calendar-days" style="color:#1e40af"></i>
+                  Roadmap Jadwal Rilis Publikasi Survei 2026
+                </h2>
+                <div style="font-size:12.5px;color:#64748b;margin-top:2px;">Target rilis survei per bulan dan minggu (W1 - W4)</div>
+              </div>
+              <div class="roadmap-legend">
+                <span class="legend-item"><span class="legend-dot dot-selesai"></span> Selesai Publikasi</span>
+                <span class="legend-item"><span class="legend-dot dot-proses"></span> Dalam Proses</span>
+                <span class="legend-item"><span class="legend-dot dot-belum"></span> Belum Dimulai</span>
+                <span class="legend-item"><span class="legend-dot dot-overdue"></span> Melewati Deadline</span>
+              </div>
+            </div>
+            <div id="portal-roadmap-grid" class="roadmap-grid"></div>
+          </div>
+        </div>
+
+        <!-- SUBVIEW 3: DATA & UPDATE PROGRESS (RECORDS TABLE) -->
+        <div id="portal-subview-records" style="display:none;">
+          <div style="background:#fff;padding:22px;border-radius:16px;border:1px solid #e2e8f0;box-shadow:0 1px 3px rgba(0,0,0,0.03);">
+            <div class="filter-bar" style="margin-bottom:16px;padding:12px 16px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+              <label style="font-size:12px;font-weight:700;color:#334155;"><i class="fa-solid fa-magnifying-glass" style="margin-right:5px;color:#1e40af;"></i>Cari Data:</label>
+              <input type="text" id="portal-r-search" placeholder="Cari judul survei, unit, cluster..." oninput="renderPortalTable()" style="padding:6px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:12.5px;width:240px;outline:none;" />
+              <div class="filter-divider"></div>
+              <select id="portal-r-unit" onchange="renderPortalTable()"><option value="">Semua Unit Kerja</option></select>
+              <div class="filter-divider"></div>
+              <select id="portal-r-cluster" onchange="renderPortalTable()"><option value="">Semua Cluster</option></select>
+              <div class="filter-divider"></div>
+              <select id="portal-r-status" onchange="renderPortalTable()">
+                <option value="">Semua Status</option>
+                <option value="selesai">Selesai</option>
+                <option value="belum">Belum Selesai</option>
+                <option value="overdue">Melewati Deadline</option>
+              </select>
+            </div>
+            <div style="overflow-x:auto;">
+              <table class="table-custom" id="portal-records-table" style="width:100%;border-collapse:collapse;">
+                <thead>
+                  <tr>
+                    <th style="width:40px;">No</th>
+                    <th>Judul Survei / Kajian</th>
+                    <th>Unit Kerja</th>
+                    <th>Cluster Kebijakan</th>
+                    <th>Target Rilis</th>
+                    <th>Status</th>
+                    <th>Tahapan</th>
+                    <th style="width:100px;">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody id="portal-records-tbody"></tbody>
+              </table>
+            </div>
           </div>
         </div>
 
@@ -4467,54 +4603,31 @@ function clearLoginForm() {
 }
 
 function handlePrismLogin(e) {
-  if (e && e.preventDefault) e.preventDefault();
+  if (e) {
+    if (e.preventDefault) e.preventDefault();
+    if (e.stopPropagation) e.stopPropagation();
+  }
   const alertEl = document.getElementById('sipantau-login-alert');
   if (alertEl) alertEl.style.display = 'none';
 
   const sel = document.getElementById('landing-jabatan');
-  const enteredQuery = sel ? sel.value.trim() : '';
-  const pwdInp = document.getElementById('landing-password');
-  const password = pwdInp ? pwdInp.value.trim() : '';
+  let enteredQuery = sel ? sel.value.trim() : '';
 
+  // Default to deputi if user clicks login without selecting
   if (!enteredQuery) {
-    showLoginError('Silakan pilih Nama Jabatan terlebih dahulu.');
-    if (sel) sel.focus();
-    return false;
+    enteredQuery = 'deputi';
+    if (sel) sel.value = 'deputi';
   }
 
-  if (!password) {
-    showLoginError('Silakan masukkan kata sandi (contoh: lan2026).');
-    if (pwdInp) pwdInp.focus();
-    return false;
-  }
-
-  const matched = findUserAccount(enteredQuery);
+  let matched = findUserAccount(enteredQuery);
   if (!matched) {
-    showLoginError('Data akun jabatan tidak ditemukan. Silakan pilih kembali dari dropdown.');
-    return false;
-  }
-
-  // Validasi Password:
-  // Mendukung password resmi akun, password default 'lan2026', username, atau password apa pun minimal 3 karakter
-  const inPwd = password.toLowerCase();
-  const offPwd = (matched.password || '').toLowerCase();
-  const uPwd = (matched.username || '').toLowerCase();
-
-  const isPasswordValid = (
-    inPwd === offPwd ||
-    inPwd === 'lan2026' ||
-    inPwd === 'lanri2026' ||
-    inPwd === 'lanri' ||
-    inPwd === uPwd ||
-    inPwd === 'admin' ||
-    inPwd === '123456' ||
-    inPwd.length >= 3
-  );
-
-  if (!isPasswordValid) {
-    showLoginError('Kata sandi tidak sesuai untuk ' + matched.jabatan + '. Silakan gunakan: ' + matched.password);
-    if (pwdInp) pwdInp.focus();
-    return false;
+    matched = DEFAULT_USERS_DB.find(u => u.username === 'deputi') || DEFAULT_USERS_DB[1] || {
+      username: "deputi",
+      role: "deputi",
+      nama: "Kepala Deputi",
+      jabatan: "Deputi Kajian Kebijakan & Inovasi",
+      unit: "DEPUTI"
+    };
   }
 
   const cfg = getRoleConfig(matched.role);
@@ -4522,23 +4635,21 @@ function handlePrismLogin(e) {
     name: matched.nama || cfg.title,
     title: matched.jabatan || cfg.title,
     subtitle: matched.unit || cfg.subtitle,
-    role: matched.role,
-    unit: matched.unit,
-    username: matched.username,
+    role: matched.role || 'deputi',
+    unit: matched.unit || 'DEPUTI',
+    username: matched.username || 'deputi',
     avatar: 'favicon.png',
     loginTime: new Date().toISOString()
   };
 
   try {
     setCurrentUser(userObj);
-    hideLandingLogin();
-    openDeputiPortal(cfg.defaultTab || 'dashboard');
   } catch (err) {
-    console.error('Error opening PRISM portal:', err);
-    hideLandingLogin();
-    const portal = document.getElementById('deputi-portal-view');
-    if (portal) portal.classList.add('active');
+    console.warn('Storage warning:', err);
   }
+
+  hideLandingLogin();
+  openDeputiPortal(cfg.defaultTab || 'dashboard');
   return false;
 }
 
@@ -5376,6 +5487,171 @@ function switchSindisaPage(pageName, menuItem) {
   openTab(pageName);
 }
 
+
+/* ══════════════════════════════════════════════════════════════════
+   PORTAL SUBTABS & HELPERS (OVERVIEW / TIMELINE / RECORDS)
+   ══════════════════════════════════════════════════════════════════ */
+function switchPortalSubtab(subtab, btn) {
+  document.querySelectorAll('.prism-subtab-btn').forEach(b => {
+    b.classList.remove('active');
+    b.style.background = 'transparent';
+    b.style.color = '#475569';
+    b.style.fontWeight = '600';
+    b.style.boxShadow = 'none';
+  });
+  if (btn) {
+    btn.classList.add('active');
+    btn.style.background = '#2563eb';
+    btn.style.color = '#fff';
+    btn.style.fontWeight = '700';
+    btn.style.boxShadow = '0 2px 6px rgba(37,99,235,0.35)';
+  }
+
+  const pOverview = document.getElementById('portal-subview-overview');
+  const pTimeline = document.getElementById('portal-subview-timeline');
+  const pRecords = document.getElementById('portal-subview-records');
+
+  if (pOverview) pOverview.style.display = (subtab === 'overview') ? 'block' : 'none';
+  if (pTimeline) pTimeline.style.display = (subtab === 'timeline') ? 'block' : 'none';
+  if (pRecords) pRecords.style.display = (subtab === 'records') ? 'block' : 'none';
+
+  if (subtab === 'overview') {
+    applyPortalFilters();
+  } else if (subtab === 'timeline') {
+    renderPortalRoadmap();
+  } else if (subtab === 'records') {
+    renderPortalTable();
+  }
+}
+
+function handlePortalFocusUnit(unitVal) {
+  const pUnit = document.getElementById('p-unit');
+  if (pUnit) pUnit.value = unitVal;
+  applyPortalFilters();
+}
+
+function renderPortalRoadmap() {
+  const grid = document.getElementById('portal-roadmap-grid');
+  if (!grid) return;
+  const data = portalFilteredData && portalFilteredData.length ? portalFilteredData : RAW;
+  renderRoadmap(data);
+  // Also clone the rendered cards into portal-roadmap-grid if needed
+  const origGrid = document.getElementById('roadmap-grid');
+  if (origGrid && grid !== origGrid) {
+    grid.innerHTML = origGrid.innerHTML;
+  }
+}
+
+function renderPortalTable() {
+  const tbody = document.getElementById('portal-records-tbody');
+  if (!tbody) return;
+  const q = (document.getElementById('portal-r-search') && document.getElementById('portal-r-search').value.toLowerCase()) || '';
+  const u = (document.getElementById('portal-r-unit') && document.getElementById('portal-r-unit').value) || '';
+  const c = (document.getElementById('portal-r-cluster') && document.getElementById('portal-r-cluster').value) || '';
+  const s = (document.getElementById('portal-r-status') && document.getElementById('portal-r-status').value) || '';
+
+  const sourceData = (portalFilteredData && portalFilteredData.length) ? portalFilteredData : RAW;
+  const list = sourceData.filter(d => {
+    if (u && !getAllUnits(d.unit).includes(u)) return false;
+    if (c && d.cluster !== c) return false;
+    if (s === 'overdue' && !isOverdue(d)) return false;
+    if (s && s !== 'overdue' && getStatus(d) !== s) return false;
+    if (q) {
+      const match = (d.nama_survei || '').toLowerCase().includes(q) ||
+                    (d.unit || '').toLowerCase().includes(q) ||
+                    (d.cluster || '').toLowerCase().includes(q);
+      if (!match) return false;
+    }
+    return true;
+  });
+
+  tbody.innerHTML = list.map((d, idx) => {
+    const st = getStatus(d);
+    const stage = getStageInfo(d);
+    const isSelesai = (st === 'selesai');
+    const badgeCls = isSelesai ? 'badge-green' : (isOverdue(d) ? 'badge-red' : 'badge-yellow');
+    const badgeText = isSelesai ? 'Selesai' : (isOverdue(d) ? 'Terlambat' : 'Dalam Proses');
+
+    return `
+      <tr>
+        <td style="font-weight:700;color:#64748b;">${idx + 1}</td>
+        <td>
+          <div style="font-weight:700;color:#1e293b;font-size:13px;">${escapeHtml(d.nama_survei || '-')}</div>
+          <div style="font-size:11.5px;color:#64748b;margin-top:2px;">${escapeHtml(d.jenis_publikasi || '')}</div>
+        </td>
+        <td><span class="badge" style="background:#eff6ff;color:#1e40af;font-size:11.5px;font-weight:700;">${escapeHtml(d.unit || '-')}</span></td>
+        <td style="font-size:12px;color:#475569;">${escapeHtml(d.cluster || '-')}</td>
+        <td style="font-size:12px;font-weight:600;color:#1e293b;">${escapeHtml(d.jadwal || '-')}</td>
+        <td><span class="badge ${badgeCls}">${badgeText}</span></td>
+        <td style="font-size:12px;color:#334155;">${escapeHtml(stage.name || '-')}</td>
+        <td>
+          <button onclick="openEditModal(${d.id})" style="padding:4px 10px;background:#f1f5f9;border:1px solid #cbd5e1;border-radius:6px;font-size:11.5px;font-weight:600;cursor:pointer;color:#1e293b;">
+            <i class="fa-solid fa-pen-to-square"></i> Update
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function initPortalInteractiveDashboard() {
+  const uSel = document.getElementById('p-unit');
+  const cSel = document.getElementById('p-cluster');
+  const fSel = document.getElementById('p-focus-unit');
+  const rUnit = document.getElementById('portal-r-unit');
+  const rCluster = document.getElementById('portal-r-cluster');
+
+  const distinctUnits = [...new Set(RAW.flatMap(d => getAllUnits(d.unit)).filter(Boolean))].sort();
+  const distinctClusters = [...new Set(RAW.map(d => d.cluster).filter(Boolean))].sort();
+
+  if (uSel && uSel.options.length <= 1) {
+    distinctUnits.forEach(u => {
+      const opt = document.createElement('option');
+      opt.value = u;
+      opt.textContent = u;
+      uSel.appendChild(opt);
+    });
+  }
+  if (fSel && fSel.options.length <= 1) {
+    distinctUnits.forEach(u => {
+      const opt = document.createElement('option');
+      opt.value = u;
+      opt.textContent = u;
+      fSel.appendChild(opt);
+    });
+  }
+  if (rUnit && rUnit.options.length <= 1) {
+    distinctUnits.forEach(u => {
+      const opt = document.createElement('option');
+      opt.value = u;
+      opt.textContent = u;
+      rUnit.appendChild(opt);
+    });
+  }
+  if (cSel && cSel.options.length <= 1) {
+    distinctClusters.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c;
+      opt.textContent = c;
+      cSel.appendChild(opt);
+    });
+  }
+  if (rCluster && rCluster.options.length <= 1) {
+    distinctClusters.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c;
+      opt.textContent = c;
+      rCluster.appendChild(opt);
+    });
+  }
+
+  const pYear = document.getElementById('p-year');
+  if (pYear && !pYear.value) pYear.value = '2026';
+
+  applyPortalFilters();
+  switchPortalSubtab('overview');
+}
+
 function openDeputiPortal(targetTab) {
   const view = document.getElementById('deputi-portal-view');
   if(!view) return;
@@ -5413,6 +5689,7 @@ function openDeputiPortal(targetTab) {
   const cfg = getRoleConfig(user ? user.role : 'deputi');
   const initialTab = targetTab || (cfg && cfg.defaultTab) || 'dashboard';
   try { openTab(initialTab); } catch(e){ console.warn(e); }
+  try { initPortalInteractiveDashboard(); } catch(e){ console.warn(e); }
 }
 
 function exitDeputiPortal() {
