@@ -33,30 +33,70 @@
       return false;
     }
 
-function handlePrismLogin(e) {
+function handleJabatanChange(val) {
+      var alertEl = document.getElementById('sipantau-login-alert');
+      if (alertEl) alertEl.style.display = 'none';
+      var uInput = document.getElementById('landing-username');
+      if (uInput && val) uInput.value = val;
+      var pInput = document.getElementById('landing-password');
+      if (pInput) pInput.focus();
+    }
+
+    function handleUsernameInput(val) {
+      var alertEl = document.getElementById('sipantau-login-alert');
+      if (alertEl) alertEl.style.display = 'none';
+      var sel = document.getElementById('landing-jabatan');
+      if (!sel || !val) return;
+      var q = val.trim().toLowerCase();
+      for (var i = 0; i < sel.options.length; i++) {
+        if (sel.options[i].value && sel.options[i].value.toLowerCase() === q) {
+          sel.selectedIndex = i;
+          break;
+        }
+      }
+    }
+
+    function handlePrismLogin(e) {
       if (e) {
         if (e.preventDefault) e.preventDefault();
         if (e.stopPropagation) e.stopPropagation();
       }
 
+      var uInput = document.getElementById('landing-username');
       var sel = document.getElementById('landing-jabatan');
-      var enteredQuery = sel ? sel.value.trim() : '';
+      var enteredUsername = uInput ? uInput.value.trim() : '';
+      var enteredJabatan = sel ? sel.value.trim() : '';
       var alertEl = document.getElementById('sipantau-login-alert');
 
-      if (!enteredQuery) {
+      var query = enteredUsername || enteredJabatan;
+      if (!query) {
         if (alertEl) {
           alertEl.style.display = 'flex';
-          alertEl.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> <span>Silakan pilih nama jabatan Anda terlebih dahulu.</span>';
+          alertEl.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> <span>Silakan pilih nama jabatan atau masukkan username Anda.</span>';
         }
+        if (uInput) uInput.focus();
         return false;
       }
 
-      var matched = (typeof findUserAccount === 'function') ? findUserAccount(enteredQuery) : null;
+      var matched = null;
+      if (typeof findUserAccount === 'function') {
+        if (enteredUsername) matched = findUserAccount(enteredUsername);
+        if (!matched && enteredJabatan) matched = findUserAccount(enteredJabatan);
+      }
       if (!matched && typeof DEFAULT_USERS_DB !== 'undefined') {
-        matched = DEFAULT_USERS_DB.find(function(u){ return u.username === enteredQuery || u.unit === enteredQuery; });
+        matched = DEFAULT_USERS_DB.find(function(u){
+          var q = query.toLowerCase();
+          return (u.username && u.username.toLowerCase() === q) ||
+                 (u.jabatan && u.jabatan.toLowerCase() === q) ||
+                 (u.unit && u.unit.toLowerCase() === q);
+        });
       }
       if (!matched) {
-        matched = { username: enteredQuery, role: "unit_" + enteredQuery.toLowerCase(), nama: "User " + enteredQuery.toUpperCase(), jabatan: "Unit " + enteredQuery.toUpperCase(), unit: enteredQuery.toUpperCase() };
+        if (alertEl) {
+          alertEl.style.display = 'flex';
+          alertEl.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> <span>Akun username/jabatan tidak ditemukan dalam sistem PRISM.</span>';
+        }
+        return false;
       }
 
       var pwdInput = document.getElementById('landing-password');
@@ -1334,7 +1374,15 @@ function handlePrismLogin(e) {
             </div>
           </div>
 
-          <!-- FIELD 2: PASSWORD (MANUAL & TOGGLE EYE) -->
+          <!-- FIELD 2: USERNAME -->
+          <div class="prism-form-group">
+            <div class="prism-input-wrap" style="position:relative;display:flex;align-items:center;">
+              <i class="fa-solid fa-user prism-icon-left" style="pointer-events:none;"></i>
+              <input type="text" id="landing-username" placeholder="Username" class="prism-input" autocomplete="username" value="" oninput="handleUsernameInput(this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('landing-password').focus();}" />
+            </div>
+          </div>
+
+          <!-- FIELD 3: PASSWORD (MANUAL & TOGGLE EYE) -->
           <div class="prism-form-group">
             <div class="prism-input-wrap" style="position:relative;display:flex;align-items:center;">
               <i class="fa-solid fa-lock prism-icon-left" style="pointer-events:none;"></i>
@@ -5903,7 +5951,24 @@ function togglePasswordVisibility(e) {
 function handleJabatanChange(val) {
   const alertEl = document.getElementById('sipantau-login-alert');
   if (alertEl) alertEl.style.display = 'none';
-  // Password & Verification code are intentionally left empty for the user to fill manually
+  const uInput = document.getElementById('landing-username');
+  if (uInput && val) uInput.value = val;
+  const pInput = document.getElementById('landing-password');
+  if (pInput) pInput.focus();
+}
+
+function handleUsernameInput(val) {
+  const alertEl = document.getElementById('sipantau-login-alert');
+  if (alertEl) alertEl.style.display = 'none';
+  const sel = document.getElementById('landing-jabatan');
+  if (!sel || !val) return;
+  const q = val.trim().toLowerCase();
+  for (let i = 0; i < sel.options.length; i++) {
+    if (sel.options[i].value && sel.options[i].value.toLowerCase() === q) {
+      sel.selectedIndex = i;
+      break;
+    }
+  }
 }
 
 function showLoginError(msg) {
@@ -5914,8 +5979,12 @@ function showLoginError(msg) {
 }
 
 function clearLoginForm() {
+  const u = document.getElementById('landing-username');
+  if (u) u.value = '';
   const pwd = document.getElementById('landing-password');
   if (pwd) pwd.value = '';
+  const sel = document.getElementById('landing-jabatan');
+  if (sel) sel.selectedIndex = 0;
 }
 
 function handlePrismLogin(e) {
@@ -5926,17 +5995,24 @@ function handlePrismLogin(e) {
   const alertEl = document.getElementById('sipantau-login-alert');
   if (alertEl) alertEl.style.display = 'none';
 
+  const uInput = document.getElementById('landing-username');
   const sel = document.getElementById('landing-jabatan');
-  let enteredQuery = sel ? sel.value.trim() : '';
+  const enteredUsername = uInput ? uInput.value.trim() : '';
+  const enteredJabatan = sel ? sel.value.trim() : '';
 
-  if (!enteredQuery) {
-    showLoginError('Silakan pilih nama jabatan Anda terlebih dahulu.');
+  const query = enteredUsername || enteredJabatan;
+  if (!query) {
+    showLoginError('Silakan pilih nama jabatan atau masukkan username Anda.');
+    if (uInput) uInput.focus();
     return false;
   }
 
-  let matched = findUserAccount(enteredQuery);
+  let matched = null;
+  if (enteredUsername) matched = findUserAccount(enteredUsername);
+  if (!matched && enteredJabatan) matched = findUserAccount(enteredJabatan);
+
   if (!matched) {
-    showLoginError('Akun jabatan tidak ditemukan dalam sistem PRISM.');
+    showLoginError('Akun username/jabatan tidak ditemukan dalam sistem PRISM.');
     return false;
   }
 
