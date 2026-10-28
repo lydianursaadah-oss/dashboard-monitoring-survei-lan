@@ -1738,9 +1738,12 @@ async function syncDataFromGoogleSheet(isManual = false) {
 }
 
 // Aliases for compatibility
-const syncDataFromSupabase = syncDataFromGoogleSheet;
-const syncDataFromGAS = syncDataFromGoogleSheet;
-const syncDataFromSheet = syncDataFromGoogleSheet;
+window.syncDataFromSupabase = syncDataFromGoogleSheet;
+window.syncDataFromGAS = syncDataFromGoogleSheet;
+window.syncDataFromSheet = syncDataFromGoogleSheet;
+var syncDataFromSupabase = syncDataFromGoogleSheet;
+var syncDataFromGAS = syncDataFromGoogleSheet;
+var syncDataFromSheet = syncDataFromGoogleSheet;
 
 function openGasModal(){
   const res = document.getElementById('gas-test-result');
@@ -2240,7 +2243,7 @@ window.addEventListener('focus', () => {
     <div class="sindisa-topbar-right">
       <div class="sindisa-user-greet" onclick="toggleUserDropdown(event)">
         <img src="favicon.png" class="sindisa-user-pic" alt="Avatar"/>
-        <span id="sindisa-header-username">Hi, User</span>
+        <span id="sindisa-header-username">Hi, Kepala Deputi</span>
         <i class="fa-solid fa-caret-down" style="font-size:11px;opacity:.8"></i>
       </div>
       <button class="sindisa-exit-btn" onclick="handleUserLogout()" title="Keluar / Logout" style="background:#fef2f2;color:#dc2626;border-color:#fecaca">
@@ -4270,14 +4273,10 @@ function syncNavUnit(val){
   renderTable();
 }
 
-async function syncDataFromGAS(){
-  const icon = document.getElementById('refresh-icon');
-  const pIcon = document.getElementById('portal-refresh-icon');
-  if(icon) icon.classList.add('fa-spin');
-  if(pIcon) pIcon.classList.add('fa-spin');
-  await syncDataFromSheet(true);
-  if(icon) setTimeout(()=>icon.classList.remove('fa-spin'), 600);
-  if(pIcon) setTimeout(()=>pIcon.classList.remove('fa-spin'), 600);
+async function triggerGASRefresh() {
+  if (typeof syncDataFromGoogleSheet === 'function') {
+    await syncDataFromGoogleSheet(true);
+  }
 }
 
 function openAddAgendaModal(){
