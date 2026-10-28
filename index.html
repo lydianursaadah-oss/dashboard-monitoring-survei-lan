@@ -2443,7 +2443,31 @@ setInterval(() => {
 
       <div class="sindisa-section-title" style="font-size:10.5px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:0.8px;padding:12px 22px 6px;">MENU PRISM</div>
       <ul class="sindisa-menu" id="sipantau-role-menu">
-        <!-- Rendered dynamically by applyRolePermissions(user) -->
+        <li class="sindisa-menu-item active" data-tab-id="dashboard" onclick="openTab('dashboard'); highlightMenuItem(this)">
+          <i class="fa-solid fa-chart-pie"></i>
+          <span class="sindisa-menu-text">Dashboard</span>
+        </li>
+        <li class="sindisa-menu-item" data-tab-id="pengumuman" onclick="openTab('pengumuman'); highlightMenuItem(this)">
+          <i class="fa-solid fa-bullhorn"></i>
+          <span class="sindisa-menu-text">Pengumuman</span>
+        </li>
+        <li class="sindisa-menu-item" data-tab-id="penulisan" onclick="openTab('penulisan'); highlightMenuItem(this)">
+          <i class="fa-solid fa-pen-ruler"></i>
+          <span class="sindisa-menu-text">Penulisan &amp; Instrumen</span>
+        </li>
+        <li class="sindisa-menu-item" data-tab-id="publikasi" onclick="openTab('publikasi'); highlightMenuItem(this)">
+          <i class="fa-solid fa-newspaper"></i>
+          <span class="sindisa-menu-text">Publikasi</span>
+        </li>
+        <li class="sindisa-menu-item" data-tab-id="review" onclick="openTab('seminar'); highlightMenuItem(this)">
+          <i class="fa-solid fa-circle-question"></i>
+          <span class="sindisa-menu-text">Review</span>
+        </li>
+        <li class="sindisa-menu-item" data-tab-id="proposal" onclick="openTab('proposal'); highlightMenuItem(this)">
+          <i class="fa-solid fa-clipboard-check"></i>
+          <span class="sindisa-menu-text">Topik Proposal / ACC</span>
+          <span class="sindisa-badge">3</span>
+        </li>
       </ul>
 
 
@@ -2467,7 +2491,6 @@ setInterval(() => {
             <i class="fa-solid fa-plus-circle" style="margin-right:5px"></i> Ajukan Publikasi / Aktivitas
           </button>
         </div>
-      </div>
 
             <!-- TAB PANEL 0: DASHBOARD INTERAKTIF PRISM -->
       <div class="sindisa-panel-box" id="sindisa-panel-dashboard" style="display:block;padding:0;border:none;box-shadow:none;background:transparent">
@@ -5821,20 +5844,32 @@ function renderSidebarForRole(user) {
   const menuContainer = document.getElementById('sipantau-role-menu');
   if(!menuContainer) return;
 
-  const cfg = getRoleConfig(user ? user.role : 'deputi');
-  const pendingCount = getApprovals().filter(i => i.status === 'Menunggu ACC').length;
+  const roleKey = user ? user.role : 'deputi';
+  const cfg = (typeof getRoleConfig === 'function') ? (getRoleConfig(roleKey) || ROLE_CONFIGS.deputi) : ROLE_CONFIGS.deputi;
+  
+  let pendingCount = 3;
+  try {
+    if(typeof getApprovals === 'function') {
+      const arr = getApprovals();
+      if(Array.isArray(arr)) {
+        const cnt = arr.filter(i => i.status === 'Menunggu ACC').length;
+        if(cnt > 0) pendingCount = cnt;
+      }
+    }
+  } catch(e){}
 
   const modeEl = document.getElementById('sipantau-sidebar-mode');
-  if(modeEl && cfg) modeEl.textContent = user && user.name ? `${user.name} (${user.unit || cfg.title})` : cfg.title;
+  if(modeEl) {
+    modeEl.textContent = (user && user.name && user.name !== 'User') ? `${user.name} (${user.unit || 'LAN RI'})` : 'Kepala Deputi';
+  }
 
-  // Render the exact vertical sidebar menu matching PRISM screenshot
-  const badgeNum = (typeof pendingCount !== 'undefined' && pendingCount > 0) ? pendingCount : 3;
-  menuContainer.innerHTML = cfg.menus.map((m, idx) => {
+  const menus = (cfg && Array.isArray(cfg.menus) && cfg.menus.length) ? cfg.menus : ALL_SIPANTAU_MENUS;
+  menuContainer.innerHTML = menus.map((m, idx) => {
     return `
       <li class="sindisa-menu-item ${idx===0?'active':''}" data-tab-id="${m.id}" onclick="${m.action}; highlightMenuItem(this)">
         <i class="fa-solid ${m.icon}"></i>
         <span class="sindisa-menu-text">${m.label}</span>
-        ${m.badge ? `<span class="sindisa-badge">${badgeNum}</span>` : ''}
+        ${m.badge ? `<span class="sindisa-badge">${pendingCount}</span>` : ''}
       </li>
     `;
   }).join('');
@@ -5914,10 +5949,11 @@ function applyPortalFilters() {
     return true;
   });
 
-  renderPortalKPIs();
-  renderPortalCharts();
-  renderPortalRoadmap();
-  renderPortalReminderAndPerformance();
+  try { renderPortalKPIs(); } catch(e){ console.error('renderPortalKPIs error:', e); }
+  try { renderPortalCharts(); } catch(e){ console.error('renderPortalCharts error:', e); }
+  try { renderPortalRoadmap(); } catch(e){ console.error('renderPortalRoadmap error:', e); }
+  try { renderPortalReminderAndPerformance(); } catch(e){ console.error('renderPortalReminderAndPerformance error:', e); }
+  try { renderPortalHeatmap(); } catch(e){ console.error('renderPortalHeatmap error:', e); }
 }
 
 function resetPortalFilters() {
@@ -6823,62 +6859,50 @@ function initPortalInteractiveDashboard() {
   const distinctUnits = [...new Set(RAW.flatMap(d => getAllUnits(d.unit)).filter(Boolean))].sort();
   const distinctClusters = [...new Set(RAW.map(d => d.cluster).filter(Boolean))].sort();
 
-  if (uSel && uSel.options.length <= 1) {
-    distinctUnits.forEach(u => {
-      const opt = document.createElement('option');
-      opt.value = u;
-      opt.textContent = u;
-      uSel.appendChild(opt);
-    });
+  function safePopulate(sel, items, defaultText) {
+    if(!sel || !sel.options) return;
+    if(sel.options.length <= 1) {
+      if(defaultText && sel.options.length === 0) {
+        const dOpt = document.createElement('option');
+        dOpt.value = '';
+        dOpt.textContent = defaultText;
+        sel.appendChild(dOpt);
+      }
+      items.forEach(u => {
+        const opt = document.createElement('option');
+        opt.value = u;
+        opt.textContent = u;
+        sel.appendChild(opt);
+      });
+    }
   }
-  if (fSel && fSel.options.length <= 1) {
-    distinctUnits.forEach(u => {
-      const opt = document.createElement('option');
-      opt.value = u;
-      opt.textContent = u;
-      fSel.appendChild(opt);
-    });
-  }
-  if (rUnit && rUnit.options.length <= 1) {
-    distinctUnits.forEach(u => {
-      const opt = document.createElement('option');
-      opt.value = u;
-      opt.textContent = u;
-      rUnit.appendChild(opt);
-    });
-  }
-  if (cSel && cSel.options.length <= 1) {
-    distinctClusters.forEach(c => {
-      const opt = document.createElement('option');
-      opt.value = c;
-      opt.textContent = c;
-      cSel.appendChild(opt);
-    });
-  }
-  if (rCluster && rCluster.options.length <= 1) {
-    distinctClusters.forEach(c => {
-      const opt = document.createElement('option');
-      opt.value = c;
-      opt.textContent = c;
-      rCluster.appendChild(opt);
-    });
-  }
+
+  safePopulate(uSel, distinctUnits, 'Semua Unit Kerja');
+  safePopulate(fSel, distinctUnits, 'Semua Unit Kerja');
+  safePopulate(rUnit, distinctUnits, 'Semua Unit Kerja');
+  safePopulate(cSel, distinctClusters, 'Semua Cluster');
+  safePopulate(rCluster, distinctClusters, 'Semua Cluster');
 
   const pYear = document.getElementById('p-year');
-  if (pYear && !pYear.value) pYear.value = '2026';
+  if (pYear && !pYear.value) pYear.value = '';
 
-  applyPortalFilters();
-  switchPortalSubtab('overview');
+  try { applyPortalFilters(); } catch(e){ console.error('applyPortalFilters error:', e); }
+  try { switchPortalSubtab('overview'); } catch(e){ console.error('switchPortalSubtab error:', e); }
 }
 
 function openDeputiPortal(targetTab) {
   const view = document.getElementById('deputi-portal-view');
   if(!view) return;
+  view.style.display = 'block';
   view.classList.add('active');
   document.body.style.overflow = 'hidden';
 
-  const user = getCurrentUser() || { name: 'KEPALA DEPUTI', role: 'deputi' };
+  let user = getCurrentUser();
+  if(!user || !user.name || user.name === 'User') {
+    user = { name: 'Kepala Deputi', role: 'deputi', title: 'Deputi Kajian Kebijakan & Inovasi', unit: 'DEPUTI' };
+  }
   const unitLocked = isUnitUser(user);
+
   const greetEl = document.getElementById('sindisa-header-username');
   const welEl = document.getElementById('sindisa-welcome-name');
   const subEl = document.getElementById('sindisa-welcome-sub');
@@ -6905,7 +6929,7 @@ function openDeputiPortal(targetTab) {
   try { renderSindisaAccTable(); } catch(e){ console.warn(e); }
   try { updatePendingBadges(); } catch(e){ console.warn(e); }
 
-  const cfg = getRoleConfig(user ? user.role : 'deputi');
+  const cfg = (typeof getRoleConfig === 'function') ? (getRoleConfig(user ? user.role : 'deputi') || ROLE_CONFIGS.deputi) : ROLE_CONFIGS.deputi;
   const initialTab = targetTab || (cfg && cfg.defaultTab) || 'dashboard';
   try { openTab(initialTab); } catch(e){ console.warn(e); }
   try { initPortalInteractiveDashboard(); } catch(e){ console.warn(e); }
