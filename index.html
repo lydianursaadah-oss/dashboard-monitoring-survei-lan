@@ -318,6 +318,25 @@ function handleJabatanChange(val) {
     .filter-bar select:focus, .filter-bar input:focus {
       border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37,99,235,.1);
     }
+    /* Filter Tahun Berwarna & Lebih Menonjol */
+    .filter-year-highlight {
+      background: #eff6ff !important;
+      border: 2px solid #2563eb !important;
+      color: #1e40af !important;
+      font-weight: 800 !important;
+      border-radius: 20px !important;
+      padding: 6px 14px 6px 30px !important;
+      font-size: 12px !important;
+      box-shadow: 0 2px 6px rgba(37,99,235,0.18) !important;
+      cursor: pointer !important;
+      outline: none !important;
+      transition: all .18s ease !important;
+    }
+    .filter-year-highlight:focus, .filter-year-highlight:hover {
+      background: #dbeafe !important;
+      border-color: #1d4ed8 !important;
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.28) !important;
+    }
     .filter-divider { width: 1px; height: 20px; background: var(--border); margin: 0 2px; }
     .filter-reset {
       margin-left: auto; padding: 6px 14px; border-radius: 8px;
@@ -2321,11 +2340,14 @@ window.addEventListener('focus', () => {
           <option value="tahap:Publikasi">Tahap 6: Publikasi</option>
         </optgroup>
       </select>
-      <select id="r-year" onchange="renderTable()">
-        <option value="">Semua Tahun</option>
-        <option value="2025">2025</option>
-        <option value="2026">2026</option>
-      </select>
+      <div style="position:relative;display:inline-flex;align-items:center;">
+        <i class="fa-solid fa-calendar-days" style="position:absolute;left:10px;color:#2563eb;font-size:12px;pointer-events:none;z-index:2"></i>
+        <select id="r-year" class="filter-year-highlight" onchange="renderTable()" title="Filter Berdasarkan Periode Tahun">
+          <option value="">Semua Tahun</option>
+          <option value="2025">Tahun 2025</option>
+          <option value="2026">Tahun 2026</option>
+        </select>
+      </div>
       <button class="filter-reset" onclick="resetTableFilters()"><i class="fa-solid fa-rotate-left"></i> Reset</button>
       <span style="margin-left:auto;font-size:11px;color:var(--text3)" id="table-count-label">— records</span>
     </div>
@@ -2585,11 +2607,14 @@ window.addEventListener('focus', () => {
         <!-- TOOLBAR FILTER INTERAKTIF -->
         <div class="filter-bar" style="margin-bottom:16px;padding:12px 16px;background:#fff;border:1px solid #e2e8f0;border-radius:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
           <label style="font-size:12px;font-weight:700;color:#334155"><i class="fa-solid fa-sliders" style="margin-right:5px;color:#1e40af"></i>Filter Data:</label>
-          <select id="p-year" onchange="applyPortalFilters()">
-            <option value="">Semua Tahun</option>
-            <option value="2025">2025</option>
-            <option value="2026">2026</option>
-          </select>
+          <div style="position:relative;display:inline-flex;align-items:center;">
+            <i class="fa-solid fa-calendar-days" style="position:absolute;left:10px;color:#2563eb;font-size:12px;pointer-events:none;z-index:2"></i>
+            <select id="p-year" class="filter-year-highlight" onchange="applyPortalFilters()" title="Filter Berdasarkan Periode Tahun">
+              <option value="">Semua Tahun</option>
+              <option value="2025">Tahun 2025</option>
+              <option value="2026">Tahun 2026</option>
+            </select>
+          </div>
           <div class="filter-divider" id="p-unit-divider"></div>
           <select id="p-unit" onchange="applyPortalFilters()"><option value="">Semua Unit Kerja</option></select>
           <div class="filter-divider"></div>
@@ -2747,6 +2772,15 @@ window.addEventListener('focus', () => {
             <div class="filter-bar" style="margin-bottom:16px;padding:12px 16px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
               <label style="font-size:12px;font-weight:700;color:#334155;"><i class="fa-solid fa-magnifying-glass" style="margin-right:5px;color:#1e40af;"></i>Cari Data:</label>
               <input type="text" id="portal-r-search" placeholder="Cari judul survei, unit, cluster..." oninput="renderPortalTable()" style="padding:6px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:12.5px;width:240px;outline:none;" />
+              <div class="filter-divider"></div>
+              <div style="position:relative;display:inline-flex;align-items:center;">
+                <i class="fa-solid fa-calendar-days" style="position:absolute;left:10px;color:#2563eb;font-size:12px;pointer-events:none;z-index:2"></i>
+                <select id="portal-r-year" class="filter-year-highlight" onchange="renderPortalTable()" title="Filter Berdasarkan Periode Tahun">
+                  <option value="">Semua Tahun</option>
+                  <option value="2025">Tahun 2025</option>
+                  <option value="2026">Tahun 2026</option>
+                </select>
+              </div>
               <div class="filter-divider"></div>
               <select id="portal-r-unit" onchange="renderPortalTable()"><option value="">Semua Unit Kerja</option></select>
               <div class="filter-divider"></div>
@@ -3237,6 +3271,60 @@ window.addEventListener('focus', () => {
     <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;align-items:center;flex-wrap:wrap;gap:10px">
       <button onclick="closeModal()" style="padding:7px 16px;border-radius:8px;background:var(--bg3);border:1px solid var(--border);color:var(--text2);font-size:12px;cursor:pointer">Tutup</button>
     </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ MODAL: TAMBAH LINK CHANNEL PUBLIKASI ═══════════════════ -->
+<div class="modal-overlay" id="add-channel-link-modal" onclick="if(event.target===this)closeAddChannelLinkModal()">
+  <div class="modal" style="max-width:520px;padding:26px">
+    <div class="modal-close" onclick="closeAddChannelLinkModal()"><i class="fa-solid fa-xmark"></i></div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+      <div id="add-channel-icon-box" style="width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;background:#eff6ff;color:#2563eb;flex-shrink:0">
+        <i class="fa-solid fa-link"></i>
+      </div>
+      <div>
+        <h3 style="font-size:16px;font-weight:800;color:var(--text1);margin:0" id="add-channel-modal-title">Tambah Link Publikasi</h3>
+        <div style="font-size:12px;color:var(--text3);margin-top:2px">Input tautan rilis untuk mengaktifkan channel ini</div>
+      </div>
+    </div>
+
+    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:12px 16px;margin:16px 0">
+      <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.5px">Survei Terkait:</div>
+      <div style="font-size:13.5px;font-weight:700;color:#1e293b;margin-top:3px;line-height:1.4" id="add-channel-survey-title">—</div>
+      <div style="display:flex;gap:8px;margin-top:8px;align-items:center;flex-wrap:wrap">
+        <span class="badge" id="add-channel-unit-badge" style="background:#eff6ff;color:#1e40af;font-size:11px;font-weight:700;padding:3px 10px">Unit</span>
+        <span class="badge" id="add-channel-target-badge" style="background:#f1f5f9;color:#475569;font-size:11px;padding:3px 10px">Target: 2026</span>
+      </div>
+    </div>
+
+    <form onsubmit="saveChannelLinkFromModal(event)">
+      <div style="margin-bottom:14px">
+        <label style="font-size:12px;font-weight:700;color:#334155;display:block;margin-bottom:6px">
+          Tautan / URL Publikasi <span id="add-channel-name-label" style="color:#2563eb;font-weight:800"></span> *
+        </label>
+        <div style="position:relative;display:flex;align-items:center">
+          <i class="fa-solid fa-globe" style="position:absolute;left:14px;color:#94a3b8;font-size:13px;pointer-events:none"></i>
+          <input type="url" id="add-channel-input-url" required placeholder="https://..." class="prism-input" style="width:100%;padding:10px 14px 10px 38px;border:1.5px solid #cbd5e1;border-radius:10px;font-size:13px;outline:none;" />
+        </div>
+        <div style="font-size:11.5px;color:#64748b;margin-top:6px;line-height:1.4">
+          Contoh: link postingan Instagram, link video YouTube, atau URL artikel portal resmi.
+        </div>
+      </div>
+
+      <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:10px 14px;margin-bottom:16px;display:flex;align-items:center;gap:10px">
+        <input type="checkbox" id="add-channel-mark-done" style="width:16px;height:16px;accent-color:#16a34a;cursor:pointer" />
+        <label for="add-channel-mark-done" style="font-size:12px;font-weight:600;color:#166534;cursor:pointer">
+          Tandai publikasi survei ini telah <strong>Selesai</strong>
+        </label>
+      </div>
+
+      <div style="display:flex;justify-content:flex-end;gap:10px;padding-top:14px;border-top:1px solid #f1f5f9">
+        <button type="button" onclick="closeAddChannelLinkModal()" style="padding:8px 16px;border-radius:8px;background:var(--bg3);border:1px solid var(--border);color:var(--text2);font-size:12px;cursor:pointer;font-weight:600">Batal</button>
+        <button type="submit" id="btn-save-channel-link" style="padding:8px 20px;border-radius:8px;background:#2563eb;color:#fff;border:none;font-size:12px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;box-shadow:0 2px 6px rgba(37,99,235,0.3)">
+          <i class="fa-solid fa-check"></i> Simpan &amp; Aktifkan Link
+        </button>
+      </div>
+    </form>
   </div>
 </div>
 
@@ -4660,9 +4748,16 @@ function renderKPIs(){
   ];
   document.getElementById('kpi-grid').innerHTML = kpis.map(k => {
     const isClickable = k.clickable !== false;
-    const clickAttr = isClickable ? `onclick="openKpiList('${k.type}')"` : '';
+    let clickAttr = '';
+    let clickTitle = '';
+    if (k.type === 'total') {
+      clickAttr = 'onclick="navigateToJadwalRilis2026()"';
+      clickTitle = 'title="Klik untuk langsung beralih ke Jadwal Rilis 2026"';
+    } else if (isClickable) {
+      clickAttr = `onclick="openKpiList('${k.type}')"`;
+      clickTitle = 'title="Klik untuk melihat daftar nama survei"';
+    }
     const clickCls = isClickable ? 'clickable' : '';
-    const clickTitle = isClickable ? 'title="Klik untuk melihat daftar nama survei"' : '';
     const valCursor = isClickable ? 'cursor:pointer' : 'cursor:default';
 
     return `
@@ -5378,6 +5473,11 @@ function openModal(identifier){
     {l:'Jenis', v:d.jenis||'Survei/Laporan', bg:'#f1f5f9', tc:'#475569'},
   ];
   document.getElementById('modal-meta').innerHTML = meta.map(m => `<span class="badge" style="background:${m.bg};color:${m.tc};border:none;font-size:11px;padding:4px 10px">${m.l}: <strong>${m.v}</strong></span>`).join('');
+  const currUser = (typeof getCurrentUser === 'function') ? getCurrentUser() : null;
+  const userRole = currUser ? (currUser.role || '') : '';
+  const isLeadership = userRole === 'kepala_lan' || userRole === 'deputi';
+  const canAddChannelLink = !isLeadership;
+
   const st = getStatus(d);
   document.getElementById('modal-channels').innerHTML = [
     statusBadge(st),
@@ -5385,7 +5485,14 @@ function openModal(identifier){
     ...CHANNEL_DEFS.map(cd => {
       const val = d[cd.field];
       if(!hasLink(val)) {
-        return `<span class="badge badge-gray" style="opacity:.45;cursor:not-allowed;" title="Belum dipublikasikan di ${cd.label}">${cd.label}</span>`;
+        if (canAddChannelLink) {
+          return `<button type="button" onclick="openAddChannelLinkModal(${d.no}, '${cd.field}')" class="badge" style="background:#f8fafc;color:#475569;border:1.5px dashed #94a3b8;cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;font-size:11.5px;font-weight:600;transition:all .18s ease;box-shadow:0 1px 2px rgba(0,0,0,0.03)" onmouseover="this.style.borderColor='#2563eb';this.style.color='#2563eb';this.style.background='#eff6ff';this.style.transform='translateY(-1px)'" onmouseout="this.style.borderColor='#94a3b8';this.style.color='#475569';this.style.background='#f8fafc';this.style.transform='none'" title="Klik untuk menambahkan link ${cd.label}">
+            <i class="fa-solid fa-plus" style="font-size:9.5px;color:#2563eb"></i>
+            <span>${cd.label}</span>
+          </button>`;
+        } else {
+          return `<span class="badge badge-gray" style="opacity:.45;cursor:not-allowed;" title="Belum dipublikasikan di ${cd.label}">${cd.label}</span>`;
+        }
       }
       const cnt = countLinks(val);
       const targetUrl = resolveChannelUrl(cd.field, val, d);
@@ -5394,7 +5501,7 @@ function openModal(identifier){
         <span>${cd.label}${cnt > 1 ? ` ×${cnt}` : ''}</span>
       </a>`;
     })
-  ].join('');
+  ].join('') + (canAddChannelLink ? `<div style="width:100%;font-size:11px;color:#64748b;margin-top:8px;display:flex;align-items:center;gap:6px"><i class="fa-solid fa-circle-info" style="color:#2563eb"></i><span>Klik tombol abu-abu bertanda <strong>+</strong> untuk menambahkan link publikasi channel.</span></div>` : '');
 
   const ks = document.getElementById('modal-ket-section');
   if(d.ket) {
@@ -5411,6 +5518,211 @@ function closeModal(e) {
     document.getElementById('modal-overlay').classList.remove('open');
   }
 }
+
+/* ══════════════════════════════════════════════════════════
+   NAVIGASI JADWAL RILIS 2026 & MODAL TAMBAH LINK PUBLIKASI
+   ══════════════════════════════════════════════════════════ */
+function navigateToJadwalRilis2026() {
+  const isPortal = document.getElementById('deputi-portal-view') && (
+    document.getElementById('deputi-portal-view').classList.contains('active') ||
+    document.getElementById('deputi-portal-view').style.display !== 'none'
+  );
+  if (isPortal) {
+    const btnTimeline = document.getElementById('subtab-btn-timeline');
+    if (typeof switchPortalSubtab === 'function') {
+      switchPortalSubtab('timeline', btnTimeline);
+    }
+    const roadmapEl = document.getElementById('portal-subview-roadmap');
+    if (roadmapEl) {
+      setTimeout(() => {
+        if (typeof roadmapEl.scrollIntoView === 'function') roadmapEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 50);
+    }
+  } else {
+    const tabTimeline = document.querySelector('.nav-tab[data-tab="timeline"]');
+    if (tabTimeline) {
+      tabTimeline.click();
+    }
+  }
+}
+window.navigateToJadwalRilis2026 = navigateToJadwalRilis2026;
+
+let activeAddLinkContext = { no: null, field: null };
+
+function openAddChannelLinkModal(surveyNo, field) {
+  let item = null;
+  if (typeof surveyNo === 'number') {
+    item = RAW.find(x => x.no === surveyNo) || RAW[surveyNo];
+  } else if (typeof surveyNo === 'string') {
+    item = RAW.find(x => x.no === parseInt(surveyNo, 10)) || RAW[surveyNo];
+  }
+  if (!item) return;
+
+  const cd = CHANNEL_DEFS.find(c => c.field === field);
+  if (!cd) return;
+
+  activeAddLinkContext = { no: item.no, field: field };
+
+  const modalTitle = document.getElementById('add-channel-modal-title');
+  if (modalTitle) modalTitle.textContent = 'Tambah Link: ' + cd.label;
+
+  const channelNameLabel = document.getElementById('add-channel-name-label');
+  if (channelNameLabel) channelNameLabel.textContent = '(' + cd.label + ')';
+
+  const surveyTitle = document.getElementById('add-channel-survey-title');
+  if (surveyTitle) surveyTitle.textContent = item.judul;
+
+  const uBadge = document.getElementById('add-channel-unit-badge');
+  if (uBadge) {
+    const uc = UNIT_COLORS[getPrimaryUnit(item.unit)] || UNIT_COLORS['MULTI'];
+    uBadge.textContent = item.unit;
+    uBadge.style.background = uc.bg;
+    uBadge.style.color = uc.text;
+  }
+
+  const tBadge = document.getElementById('add-channel-target-badge');
+  if (tBadge) {
+    tBadge.textContent = 'Jadwal: ' + (item.jadwal || '-') + ' (' + (item.tahun || '2026') + ')';
+  }
+
+  const iconBox = document.getElementById('add-channel-icon-box');
+  if (iconBox) {
+    iconBox.style.background = cd.bg;
+    iconBox.style.color = cd.color;
+  }
+
+  const urlInput = document.getElementById('add-channel-input-url');
+  if (urlInput) {
+    urlInput.value = item[field] || '';
+    urlInput.placeholder = cd.field.includes('ig') ? 'https://www.instagram.com/p/...' : cd.field.includes('yt') ? 'https://youtu.be/...' : 'https://...';
+  }
+
+  const chkDone = document.getElementById('add-channel-mark-done');
+  if (chkDone) {
+    chkDone.checked = getStatus(item) === 'selesai';
+  }
+
+  const modal = document.getElementById('add-channel-link-modal');
+  if (modal) modal.classList.add('open');
+  if (urlInput) setTimeout(() => urlInput.focus(), 100);
+}
+
+function closeAddChannelLinkModal() {
+  const modal = document.getElementById('add-channel-link-modal');
+  if (modal) modal.classList.remove('open');
+  activeAddLinkContext = { no: null, field: null };
+}
+
+async function saveChannelLinkFromModal(e) {
+  if (e && e.preventDefault) e.preventDefault();
+  const { no, field } = activeAddLinkContext;
+  if (!no || !field) return false;
+
+  const item = RAW.find(x => x.no === no);
+  if (!item) return false;
+
+  const urlInput = document.getElementById('add-channel-input-url');
+  const urlVal = urlInput ? urlInput.value.trim() : '';
+
+  if (!urlVal) {
+    alert('Silakan masukkan tautan / URL publikasi.');
+    if (urlInput) urlInput.focus();
+    return false;
+  }
+
+  const cd = CHANNEL_DEFS.find(c => c.field === field);
+  const channelLabel = cd ? cd.label : field;
+
+  const chkDone = document.getElementById('add-channel-mark-done');
+  const markAsDone = chkDone ? chkDone.checked : false;
+
+  const btn = document.getElementById('btn-save-channel-link');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan…';
+  }
+
+  // 1. Update in RAW
+  item[field] = urlVal;
+  if (markAsDone) {
+    item.ket = 'Selesai';
+    item.status = 'Selesai';
+    item.tahapan = 'Publikasi / Selesai';
+  }
+
+  // 2. Save in localStorage
+  try {
+    localStorage.setItem('lan_pub_data', JSON.stringify(RAW));
+  } catch(err){}
+
+  // 3. Map field to Supabase database column
+  const fieldToDbCol = {
+    webLAN: 'web_lan',
+    webUnit: 'web_unit',
+    igLAN: 'ig_lan',
+    igUnit: 'ig_unit',
+    ytLAN: 'yt_lan',
+    ytUnit: 'yt_unit',
+    jurnal: 'jurnal',
+    media: 'media'
+  };
+  const dbCol = fieldToDbCol[field] || field;
+
+  // 4. Update to Supabase REST API
+  try {
+    if (typeof SUPABASE_CONFIG !== 'undefined' && SUPABASE_CONFIG.url && SUPABASE_CONFIG.anonKey) {
+      const payload = { [dbCol]: urlVal };
+      if (markAsDone) {
+        payload.ket = 'Selesai';
+        payload.status = 'Selesai';
+      }
+      fetch(`${SUPABASE_CONFIG.url}/rest/v1/publikasi?no=eq.${item.no}`, {
+        method: 'PATCH',
+        headers: {
+          'apikey': SUPABASE_CONFIG.anonKey,
+          'Authorization': `Bearer ${SUPABASE_CONFIG.anonKey}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=representation'
+        },
+        body: JSON.stringify(payload)
+      }).then(res => {
+        console.log('[SUPABASE] Channel link synced to DB:', res.status);
+      }).catch(err => {
+        console.warn('[SUPABASE] Failed to sync channel link to DB:', err);
+      });
+    }
+  } catch(err){}
+
+  if (btn) {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-check"></i> Simpan &amp; Aktifkan Link';
+  }
+
+  // 5. Close add modal & immediately refresh openModal with the updated item
+  closeAddChannelLinkModal();
+  openModal(item);
+
+  // 6. Refresh views
+  try {
+    if (typeof refreshAllPRISMViews === 'function') refreshAllPRISMViews();
+    else {
+      if (typeof renderTable === 'function') renderTable();
+      if (typeof renderRoadmap === 'function') renderRoadmap(filteredData);
+      if (typeof renderPortalTable === 'function') renderPortalTable();
+      if (typeof renderPortalRoadmap === 'function') renderPortalRoadmap();
+    }
+  } catch(err){}
+
+  if (typeof showNotificationToast === 'function') {
+    showNotificationToast(`✅ Berhasil menambahkan tautan publikasi <strong>${channelLabel}</strong>!`, 'success');
+  }
+
+  return false;
+}
+
+window.openAddChannelLinkModal = openAddChannelLinkModal;
+window.closeAddChannelLinkModal = closeAddChannelLinkModal;
+window.saveChannelLinkFromModal = saveChannelLinkFromModal;
 
 /* ══════════════════════════════════════════════════════════
    TAB NAVIGATION
@@ -5646,6 +5958,10 @@ function renderAuthNav() {
 let activeKpiItems = [];
 
 function openKpiList(type) {
+  if(type === 'total') {
+    navigateToJadwalRilis2026();
+    return;
+  }
   if(type === 'unit') return;
   const modal = document.getElementById('kpi-list-modal');
   const iconBox = document.getElementById('kpi-modal-icon');
@@ -6204,7 +6520,7 @@ function renderPortalKPIs() {
   }
 
   const kpis = [
-    {type:'total',   icon:'fa-file-lines',    value:total,     label:selectedUnit ? `Total Survei ${selectedUnit}` : 'Total Publikasi', sub:'Klik untuk lihat daftar survei', color:'#1e40af', ibg:'#eff6ff', delta:null},
+    {type:'total',   icon:'fa-file-lines',    value:total,     label:selectedUnit ? `Total Survei ${selectedUnit}` : 'Total Publikasi', sub:'Klik untuk lihat Jadwal Rilis 2026 →', color:'#1e40af', ibg:'#eff6ff', delta:null},
     {type:'selesai', icon:'fa-circle-check',  value:selesai,   label:'Selesai Publikasi', sub:`${pct}% selesai · Klik lihat list`, color:'#16a34a', ibg:'#f0fdf4', delta:{cls:'delta-good',text:`${pct}%`}},
     {type:'belum',   icon:'fa-hourglass-half',value:belum,     label:'Dalam Proses',   sub:`${belum} survei berjalan · Klik lihat list`, color:'#dc2626', ibg:'#fef2f2', delta:{cls:'delta-bad', text:`${pctBelum}%`}},
     fourthKpi,
@@ -7076,12 +7392,14 @@ function renderPortalTable() {
   const tbody = document.getElementById('portal-records-tbody');
   if (!tbody) return;
   const q = (document.getElementById('portal-r-search') && document.getElementById('portal-r-search').value.toLowerCase()) || '';
+  const yr = (document.getElementById('portal-r-year') && document.getElementById('portal-r-year').value) || '';
   const u = (document.getElementById('portal-r-unit') && document.getElementById('portal-r-unit').value) || '';
   const c = (document.getElementById('portal-r-cluster') && document.getElementById('portal-r-cluster').value) || '';
   const s = (document.getElementById('portal-r-status') && document.getElementById('portal-r-status').value) || '';
 
   const sourceData = (portalFilteredData && portalFilteredData.length) ? portalFilteredData : RAW;
   const list = sourceData.filter(d => {
+    if (yr && String(d.tahun || '') !== yr) return false;
     if (u && !getAllUnits(d.unit).includes(u)) return false;
     if (c && d.cluster !== c) return false;
     if (s === 'overdue' && !isOverdue(d)) return false;
