@@ -5236,7 +5236,7 @@ function renderRoadmap(data, year){
         ${items.map((d, itemIdx)=>{
           const sl=statusLabel(d), od=isOverdue(d);
           const uc=UNIT_COLORS[getPrimaryUnit(d.unit)]||UNIT_COLORS['MULTI'];
-          const numDisplay = d.no ? `#${d.no}` : `#${itemIdx + 1}`;
+          const numDisplay = `#${itemIdx + 1}`;
           return `<div class="roadmap-pub-card${od?' overdue':''}" onclick="openModal(${d.no ? d.no - 1 : itemIdx})">
             <div class="roadmap-pub-top">
               <span class="roadmap-unit-badge" style="background:${uc.bg};color:${uc.text};border:1px solid ${uc.border}">${d.unit}</span>
@@ -5922,7 +5922,7 @@ function renderAuthNav() {
   if(!user || !user.name || user.name === 'User') {
     container.innerHTML = `
       <button class="btn-login-nav" onclick="openLoginModal()" title="Login Pejabat, Pengelola, & Unit Kerja LAN RI" style="display:inline-flex;align-items:center;gap:7px;padding:8px 16px;border-radius:9px;background:#1e40af;color:#fff;font-weight:700;font-size:12.5px;border:none;cursor:pointer;box-shadow:0 3px 10px rgba(30,64,175,.25);transition:all .2s;">
-        <i class="fa-solid fa-right-to-bracket"></i> Masuk / Login Portal
+        <i class="fa-solid fa-right-to-bracket"></i> Login Portal
       </button>
     `;
   } else {
