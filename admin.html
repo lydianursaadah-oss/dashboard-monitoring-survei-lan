@@ -699,9 +699,12 @@
         <div class="page-header">
           <div>
             <div class="page-title"><i class="fa-solid fa-clock-rotate-left" style="color:var(--accent);margin-right:8px"></i>Riwayat Perubahan</div>
-            <div class="page-sub">Log aktivitas pengeditan data</div>
+            <div class="page-sub">Log aktivitas pengeditan data &amp; pemulihan data yang terhapus</div>
           </div>
-          <button class="btn btn-outline btn-sm" onclick="clearLog()"><i class="fa-solid fa-trash"></i> Bersihkan Log</button>
+          <div class="btn-group">
+            <button class="btn btn-primary btn-sm" onclick="syncAllFromSupabaseToLocal()"><i class="fa-solid fa-cloud-arrow-down"></i> Sinkron Ulang dari Supabase</button>
+            <button class="btn btn-outline btn-sm" onclick="clearLog()"><i class="fa-solid fa-trash"></i> Bersihkan Log</button>
+          </div>
         </div>
         <div class="card">
           <div class="card-body" id="log-list">
@@ -1865,14 +1868,92 @@ function renderLog(){
   const el = document.getElementById('log-list');
   if(!logs.length){ el.innerHTML='<div class="empty"><i class="fa-solid fa-scroll"></i>Belum ada riwayat perubahan.</div>'; return; }
   const dotColors = {add:'#16a34a',edit:'#2563eb',delete:'#dc2626',info:'#94a3b8',reset:'#d97706'};
-  el.innerHTML = logs.map(l=>`
-    <div class="log-item">
-      <div class="log-dot" style="background:${dotColors[l.type]||'#94a3b8'}"></div>
-      <div style="flex:1">
-        <div class="log-msg">${l.msg}</div>
-        <div class="log-time">${new Date(l.time).toLocaleString('id-ID')}</div>
-      </div>
-    </div>`).join('');
+  el.innerHTML = logs.map((l, idx)=>{
+    let restoreBtn = '';
+    if (l.type === 'delete') {
+      const m = l.msg ? l.msg.match(/\(No\.(\d+)\)/) : null;
+      const no = m ? parseInt(m[1]) : (l.deletedRecord ? l.deletedRecord.no : null);
+      if (no) {
+        const isAlreadyRestored = DB.some(d => d.no === no);
+        if (isAlreadyRestored) {
+          restoreBtn = `<span style="margin-left:auto;font-size:11px;font-weight:700;color:#16a34a;background:#f0fdf4;padding:4px 9px;border-radius:6px;border:1px solid #bbf7d0;"><i class="fa-solid fa-check"></i> Sudah Aktif</span>`;
+        } else {
+          restoreBtn = `<button class="btn btn-outline btn-xs" onclick="restoreDeletedRecord(${no}, ${idx})" style="margin-left:auto;display:inline-flex;align-items:center;gap:5px;color:#1e40af;border-color:#bfdbfe;background:#eff6ff;font-weight:700;cursor:pointer;" title="Kembalikan data survei ini"><i class="fa-solid fa-rotate-left"></i> Urungkan / Kembalikan Data</button>`;
+        }
+      }
+    }
+    return `
+      <div class="log-item" style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--border)">
+        <div class="log-dot" style="background:${dotColors[l.type]||'#94a3b8'}"></div>
+        <div style="flex:1">
+          <div class="log-msg" style="font-weight:600;font-size:13px;color:var(--text1)">${l.msg}</div>
+          <div class="log-time" style="font-size:11px;color:var(--text3)">${new Date(l.time).toLocaleString('id-ID')}</div>
+        </div>
+        ${restoreBtn}
+      </div>`;
+  }).join('');
+}
+
+async function restoreDeletedRecord(no, logIdx) {
+  const logs = JSON.parse(localStorage.getItem(LS_LOG) || '[]');
+  let rec = (logs[logIdx] && logs[logIdx].deletedRecord) ? logs[logIdx].deletedRecord : null;
+  if (!rec && typeof DEFAULT_DATA !== 'undefined') {
+    rec = DEFAULT_DATA.find(d => d.no === no);
+  }
+  if (!rec) {
+    showToast(`Data survei No.${no} tidak ditemukan di master cadangan.`, 'error');
+    return;
+  }
+
+  if (DB.some(d => d.no === no)) {
+    showToast(`Survei No.${no} sudah aktif dalam daftar!`, 'warn');
+    renderLog();
+    return;
+  }
+
+  DB.push(rec);
+  DB.sort((a, b) => a.no - b.no);
+  saveDB();
+
+  if (supabaseClient) {
+    const sbRow = {
+      no: rec.no,
+      unit: rec.unit,
+      judul: rec.judul,
+      jenis: rec.jenis || '',
+      jadwal: rec.jadwal || '',
+      tahun: String(rec.tahun || '2026'),
+      cluster: rec.cluster || '',
+      jurnal: rec.jurnal || '',
+      media: rec.media || '',
+      web_lan: rec.webLAN || '',
+      web_unit: rec.webUnit || '',
+      ig_lan: rec.igLAN || '',
+      ig_unit: rec.igUnit || '',
+      yt_lan: rec.ytLAN || '',
+      yt_unit: rec.ytUnit || '',
+      ket: rec.ket || 'Belum Selesai'
+    };
+    try {
+      await supabaseClient.from('publikasi').insert([sbRow]);
+      console.log('[SUPABASE RESTORE] Successfully inserted back into cloud for #', rec.no);
+    } catch(e) {
+      console.warn('[SUPABASE RESTORE ERROR]', e);
+    }
+  }
+
+  addLog(`Pulihkan: "${rec.judul.slice(0, 50)}" (No.${rec.no})`, 'add');
+  showToast(`✅ Berhasil mengurungkan! Data "${rec.judul.slice(0, 35)}..." telah dikembalikan.`, 'success');
+  renderStats();
+  renderDataTable();
+  renderLog();
+}
+
+async function syncAllFromSupabaseToLocal() {
+  showToast('Mengambil data terbaru dari Supabase...', 'info');
+  await loadFromSupabase();
+  showToast('✅ Berhasil memuat data terbaru dari Supabase!', 'success');
+  renderLog();
 }
 function clearLog(){ localStorage.removeItem(LS_LOG); renderLog(); showToast('Log dibersihkan','warn'); }
 
@@ -2091,7 +2172,7 @@ function deleteRecord(no){
           else console.log('[SUPABASE] Record dihapus dari cloud');
         });
     }
-    addLog(`Hapus: "${d?.judul?.slice(0,50)}" (No.${no})`, 'delete');
+    addLog(`Hapus: "${d?.judul?.slice(0,50)}" (No.${no})`, 'delete', d);
     showToast('Publikasi dihapus dari lokal & Supabase.','warn');
     renderStats(); renderDataTable();
   });
