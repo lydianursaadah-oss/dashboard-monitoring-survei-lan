@@ -1107,7 +1107,7 @@ function handleJabatanChange(val) {
     #sipantau-login-landing {
       position: fixed; inset: 0; z-index: 2000;
       background: radial-gradient(circle at 80% 20%, #eff6ff 0%, #dbeafe 30%, #bfdbfe 65%, #93c5fd 100%);
-      display: flex; align-items: center; justify-content: center; padding: 20px;
+      display: none; align-items: center; justify-content: center; padding: 20px;
       overflow-y: auto; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     }
     .prism-login-card {
@@ -1330,8 +1330,12 @@ function handleJabatanChange(val) {
 <body>
 
 <!-- ══════════════════════ HALAMAN UTAMA / LANDING LOGIN PRISM LAN RI ══════════════════════ -->
-<div id="sipantau-login-landing">
-  <div class="prism-login-card">
+<div id="sipantau-login-landing" onclick="if(event.target===this) hideLandingLogin()">
+  <div class="prism-login-card" style="position:relative;">
+    <!-- TOMBOL CLOSE KE DASHBOARD PUBLIK -->
+    <button type="button" onclick="hideLandingLogin()" class="prism-login-close-btn" title="Tutup dan lihat Dashboard Publik Semua Unit" style="position:absolute;top:16px;right:16px;width:36px;height:36px;border-radius:50%;background:#ffffff;border:1.5px solid #cbd5e1;display:flex;align-items:center;justify-content:center;color:#64748b;font-size:16px;cursor:pointer;z-index:20;transition:all .2s;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
 
     <!-- KOLOM KIRI: FORM LOGIN JABATAN (SHANGHAI CONSERVATORY OF MUSIC STYLE) -->
     <div class="prism-login-left">
@@ -1404,6 +1408,12 @@ function handleJabatanChange(val) {
           <button type="button" onclick="handlePrismLogin(event)" class="prism-btn-submit" id="btn-landing-submit">
             <i class="fa-solid fa-right-to-bracket"></i> Login
           </button>
+          <!-- LINK LIHAT DASHBOARD PUBLIK TANPA LOGIN -->
+          <div style="text-align:center;margin-top:12px;">
+            <button type="button" onclick="hideLandingLogin()" style="background:none;border:none;color:#2563eb;font-size:12px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;text-decoration:underline;">
+              <i class="fa-solid fa-arrow-left"></i> Lihat Dashboard Publik Semua Unit (Tanpa Login)
+            </button>
+          </div>
         </div>
       </div>
 
@@ -2495,6 +2505,10 @@ window.addEventListener('focus', () => {
       </div>
     </div>
     <div class="sindisa-topbar-right">
+      <!-- TOMBOL BERALIH KE DASHBOARD PUBLIK -->
+      <button onclick="exitDeputiPortal()" class="sindisa-public-btn" title="Beralih dan lihat Dashboard Publik Semua Unit" style="padding:6px 14px;border-radius:8px;border:1.5px solid #bfdbfe;background:#eff6ff;color:#1e40af;font-size:12px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .2s;">
+        <i class="fa-solid fa-globe"></i> Dashboard Publik
+      </button>
       <div class="sindisa-user-greet" onclick="toggleUserDropdown(event)">
         <img src="favicon.png" class="sindisa-user-pic" alt="Avatar"/>
         <span id="sindisa-header-username">Hi, Kepala Deputi</span>
@@ -2554,6 +2568,10 @@ window.addEventListener('focus', () => {
 
       <div style="margin-top:auto;padding:16px 20px;border-top:1px solid #f1f5f9">
         <div style="font-size:11px;color:#94a3b8;margin-bottom:8px">Mode Akses: <strong id="sipantau-sidebar-mode">Kepala Deputi</strong></div>
+        <!-- TOMBOL KE DASHBOARD PUBLIK -->
+        <button onclick="exitDeputiPortal()" style="width:100%;margin-bottom:8px;padding:8px;border-radius:6px;border:1.5px solid #bfdbfe;background:#eff6ff;color:#1e40af;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px">
+          <i class="fa-solid fa-globe"></i> Lihat Dashboard Publik
+        </button>
         <button onclick="handleUserLogout()" style="width:100%;padding:8px;border-radius:6px;border:1px solid #fecaca;background:#fef2f2;color:#dc2626;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px">
           <i class="fa-solid fa-right-from-bracket"></i> Keluar / Logout
         </button>
@@ -3140,6 +3158,11 @@ window.addEventListener('focus', () => {
             <tbody id="sindisa-acc-tbody"></tbody>
           </table>
         </div>
+      </div>
+
+      <!-- TAB PANEL DINAMIS: ROLE WORKFLOW PRISM -->
+      <div class="sindisa-panel-box" id="sindisa-panel-dynamic" style="display:none;background:#ffffff;border-radius:14px;border:1px solid #e2e8f0;padding:24px;box-shadow:0 1px 3px rgba(0,0,0,0.03);">
+        <!-- Konten render dinamis per tab menu role -->
       </div>
 
     </main>
@@ -5911,42 +5934,21 @@ function renderAuthNav() {
   if(!container) return;
   const user = getCurrentUser();
 
-  if(!user) {
+  if(!user || !user.name || user.name === 'User') {
     container.innerHTML = `
-      <button class="btn-login-nav" onclick="openLoginModal()" title="Login Pejabat / Admin">
-        <i class="fa-solid fa-user-lock"></i> Masuk / Login
+      <button class="btn-login-nav" onclick="openLoginModal()" title="Login Pejabat, Pengelola, & Unit Kerja LAN RI" style="display:inline-flex;align-items:center;gap:7px;padding:8px 16px;border-radius:9px;background:#1e40af;color:#fff;font-weight:700;font-size:12.5px;border:none;cursor:pointer;box-shadow:0 3px 10px rgba(30,64,175,.25);transition:all .2s;">
+        <i class="fa-solid fa-right-to-bracket"></i> Masuk / Login Portal
       </button>
     `;
   } else {
-    const isDeputi = user.role === 'deputi';
     container.innerHTML = `
-      <div class="user-profile-btn" onclick="toggleUserDropdown(event)" title="Profil Pengguna">
-        <div class="user-avatar-img"><i class="fa-solid fa-user"></i></div>
-        <span class="user-name-text">Hi, ${user.name.split(' ')[0]}</span>
-        <i class="fa-solid fa-chevron-down" style="font-size:10px;color:var(--text3)"></i>
-        
-        <div class="user-dropdown-menu" id="user-dropdown-menu">
-          <div class="user-dropdown-header">
-            <div class="ud-name">${user.name}</div>
-            <div class="ud-role">${user.title}</div>
-          </div>
-          ${isDeputi ? `
-            <div class="user-dropdown-item" onclick="openDeputiPortal()">
-              <i class="fa-solid fa-gauge-high"></i> <strong>Buka Portal Deputi</strong>
-            </div>
-            <div class="user-dropdown-item" onclick="openDeputiPortal('acc')">
-              <i class="fa-solid fa-clipboard-check"></i> Persetujuan (ACC)
-            </div>
-          ` : `
-            <div class="user-dropdown-item" onclick="window.location.href='admin.html'">
-              <i class="fa-solid fa-table-cells"></i> Editor Admin Panel
-            </div>
-          `}
-          <div class="user-dropdown-divider"></div>
-          <div class="user-dropdown-item" onclick="handleUserLogout()" style="color:#dc2626">
-            <i class="fa-solid fa-right-from-bracket" style="color:#dc2626"></i> Keluar / Logout
-          </div>
-        </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <button onclick="openDeputiPortal()" class="btn-workspace-nav" title="Buka Workspace Sistem Anda" style="display:inline-flex;align-items:center;gap:7px;padding:7px 14px;border-radius:8px;background:#1e40af;color:#fff;font-weight:700;font-size:12px;border:none;cursor:pointer;box-shadow:0 2px 8px rgba(30,64,175,.25);">
+          <i class="fa-solid fa-layer-group"></i> Workspace (${user.name.split(' ')[0]})
+        </button>
+        <button onclick="handleUserLogout()" title="Keluar / Logout" style="padding:7px 10px;border-radius:8px;background:#fef2f2;color:#dc2626;border:1px solid #fecaca;font-size:12px;cursor:pointer;">
+          <i class="fa-solid fa-right-from-bracket"></i>
+        </button>
       </div>
     `;
   }
@@ -6111,72 +6113,122 @@ const ALL_SIPANTAU_MENUS = [
 ];
 
 const ROLE_CONFIGS = {
-  // 1. Pimpinan: Kepala LAN RI (3 menu eksekutif: Dashboard, Pengumuman, Topik Proposal / ACC)
-  kepala_lan: {
-    title: "Kepala LAN RI",
-    subtitle: "Pimpinan Lembaga Administrasi Negara",
-    menus: [
-      { id: "dashboard",  icon: "fa-chart-pie",       label: "Dashboard",             action: "openTab('dashboard')" },
-      { id: "pengumuman", icon: "fa-bullhorn",        label: "Pengumuman",            action: "openTab('pengumuman')" },
-      { id: "proposal",   icon: "fa-clipboard-check", label: "Topik Proposal / ACC",  badge: true, action: "openTab('proposal')" }
-    ],
-    defaultTab: "dashboard"
-  },
-  // 2. Pimpinan: Kepala Deputi (3 menu eksekutif: Dashboard, Pengumuman, Topik Proposal / ACC)
-  deputi: {
-    title: "Kepala Deputi",
-    subtitle: "Deputi Kajian Kebijakan & Inovasi",
-    menus: [
-      { id: "dashboard",  icon: "fa-chart-pie",       label: "Dashboard",             action: "openTab('dashboard')" },
-      { id: "pengumuman", icon: "fa-bullhorn",        label: "Pengumuman",            action: "openTab('pengumuman')" },
-      { id: "proposal",   icon: "fa-clipboard-check", label: "Topik Proposal / ACC",  badge: true, action: "openTab('proposal')" }
-    ],
-    defaultTab: "dashboard"
-  },
-  // 3. Admin DSPK2AN: Verifikasi & publikasi lintas unit (6 menu lengkap)
-  admin_dspk2an: {
-    title: "Admin DSPK2AN",
-    subtitle: "Pusat Kajian Kebijakan Administrasi Negara",
-    menus: [
-      { id: "dashboard",  icon: "fa-chart-pie",       label: "Dashboard",             action: "openTab('dashboard')" },
-      { id: "pengumuman", icon: "fa-bullhorn",        label: "Pengumuman",            action: "openTab('pengumuman')" },
-      { id: "penulisan",  icon: "fa-pen-ruler",       label: "Penulisan & Instrumen", action: "openTab('penulisan')" },
-      { id: "publikasi",  icon: "fa-newspaper",       label: "Publikasi",             action: "openTab('publikasi')" },
-      { id: "review",     icon: "fa-circle-question", label: "Review",                action: "openTab('seminar')" },
-      { id: "proposal",   icon: "fa-clipboard-check", label: "Verifikasi Usulan / ACC", badge: true, action: "openTab('proposal')" }
-    ],
-    defaultTab: "dashboard"
-  },
-  // 4. Unit Kerja: SKMK, SKPP, DAPKK, SKMP, SKTAN, STIA JKT/MKS/BDG (5 menu spesifik unit)
+  // 1. UNIT KERJA PELAKSANA (Pusjar SKMK, SKPP, DAPKK, SKMP, SKTAN, STIA JKT/MKS/BDG)
   default_unit: {
     title: "Unit Kerja Pelaksana",
     subtitle: "Pelaksana Publikasi Survei",
     menus: [
-      { id: "dashboard",  icon: "fa-chart-pie",       label: "Dashboard",             action: "openTab('dashboard')" },
-      { id: "pengumuman", icon: "fa-bullhorn",        label: "Pengumuman",            action: "openTab('pengumuman')" },
-      { id: "penulisan",  icon: "fa-pen-ruler",       label: "Progres Survei Unit",   action: "openTab('penulisan')" },
-      { id: "publikasi",  icon: "fa-newspaper",       label: "Publikasi Unit",        action: "openTab('publikasi')" },
-      { id: "proposal",   icon: "fa-clipboard-check", label: "Pengajuan & Status ACC", badge: false, action: "openTab('proposal')" }
+      { section: "MENU UTAMA" },
+      { id: "dashboard", icon: "fa-chart-pie", label: "Dashboard Unit", action: "openTab('dashboard')" },
+      { id: "pengumuman", icon: "fa-bullhorn", label: "Pengumuman", action: "openTab('pengumuman')" },
+      { section: "KEGIATAN" },
+      { id: "pengajuan_kegiatan", icon: "fa-file-circle-plus", label: "Pengajuan Kegiatan", action: "openTab('pengajuan_kegiatan')" },
+      { id: "progress_kegiatan", icon: "fa-bars-progress", label: "Progress Kegiatan", action: "openTab('progress_kegiatan')" },
+      { id: "perbaikan_catatan", icon: "fa-clipboard-check", label: "Perbaikan & Catatan", badge: true, action: "openTab('perbaikan_catatan')" },
+      { section: "PUBLIKASI" },
+      { id: "publikasi_awal", icon: "fa-newspaper", label: "Publikasi Awal", action: "openTab('publikasi_awal')" },
+      { id: "publikasi_akhir", icon: "fa-file-lines", label: "Publikasi Akhir", action: "openTab('publikasi_akhir')" },
+      { section: "LAINNYA" },
+      { id: "riwayat_kegiatan", icon: "fa-clock-rotate-left", label: "Riwayat Kegiatan", action: "openTab('riwayat_kegiatan')" },
+      { id: "profil_unit", icon: "fa-building-user", label: "Profil Unit Kerja", action: "openTab('profil_unit')" }
     ],
     defaultTab: "dashboard"
   },
-  // 5. Humas LAN RI: Kanal Publikasi (3 menu)
+
+  // 2. ADMIN DSPK2AN (Verifikator & Pengelola Sistem)
+  admin_dspk2an: {
+    title: "Admin DSPK2AN",
+    subtitle: "Pusat Kajian Kebijakan Administrasi Negara",
+    menus: [
+      { section: "MENU UTAMA" },
+      { id: "dashboard", icon: "fa-chart-pie", label: "Dashboard Admin", action: "openTab('dashboard')" },
+      { id: "pengumuman", icon: "fa-bullhorn", label: "Kelola Pengumuman", action: "openTab('pengumuman')" },
+      { section: "WORKFLOW PENGELOLAAN" },
+      { id: "inbox_pengajuan", icon: "fa-inbox", label: "Inbox Pengajuan", badge: true, action: "openTab('inbox_pengajuan')" },
+      { id: "persetujuan_pimpinan", icon: "fa-user-check", label: "Persetujuan Pimpinan", action: "openTab('persetujuan_pimpinan')" },
+      { id: "monitoring_progress", icon: "fa-chart-line", label: "Monitoring Progress", action: "openTab('monitoring_progress')" },
+      { section: "PUBLIKASI" },
+      { id: "review_publikasi_awal", icon: "fa-magnifying-glass-chart", label: "Review Publikasi Awal", action: "openTab('review_publikasi_awal')" },
+      { id: "review_publikasi_akhir", icon: "fa-file-circle-check", label: "Review Publikasi Akhir", action: "openTab('review_publikasi_akhir')" },
+      { id: "kalender_publikasi", icon: "fa-calendar-days", label: "Kalender Publikasi", action: "openTab('kalender_publikasi')" },
+      { section: "SISTEM" },
+      { id: "laporan_rekapitulasi", icon: "fa-chart-simple", label: "Laporan & Rekapitulasi", action: "openTab('laporan_rekapitulasi')" },
+      { id: "master_data", icon: "fa-database", label: "Master Data", action: "openTab('master_data')" },
+      { id: "log_aktivitas", icon: "fa-list-check", label: "Log Aktivitas", action: "openTab('log_aktivitas')" }
+    ],
+    defaultTab: "dashboard"
+  },
+
+  // 3. KEPALA LAN RI (Pimpinan Tertinggi / Pengambil Keputusan)
+  kepala_lan: {
+    title: "Kepala LAN RI",
+    subtitle: "Pimpinan Lembaga Administrasi Negara",
+    menus: [
+      { section: "MENU UTAMA" },
+      { id: "dashboard", icon: "fa-chart-pie", label: "Dashboard Pimpinan", action: "openTab('dashboard')" },
+      { id: "pengumuman", icon: "fa-bullhorn", label: "Pengumuman", action: "openTab('pengumuman')" },
+      { section: "PERLU KEPUTUSAN" },
+      { id: "keputusan_pengajuan", icon: "fa-stamp", label: "Persetujuan Pengajuan", badge: true, action: "openTab('keputusan_pengajuan')" },
+      { id: "keputusan_pub_awal", icon: "fa-newspaper", label: "Persetujuan Publikasi Awal", action: "openTab('keputusan_pub_awal')" },
+      { id: "keputusan_pub_akhir", icon: "fa-file-signature", label: "Persetujuan Publikasi Akhir", action: "openTab('keputusan_pub_akhir')" },
+      { section: "MONITORING STRATEGIS" },
+      { id: "monitoring_strategis", icon: "fa-chess-king", label: "Kegiatan Strategis LAN", action: "openTab('monitoring_strategis')" },
+      { id: "monitoring_terlambat", icon: "fa-triangle-exclamation", label: "Kegiatan Terlambat / Berisiko", action: "openTab('monitoring_terlambat')" },
+      { section: "ARAHAN" },
+      { id: "catatan_arahan", icon: "fa-comment-dots", label: "Catatan & Arahan Pimpinan", action: "openTab('catatan_arahan')" }
+    ],
+    defaultTab: "dashboard"
+  },
+
+  // 4. KEPALA DEPUTI (Deputi Kajian Kebijakan & Inovasi)
+  deputi: {
+    title: "Kepala Deputi",
+    subtitle: "Deputi Kajian Kebijakan & Inovasi",
+    menus: [
+      { section: "MENU UTAMA" },
+      { id: "dashboard", icon: "fa-chart-pie", label: "Dashboard Deputi", action: "openTab('dashboard')" },
+      { id: "pengumuman", icon: "fa-bullhorn", label: "Pengumuman", action: "openTab('pengumuman')" },
+      { section: "PERLU REVIEW" },
+      { id: "inbox_persetujuan", icon: "fa-clipboard-check", label: "Inbox Persetujuan", badge: true, action: "openTab('inbox_persetujuan')" },
+      { id: "review_substansi", icon: "fa-glasses", label: "Review Substansi & Publikasi", action: "openTab('review_substansi')" },
+      { section: "MONITORING" },
+      { id: "monitoring_unit", icon: "fa-building", label: "Monitoring Unit Binaan", action: "openTab('monitoring_unit')" },
+      { id: "peringatan_terlambat", icon: "fa-triangle-exclamation", label: "Peringatan Keterlambatan", action: "openTab('peringatan_terlambat')" },
+      { section: "DISPOSISI" },
+      { id: "disposisi_catatan", icon: "fa-pen-to-square", label: "Disposisi & Catatan", action: "openTab('disposisi_catatan')" }
+    ],
+    defaultTab: "dashboard"
+  },
+
+  // 5. HUMAS LAN RI (Biro Humas & Publikasi)
   humas: {
     title: "Humas LAN RI",
     subtitle: "Biro Humas & Publikasi",
     menus: [
-      { id: "dashboard",  icon: "fa-chart-pie",       label: "Dashboard",             action: "openTab('dashboard')" },
-      { id: "pengumuman", icon: "fa-bullhorn",        label: "Pengumuman",            action: "openTab('pengumuman')" },
-      { id: "publikasi",  icon: "fa-newspaper",       label: "Kanal Publikasi",       action: "openTab('publikasi')" }
+      { section: "MENU UTAMA" },
+      { id: "dashboard", icon: "fa-chart-pie", label: "Dashboard Publikasi", action: "openTab('dashboard')" },
+      { id: "pengumuman", icon: "fa-bullhorn", label: "Pengumuman", action: "openTab('pengumuman')" },
+      { section: "ANTRIAN PUBLIKASI" },
+      { id: "antrian_publikasi", icon: "fa-layer-group", label: "Antrian Siap Terbit", badge: true, action: "openTab('antrian_publikasi')" },
+      { id: "review_desain", icon: "fa-palette", label: "Review Desain & Redaksi", action: "openTab('review_desain')" },
+      { section: "PUBLIKASI & MEDIA" },
+      { id: "manajemen_kanal", icon: "fa-share-nodes", label: "Manajemen Kanal Publikasi", action: "openTab('manajemen_kanal')" },
+      { id: "kalender_media", icon: "fa-calendar-days", label: "Kalender Rilis Media", action: "openTab('kalender_media')" },
+      { id: "arsip_publikasi", icon: "fa-box-archive", label: "Arsip Publikasi", action: "openTab('arsip_publikasi')" }
     ],
     defaultTab: "dashboard"
   }
 };
 
 function getRoleConfig(roleKey) {
-  if(ROLE_CONFIGS[roleKey]) return ROLE_CONFIGS[roleKey];
-  if(roleKey && roleKey.startsWith('unit_')) return ROLE_CONFIGS.default_unit;
-  return ROLE_CONFIGS.deputi;
+  if (!roleKey) return ROLE_CONFIGS.default_unit;
+  if (ROLE_CONFIGS[roleKey]) return ROLE_CONFIGS[roleKey];
+  if (roleKey.startsWith('unit_')) return ROLE_CONFIGS.default_unit;
+  if (roleKey.includes('admin')) return ROLE_CONFIGS.admin_dspk2an;
+  if (roleKey.includes('kepala')) return ROLE_CONFIGS.kepala_lan;
+  if (roleKey.includes('humas')) return ROLE_CONFIGS.humas;
+  if (roleKey.includes('deputi')) return ROLE_CONFIGS.deputi;
+  return ROLE_CONFIGS.default_unit;
 }
 
 /* ── Database Akun Terhubung Langsung ke Supabase 'users' ── */
@@ -6379,8 +6431,8 @@ function renderSidebarForRole(user) {
   const menuContainer = document.getElementById('sipantau-role-menu');
   if(!menuContainer) return;
 
-  const roleKey = user ? user.role : 'deputi';
-  const cfg = (typeof getRoleConfig === 'function') ? (getRoleConfig(roleKey) || ROLE_CONFIGS.deputi) : ROLE_CONFIGS.deputi;
+  const roleKey = user ? user.role : 'default_unit';
+  const cfg = (typeof getRoleConfig === 'function') ? (getRoleConfig(roleKey) || ROLE_CONFIGS.default_unit) : ROLE_CONFIGS.default_unit;
   
   let pendingCount = 3;
   try {
@@ -6395,13 +6447,25 @@ function renderSidebarForRole(user) {
 
   const modeEl = document.getElementById('sipantau-sidebar-mode');
   if(modeEl) {
-    modeEl.textContent = (user && user.name && user.name !== 'User') ? `${user.name} (${user.unit || 'LAN RI'})` : 'Kepala Deputi';
+    modeEl.textContent = (user && user.name && user.name !== 'User') ? `${user.name} (${user.unit || 'LAN RI'})` : (cfg.title || 'Role Workspace');
   }
 
-  const menus = (cfg && Array.isArray(cfg.menus) && cfg.menus.length) ? cfg.menus : ALL_SIPANTAU_MENUS;
-  menuContainer.innerHTML = menus.map((m, idx) => {
+  const menus = (cfg && Array.isArray(cfg.menus) && cfg.menus.length) ? cfg.menus : [];
+  let isFirstActionable = true;
+
+  menuContainer.innerHTML = menus.map((m) => {
+    if (m.section) {
+      return `
+        <li class="sindisa-section-title" style="font-size:10px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:0.8px;padding:12px 18px 4px;list-style:none;">
+          ${m.section}
+        </li>
+      `;
+    }
+    const isActive = isFirstActionable;
+    if (isFirstActionable) isFirstActionable = false;
+
     return `
-      <li class="sindisa-menu-item ${idx===0?'active':''}" data-tab-id="${m.id}" onclick="${m.action}; highlightMenuItem(this)">
+      <li class="sindisa-menu-item ${isActive ? 'active' : ''}" data-tab-id="${m.id}" onclick="${m.action}; highlightMenuItem(this)">
         <i class="fa-solid ${m.icon}"></i>
         <span class="sindisa-menu-text">${m.label}</span>
         ${m.badge ? `<span class="sindisa-badge">${pendingCount}</span>` : ''}
@@ -7265,62 +7329,387 @@ function submitSindisaActivityForm(e) {
 }
 
 function openTab(tabName) {
-  const panelMap = {
-    'dashboard': 'dashboard',
-    'pengumuman': 'pengumuman',
-    'aktivitas': 'aktivitas',
-    'penulisan': 'penulisan',
-    'publikasi': 'publikasi',
-    'review': 'seminar',
-    'seminar': 'seminar',
-    'proposal': 'proposal',
-    'acc': 'proposal'
-  };
-  const activePanel = panelMap[tabName] || tabName;
+  const standardPanels = ['dashboard', 'pengumuman', 'aktivitas', 'penulisan', 'publikasi', 'seminar', 'proposal'];
+  const isStandard = ['dashboard', 'pengumuman'].includes(tabName);
+  const dynPanel = document.getElementById('sindisa-panel-dynamic');
 
-  const panels = ['dashboard', 'pengumuman', 'aktivitas', 'penulisan', 'publikasi', 'seminar', 'proposal'];
-  panels.forEach(p => {
+  // Sembunyikan panel standar
+  standardPanels.forEach(p => {
     const el = document.getElementById('sindisa-panel-' + p);
-    if(el) {
-      el.style.display = (p === activePanel) ? 'block' : 'none';
-    }
+    if(el) el.style.display = 'none';
   });
+
+  if (isStandard) {
+    if (dynPanel) dynPanel.style.display = 'none';
+    const el = document.getElementById('sindisa-panel-' + tabName);
+    if(el) el.style.display = 'block';
+
+    if(tabName === 'dashboard') {
+      initPortalDropdowns();
+      applyPortalFilters();
+    } else if(tabName === 'pengumuman') {
+      renderSindisaPengumuman();
+    }
+  } else {
+    // Render dynamic panel untuk peran dan menu spesifik
+    if (dynPanel) {
+      dynPanel.style.display = 'block';
+      renderDynamicRoleTab(tabName, getCurrentUser());
+    }
+  }
 
   // Highlight corresponding menu item in the vertical sidebar
   document.querySelectorAll('#sipantau-role-menu .sindisa-menu-item').forEach(m => {
-    const fnStr = m.getAttribute('onclick') || '';
     const dTab = m.getAttribute('data-tab-id') || '';
-    if(fnStr.includes(`'${tabName}'`) || fnStr.includes(`'${activePanel}'`) || dTab === tabName || dTab === activePanel || (tabName === 'seminar' && dTab === 'review') || (activePanel === 'seminar' && dTab === 'review')) {
+    if(dTab === tabName) {
       m.classList.add('active');
     } else {
       m.classList.remove('active');
     }
   });
+}
 
-  // Render appropriate content immediately
-  if(activePanel === 'dashboard') {
-    initPortalDropdowns();
-    applyPortalFilters();
-  } else if(activePanel === 'pengumuman') {
-    renderSindisaPengumuman();
-  } else if(activePanel === 'penulisan') {
-    renderSindisaPenulisan();
-    populateActTopikDropdown();
-  } else if(activePanel === 'publikasi') {
-    renderSindisaPublikasi();
-  } else if(activePanel === 'seminar') {
-    renderSindisaSeminar();
-  } else if(activePanel === 'proposal') {
-    const user = getCurrentUser();
-    const unitLocked = isUnitUser(user);
-    const btnAddEl = document.getElementById('btn-proposal-add');
-    if(btnAddEl) {
-      btnAddEl.onclick = unitLocked ? function() { openTab('aktivitas'); } : openAjukanDisposisiModal;
-    }
-    renderSindisaAccTable();
-  } else if(activePanel === 'aktivitas') {
-    populateActTopikDropdown();
+/* ══════════════════════════════════════════════════════════
+   RENDERER HALAMAN & TAB DINAMIS ROLE WORKFLOW PRISM
+   ══════════════════════════════════════════════════════════ */
+function renderDynamicRoleTab(tabName, user) {
+  const container = document.getElementById('sindisa-panel-dynamic');
+  if(!container) return;
+
+  const unitLocked = isUnitUser(user);
+  const userUnit = user ? user.unit : '';
+
+  // Saring data berdasarkan unit pelaksana jika login sebagai unit
+  const relevantData = RAW.filter(d => {
+    if (!unitLocked || !userUnit) return true;
+    return getAllUnits(d.unit).includes(userUnit);
+  });
+
+  const totalPub = relevantData.length;
+  const selesaiCount = relevantData.filter(d => getStatus(d) === 'selesai').length;
+  const prosesCount = relevantData.filter(d => getStatus(d) === 'belum').length;
+  const overdueCount = relevantData.filter(d => isOverdue(d)).length;
+
+  let headerHtml = '';
+  let bodyHtml = '';
+
+  switch (tabName) {
+    // ── ROLE UNIT KERJA ─────────────────────────────
+    case 'pengajuan_kegiatan':
+      headerHtml = `
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+          <div>
+            <h3 style="font-size:18px;font-weight:800;color:#1e293b;margin-bottom:4px;">
+              <i class="fa-solid fa-file-circle-plus" style="color:#2563eb;margin-right:8px;"></i> Pengajuan Rencana Kegiatan Survei
+            </h3>
+            <p style="font-size:12.5px;color:#64748b;">Kelola dan ajukan usulan kegiatan survei &amp; kajian ${userUnit ? 'Unit ' + userUnit : 'Unit Kerja'}</p>
+          </div>
+          <button onclick="openAddAgendaModal()" style="display:inline-flex;align-items:center;gap:7px;padding:9px 16px;background:#2563eb;color:#fff;border:none;border-radius:8px;font-size:12.5px;font-weight:700;cursor:pointer;box-shadow:0 2px 6px rgba(37,99,235,0.25);">
+            <i class="fa-solid fa-circle-plus"></i> + Ajukan Kegiatan Baru
+          </button>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:14px;margin-bottom:22px;">
+          <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:14px;">
+            <div style="font-size:11.5px;font-weight:700;color:#64748b;">TOTAL USULAN</div>
+            <div style="font-size:22px;font-weight:800;color:#1e293b;margin-top:4px;">${totalPub}</div>
+          </div>
+          <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px;">
+            <div style="font-size:11.5px;font-weight:700;color:#16a34a;">TERVERIFIKASI &amp; SELESAI</div>
+            <div style="font-size:22px;font-weight:800;color:#16a34a;margin-top:4px;">${selesaiCount}</div>
+          </div>
+          <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:14px;">
+            <div style="font-size:11.5px;font-weight:700;color:#2563eb;">DALAM PROSES</div>
+            <div style="font-size:22px;font-weight:800;color:#2563eb;margin-top:4px;">${prosesCount}</div>
+          </div>
+        </div>
+      `;
+      bodyHtml = renderWorkflowTable(relevantData, 'pengajuan');
+      break;
+
+    case 'progress_kegiatan':
+      headerHtml = `
+        <div style="margin-bottom:20px;">
+          <h3 style="font-size:18px;font-weight:800;color:#1e293b;margin-bottom:4px;">
+            <i class="fa-solid fa-bars-progress" style="color:#0ea5e9;margin-right:8px;"></i> Progress Pelaksanaan Survei &amp; Kajian
+          </h3>
+          <p style="font-size:12.5px;color:#64748b;">Monitoring 4 tahapan alur kerja: Instrumen &rarr; Pengolahan &rarr; Review &rarr; Publikasi</p>
+        </div>
+      `;
+      bodyHtml = renderWorkflowTable(relevantData, 'progress');
+      break;
+
+    case 'perbaikan_catatan':
+      headerHtml = `
+        <div style="margin-bottom:20px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+            <h3 style="font-size:18px;font-weight:800;color:#1e293b;">
+              <i class="fa-solid fa-clipboard-check" style="color:#f59e0b;margin-right:8px;"></i> Perbaikan &amp; Catatan Revisi
+            </h3>
+            <span class="badge" style="background:#fef3c7;color:#b45309;font-weight:700;">Perlu Tindakan</span>
+          </div>
+          <p style="font-size:12.5px;color:#64748b;">Daftar kegiatan yang memiliki masukan/catatan dari DSPK2AN atau Pimpinan</p>
+        </div>
+      `;
+      bodyHtml = renderWorkflowTable(relevantData.filter(d => (d.catatan && d.catatan.trim()) || isOverdue(d)), 'catatan');
+      break;
+
+    case 'publikasi_awal':
+    case 'publikasi_akhir':
+      const isAkhir = (tabName === 'publikasi_akhir');
+      headerHtml = `
+        <div style="margin-bottom:20px;">
+          <h3 style="font-size:18px;font-weight:800;color:#1e293b;margin-bottom:4px;">
+            <i class="fa-solid ${isAkhir ? 'fa-file-lines' : 'fa-newspaper'}" style="color:#2563eb;margin-right:8px;"></i> 
+            ${isAkhir ? 'Publikasi Akhir (Laporan Lengkap & Ringkasan Eksekutif)' : 'Publikasi Awal (Infografis & Rilis Pembuka)'}
+          </h3>
+          <p style="font-size:12.5px;color:#64748b;">${isAkhir ? 'Dokumen final hasil riset & survei siap serah terima dan pengesahan.' : 'Materi publikasi ringkas survei untuk tayang di kanal komunikasi LAN RI.'}</p>
+        </div>
+      `;
+      bodyHtml = renderWorkflowTable(relevantData, isAkhir ? 'pub_akhir' : 'pub_awal');
+      break;
+
+    case 'riwayat_kegiatan':
+      headerHtml = `
+        <div style="margin-bottom:20px;">
+          <h3 style="font-size:18px;font-weight:800;color:#1e293b;margin-bottom:4px;">
+            <i class="fa-solid fa-clock-rotate-left" style="color:#64748b;margin-right:8px;"></i> Riwayat &amp; Arsip Kegiatan Selesai
+          </h3>
+          <p style="font-size:12.5px;color:#64748b;">Dokumentasi kegiatan dan publikasi survei yang telah rampung</p>
+        </div>
+      `;
+      bodyHtml = renderWorkflowTable(relevantData.filter(d => getStatus(d) === 'selesai'), 'riwayat');
+      break;
+
+    case 'profil_unit':
+      headerHtml = `
+        <div style="margin-bottom:20px;">
+          <h3 style="font-size:18px;font-weight:800;color:#1e293b;margin-bottom:4px;">
+            <i class="fa-solid fa-building-user" style="color:#2563eb;margin-right:8px;"></i> Profil Unit Kerja
+          </h3>
+          <p style="font-size:12.5px;color:#64748b;">Informasi dan ringkasan operasional unit kerja pelaksana publikasi</p>
+        </div>
+      `;
+      bodyHtml = `
+        <div style="display:grid;grid-template-columns:1fr 2fr;gap:24px;background:#f8fafc;padding:24px;border-radius:12px;border:1px solid #e2e8f0;">
+          <div style="text-align:center;padding:20px;background:#fff;border-radius:10px;border:1px solid #e2e8f0;">
+            <img src="favicon.png" style="width:72px;height:72px;object-fit:contain;margin-bottom:12px;"/>
+            <h4 style="font-size:16px;font-weight:800;color:#1e293b;">${user ? user.unit || user.name : 'Unit Kerja'}</h4>
+            <div style="font-size:12px;color:#64748b;margin-top:4px;">${user ? user.title || 'Pelaksana Survei' : 'LAN RI'}</div>
+            <div style="margin-top:16px;padding:8px;background:#eff6ff;color:#1e40af;font-size:11.5px;font-weight:700;border-radius:6px;">
+              Terhubung Database Supabase
+            </div>
+          </div>
+          <div>
+            <h4 style="font-size:14px;font-weight:700;color:#1e293b;margin-bottom:14px;">Ringkasan Kinerja Survei 2026</h4>
+            <div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:12px;margin-bottom:18px;">
+              <div style="background:#fff;padding:12px;border-radius:8px;border:1px solid #e2e8f0;text-align:center;">
+                <div style="font-size:11px;color:#64748b;font-weight:700;">TOTAL SURVEI</div>
+                <div style="font-size:20px;font-weight:800;color:#1e293b;margin-top:4px;">${totalPub}</div>
+              </div>
+              <div style="background:#fff;padding:12px;border-radius:8px;border:1px solid #e2e8f0;text-align:center;">
+                <div style="font-size:11px;color:#16a34a;font-weight:700;">SELESAI</div>
+                <div style="font-size:20px;font-weight:800;color:#16a34a;margin-top:4px;">${selesaiCount}</div>
+              </div>
+              <div style="background:#fff;padding:12px;border-radius:8px;border:1px solid #e2e8f0;text-align:center;">
+                <div style="font-size:11px;color:#2563eb;font-weight:700;">PROSES</div>
+                <div style="font-size:20px;font-weight:800;color:#2563eb;margin-top:4px;">${prosesCount}</div>
+              </div>
+            </div>
+            <div style="font-size:12px;color:#475569;line-height:1.6;">
+              Unit kerja ini bertanggung jawab atas penyusunan dan publikasi survei/kajian kebijakan administrasi negara. Seluruh data disinkronkan secara real-time ke sistem PRISM LAN RI.
+            </div>
+          </div>
+        </div>
+      `;
+      break;
+
+    // ── ROLE ADMIN DSPK2AN ──────────────────────────
+    case 'inbox_pengajuan':
+      headerHtml = `
+        <div style="margin-bottom:20px;">
+          <h3 style="font-size:18px;font-weight:800;color:#1e293b;margin-bottom:4px;">
+            <i class="fa-solid fa-inbox" style="color:#2563eb;margin-right:8px;"></i> Inbox Pengajuan Usulan Survei Seluruh Unit
+          </h3>
+          <p style="font-size:12.5px;color:#64748b;">Verifikasi usulan baru dari seluruh unit kerja sebelum dieskalasikan ke Pimpinan</p>
+        </div>
+      `;
+      bodyHtml = renderWorkflowTable(RAW, 'admin_inbox');
+      break;
+
+    case 'persetujuan_pimpinan':
+    case 'keputusan_pengajuan':
+    case 'inbox_persetujuan':
+      headerHtml = `
+        <div style="margin-bottom:20px;">
+          <h3 style="font-size:18px;font-weight:800;color:#1e293b;margin-bottom:4px;">
+            <i class="fa-solid fa-clipboard-check" style="color:#16a34a;margin-right:8px;"></i> Persetujuan &amp; ACC Pimpinan
+          </h3>
+          <p style="font-size:12.5px;color:#64748b;">Pengajuan dan naskah strategis yang memerlukan pengesahan atau disposisi pimpinan</p>
+        </div>
+      `;
+      bodyHtml = renderWorkflowTable(RAW, 'approval');
+      break;
+
+    case 'monitoring_progress':
+    case 'monitoring_strategis':
+    case 'monitoring_unit':
+      headerHtml = `
+        <div style="margin-bottom:20px;">
+          <h3 style="font-size:18px;font-weight:800;color:#1e293b;margin-bottom:4px;">
+            <i class="fa-solid fa-chart-line" style="color:#2563eb;margin-right:8px;"></i> Monitoring Kinerja Survei Multi-Unit
+          </h3>
+          <p style="font-size:12.5px;color:#64748b;">Pemantauan matriks penyelesaian survei seluruh unit kerja LAN RI</p>
+        </div>
+      `;
+      bodyHtml = renderWorkflowTable(RAW, 'monitoring');
+      break;
+
+    case 'monitoring_terlambat':
+    case 'peringatan_terlambat':
+      headerHtml = `
+        <div style="margin-bottom:20px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+            <h3 style="font-size:18px;font-weight:800;color:#dc2626;">
+              <i class="fa-solid fa-triangle-exclamation" style="margin-right:8px;"></i> Peringatan Kegiatan Terlambat / Berisiko
+            </h3>
+            <span class="badge" style="background:#fee2e2;color:#dc2626;font-weight:700;">Atensi Khusus</span>
+          </div>
+          <p style="font-size:12.5px;color:#64748b;">Daftar kegiatan survei yang melewati target jadwal dan memerlukan perhatian pimpinan</p>
+        </div>
+      `;
+      bodyHtml = renderWorkflowTable(RAW.filter(d => isOverdue(d)), 'terlambat');
+      break;
+
+    case 'review_publikasi_awal':
+    case 'review_publikasi_akhir':
+    case 'review_substansi':
+    case 'review_desain':
+      headerHtml = `
+        <div style="margin-bottom:20px;">
+          <h3 style="font-size:18px;font-weight:800;color:#1e293b;margin-bottom:4px;">
+            <i class="fa-solid fa-glasses" style="color:#7c3aed;margin-right:8px;"></i> Review Substansi, Redaksi &amp; Desain
+          </h3>
+          <p style="font-size:12.5px;color:#64748b;">Pengecekan kualitas naskah, kesesuaian template, dan standar publikasi LAN RI</p>
+        </div>
+      `;
+      bodyHtml = renderWorkflowTable(RAW, 'review');
+      break;
+
+    case 'kalender_publikasi':
+    case 'kalender_media':
+      headerHtml = `
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+          <div>
+            <h3 style="font-size:18px;font-weight:800;color:#1e293b;margin-bottom:4px;">
+              <i class="fa-solid fa-calendar-days" style="color:#2563eb;margin-right:8px;"></i> Kalender &amp; Roadmap Publikasi 2026
+            </h3>
+            <p style="font-size:12.5px;color:#64748b;">Jadwal tayang rilis hasil riset dan publikasi survei per bulan</p>
+          </div>
+          <button onclick="navigateToJadwalRilis2026()" style="padding:8px 16px;background:#eff6ff;color:#1e40af;border:1.5px solid #bfdbfe;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">
+            <i class="fa-solid fa-timeline"></i> Buka Roadmap Interaktif
+          </button>
+        </div>
+      `;
+      bodyHtml = renderWorkflowTable(RAW, 'kalender');
+      break;
+
+    case 'manajemen_kanal':
+    case 'antrian_publikasi':
+      headerHtml = `
+        <div style="margin-bottom:20px;">
+          <h3 style="font-size:18px;font-weight:800;color:#1e293b;margin-bottom:4px;">
+            <i class="fa-solid fa-share-nodes" style="color:#ec4899;margin-right:8px;"></i> Antrian &amp; Manajemen Kanal Publikasi
+          </h3>
+          <p style="font-size:12.5px;color:#64748b;">Kelola link rilis di Instagram, YouTube, dan Website Resmi LAN RI</p>
+        </div>
+      `;
+      bodyHtml = renderWorkflowTable(RAW, 'kanal');
+      break;
+
+    case 'laporan_rekapitulasi':
+    case 'master_data':
+    case 'log_aktivitas':
+    case 'catatan_arahan':
+    case 'disposisi_catatan':
+    case 'arsip_publikasi':
+    default:
+      headerHtml = `
+        <div style="margin-bottom:20px;">
+          <h3 style="font-size:18px;font-weight:800;color:#1e293b;margin-bottom:4px;">
+            <i class="fa-solid fa-folder-open" style="color:#2563eb;margin-right:8px;"></i> ${tabName.replace(/_/g, ' ').toUpperCase()}
+          </h3>
+          <p style="font-size:12.5px;color:#64748b;">Pusat pengelolaan data dan informasi strategis PRISM LAN RI</p>
+        </div>
+      `;
+      bodyHtml = renderWorkflowTable(relevantData, 'default');
+      break;
   }
+
+  container.innerHTML = headerHtml + bodyHtml;
+}
+
+/* Helper renderer tabel untuk workflow view */
+function renderWorkflowTable(dataList, viewType) {
+  if (!dataList || dataList.length === 0) {
+    return `
+      <div style="padding:40px;text-align:center;background:#f8fafc;border-radius:10px;border:1px dashed #cbd5e1;color:#64748b;">
+        <i class="fa-solid fa-inbox" style="font-size:28px;color:#94a3b8;margin-bottom:10px;display:block;"></i>
+        Tidak ada data yang tersedia untuk kategori ini saat ini.
+      </div>
+    `;
+  }
+
+  const rows = dataList.map((d, idx) => {
+    const st = getStatus(d);
+    const isSelesai = (st === 'selesai');
+    const badgeCls = isSelesai ? 'badge-green' : (isOverdue(d) ? 'badge-red' : 'badge-yellow');
+    const badgeText = isSelesai ? 'Selesai' : (isOverdue(d) ? 'Terlambat' : 'Dalam Proses');
+    const stage = getStageInfo(d);
+
+    let actionBtn = `
+      <button onclick="openModal(${d.no || idx})" style="padding:5px 12px;background:#f8fafc;border:1px solid #cbd5e1;border-radius:6px;font-size:11.5px;font-weight:600;cursor:pointer;color:#1e293b;transition:all .15s;">
+        <i class="fa-solid fa-eye"></i> Detail
+      </button>
+    `;
+
+    return `
+      <tr style="border-bottom:1px solid #f1f5f9;">
+        <td style="font-weight:700;color:#94a3b8;font-size:12px;padding:11px 12px;">${idx + 1}</td>
+        <td style="padding:11px 12px;">
+          <div style="font-weight:700;color:#1e293b;font-size:13px;line-height:1.4;">${escapeHtml(d.nama_survei || d.judul || '-')}</div>
+          <div style="font-size:11.5px;color:#64748b;margin-top:2px;">${escapeHtml(d.jenis_publikasi || '')}</div>
+        </td>
+        <td style="padding:11px 12px;">
+          <span class="badge" style="background:#eff6ff;color:#1e40af;font-size:11.5px;font-weight:700;">${escapeHtml(d.unit || '-')}</span>
+        </td>
+        <td style="padding:11px 12px;font-size:12px;color:#475569;">${escapeHtml(d.jadwal || '-')}</td>
+        <td style="padding:11px 12px;"><span class="badge ${badgeCls}">${badgeText}</span></td>
+        <td style="padding:11px 12px;font-size:12px;color:#334155;">${escapeHtml(stage.name || '-')}</td>
+        <td style="padding:11px 12px;text-align:right;">${actionBtn}</td>
+      </tr>
+    `;
+  }).join('');
+
+  return `
+    <div style="overflow-x:auto;border:1px solid #e2e8f0;border-radius:10px;">
+      <table style="width:100%;border-collapse:collapse;text-align:left;font-family:inherit;">
+        <thead style="background:#f8fafc;border-bottom:1px solid #e2e8f0;">
+          <tr>
+            <th style="padding:10px 12px;font-size:11.5px;font-weight:700;color:#475569;width:40px;">No</th>
+            <th style="padding:10px 12px;font-size:11.5px;font-weight:700;color:#475569;">Judul Survei / Kajian</th>
+            <th style="padding:10px 12px;font-size:11.5px;font-weight:700;color:#475569;">Unit</th>
+            <th style="padding:10px 12px;font-size:11.5px;font-weight:700;color:#475569;">Jadwal Rilis</th>
+            <th style="padding:10px 12px;font-size:11.5px;font-weight:700;color:#475569;">Status</th>
+            <th style="padding:10px 12px;font-size:11.5px;font-weight:700;color:#475569;">Tahapan Alur</th>
+            <th style="padding:10px 12px;font-size:11.5px;font-weight:700;color:#475569;text-align:right;">Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows}
+        </tbody>
+      </table>
+    </div>
+  `;
 }
 
 function switchSindisaTab(tabId) {
@@ -7974,19 +8363,20 @@ renderRoadmap(filteredData);
 renderTable();
 
 // Initial check: pastikan selalu tampilkan halaman login saat pertama kali link dibuka/diklik
+// Initial check: Dashboard semua unit tetap menjadi halaman awal link (Public Landing)
 (function initLandingState(){
-  try {
-    // Bersihkan sesi aktif sebelumnya agar saat pertama kali membuka web harus login terlebih dahulu
-    localStorage.removeItem('lan_current_user');
-  } catch(e){}
-
-  showLandingLogin();
+  // Pastikan form login overlay tertutup secara default agar dashboard publik langsung terlihat
+  hideLandingLogin();
 
   const view = document.getElementById('deputi-portal-view');
   if (view) {
     view.style.display = 'none';
     view.classList.remove('active');
   }
+  document.body.style.overflow = '';
+
+  // Render status tombol di navbar (Login atau Workspace)
+  renderAuthNav();
   clearLoginForm();
 
   // Sync user accounts & data from Supabase di background
