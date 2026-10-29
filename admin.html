@@ -1995,7 +1995,7 @@ function editRecord(no){
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
-function saveRecord(e){
+async function saveRecord(e){
   e.preventDefault();
   const id=document.getElementById('f-id').value;
   const bulan=document.getElementById('f-bulan').value;
@@ -2051,14 +2051,30 @@ function saveRecord(e){
       yt_unit: rec.ytUnit,
       ket: rec.ket
     };
-    supabaseClient.from('publikasi').upsert(sbRow, { onConflict: 'no' })
-      .then(({ error }) => {
-        if(error) console.error('[SUPABASE UPSERT ERROR]', error);
-        else console.log('[SUPABASE] Berhasil disinkronkan ke cloud');
-      });
+
+    try {
+      const { data: existing } = await supabaseClient.from('publikasi').select('id, no').eq('no', rec.no);
+      let sbRes;
+      if (existing && existing.length > 0) {
+        sbRes = await supabaseClient.from('publikasi').update(sbRow).eq('no', rec.no);
+      } else {
+        sbRes = await supabaseClient.from('publikasi').insert([sbRow]);
+      }
+      if (sbRes.error) {
+        console.error('[SUPABASE ERROR]', sbRes.error);
+        showToast('Tersimpan di lokal, gagal sinkron Supabase: ' + sbRes.error.message, 'warn');
+      } else {
+        console.log('[SUPABASE] Berhasil disinkronkan ke cloud');
+        showToast(id ? '✅ Perubahan berhasil disimpan & disinkron ke Supabase!' : '✅ Publikasi baru berhasil disimpan ke Supabase!', 'success');
+      }
+    } catch(err) {
+      console.error('[SUPABASE EXCEPTION]', err);
+      showToast('Tersimpan di lokal, koneksi Supabase bermasalah', 'warn');
+    }
+  } else {
+    showToast('Tersimpan di lokal (Supabase belum terhubung)', 'info');
   }
 
-  showToast(id ? 'Perubahan berhasil disimpan & disinkron ke Supabase!' : 'Publikasi baru berhasil disimpan ke Supabase!', 'success');
   showPage('data');
 }
 

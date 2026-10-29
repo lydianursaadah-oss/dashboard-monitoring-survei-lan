@@ -1920,6 +1920,10 @@ function refreshAllPRISMViews() {
   if (typeof renderSindisaAccTable === 'function') renderSindisaAccTable();
   if (typeof populateDropdowns === 'function') populateDropdowns();
   if (typeof applyFilters === 'function') applyFilters();
+  if (typeof renderKPIs === 'function') renderKPIs();
+  if (typeof renderCharts === 'function') renderCharts();
+  if (typeof renderRoadmap === 'function') renderRoadmap(filteredData, activeRoadmapYear);
+  if (typeof renderTable === 'function') renderTable();
 }
 
 // Aliases for full backward compatibility
@@ -1990,6 +1994,22 @@ async function testLiveSync(){
     res.style.color = ok ? '#16a34a' : '#d97706';
   }
 }
+
+// Real-time live sync across admin tab and dashboard tab
+window.addEventListener('storage', (e) => {
+  if (e.key === 'lan_pub_data' && e.newValue) {
+    try {
+      const parsed = JSON.parse(e.newValue);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        RAW.length = 0;
+        parsed.forEach(r => RAW.push(r));
+        filteredData = [...RAW];
+        refreshAllPRISMViews();
+        console.log('[STORAGE] Live updated from admin tab:', parsed.length, 'records');
+      }
+    } catch(err){}
+  }
+});
 
 // Background sync on window focus
 window.addEventListener('focus', () => {
