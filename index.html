@@ -1362,30 +1362,7 @@ function handleJabatanChange(val) {
 
         <!-- FORM LOGIN -->
         <div class="prism-form-body">
-          <!-- FIELD 1: DROPDOWN NAMA JABATAN -->
-          <div class="prism-form-group">
-            <div class="prism-input-wrap">
-              <i class="fa-solid fa-user-tie prism-icon-left"></i>
-              <select id="landing-jabatan" class="prism-select" onchange="handleJabatanChange(this.value)">
-                <option value="" disabled selected>Pilih Nama Jabatan...</option>
-                <option value="kepala.lan">Pimpinan Lembaga Administrasi Negara</option>
-                <option value="deputi">Deputi Kajian Kebijakan &amp; Inovasi</option>
-                <option value="admin.dspk2an">Pengelola Survei &amp; Publikasi DSPK2AN</option>
-                <option value="humas.lan">Biro Humas &amp; Publikasi</option>
-                <option value="skpp">Pusat Kajian Kebijakan</option>
-                <option value="dapkk">Aparatur &amp; Kelembagaan</option>
-                <option value="skmp">Manajemen Publik</option>
-                <option value="sktan">Tata Administrasi Negara</option>
-                <option value="stia.jkt">Politeknik STIA LAN Jakarta</option>
-                <option value="stia.mks">Politeknik STIA LAN Makassar</option>
-                <option value="stia.bdg">Politeknik STIA LAN Bandung</option>
-                <option value="skmk">Pusjar SKMK</option>
-              </select>
-              <i class="fa-solid fa-chevron-down prism-select-arrow"></i>
-            </div>
-          </div>
-
-          <!-- FIELD 2: USERNAME -->
+          <!-- FIELD 1: USERNAME -->
           <div class="prism-form-group">
             <div class="prism-input-wrap" style="position:relative;display:flex;align-items:center;">
               <i class="fa-solid fa-user prism-icon-left" style="pointer-events:none;"></i>
@@ -1393,7 +1370,7 @@ function handleJabatanChange(val) {
             </div>
           </div>
 
-          <!-- FIELD 3: PASSWORD (MANUAL & TOGGLE EYE) -->
+          <!-- FIELD 2: PASSWORD (MANUAL & TOGGLE EYE) -->
           <div class="prism-form-group">
             <div class="prism-input-wrap" style="position:relative;display:flex;align-items:center;">
               <i class="fa-solid fa-lock prism-icon-left" style="pointer-events:none;"></i>
@@ -1402,6 +1379,14 @@ function handleJabatanChange(val) {
                 <i class="fa-solid fa-eye" id="toggle-pwd-icon"></i>
               </div>
             </div>
+          </div>
+
+          <!-- FIELD 3: REMEMBER ME (SETELAH PASSWORD) -->
+          <div style="display:flex;align-items:center;margin:6px 0 16px;padding:0 2px;">
+            <label style="font-size:12px;color:#475569;display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-weight:500;user-select:none;">
+              <input type="checkbox" id="landing-remember" checked style="accent-color:#2563eb;width:15px;height:15px;cursor:pointer;" />
+              Remember me
+            </label>
           </div>
 
           <!-- BUTTON LOGIN (NO FORM, NEVER RELOADS) -->
@@ -1600,8 +1585,8 @@ function handleJabatanChange(val) {
         </select>
       </div>
       <nav class="nav-tabs-custom">
-        <div class="nav-tab" data-tab="overview"><i class="fa-regular fa-clock"></i> Ringkasan &amp; Analisis</div>
-        <div class="nav-tab active" data-tab="timeline"><i class="fa-regular fa-calendar"></i> Jadwal Rilis 2026</div>
+        <div class="nav-tab active" data-tab="overview"><i class="fa-regular fa-clock"></i> Ringkasan &amp; Analisis</div>
+        <div class="nav-tab" data-tab="timeline"><i class="fa-regular fa-calendar"></i> Jadwal Rilis 2026</div>
       </nav>
     </div>
   </div>
@@ -2043,7 +2028,7 @@ window.addEventListener('focus', () => {
 <div class="main">
 
   <!-- ═══════════════════ PAGE: OVERVIEW (RINGKASAN & ANALISIS) ═══════════════════ -->
-  <div class="page" id="page-overview">
+  <div class="page active" id="page-overview">
 
     <div class="filter-bar">
       <label><i class="fa-solid fa-sliders" style="margin-right:5px;color:var(--accent)"></i>Filter:</label>
@@ -2054,6 +2039,7 @@ window.addEventListener('focus', () => {
           <option value="2025">Tahun 2025</option>
           <option value="2026">Tahun 2026</option>
           <option value="2027">Tahun 2027</option>
+          <option value="2028">Tahun 2028</option>
         </select>
       </div>
       <div class="filter-divider"></div>
@@ -2193,13 +2179,24 @@ window.addEventListener('focus', () => {
   </div>
 
   <!-- ═══════════════════ PAGE: TIMELINE (ROADMAP) ═══════════════════ -->
-  <div class="page active" id="page-timeline">
+  <div class="page" id="page-timeline">
     <div class="roadmap-wrapper">
       <!-- Roadmap header -->
-      <div class="roadmap-header">
-        <div>
-          <h2 class="roadmap-heading">Roadmap Publikasi Survei 2026</h2>
-          <div class="roadmap-subheading">Jadwal target rilis per bulan dan minggu (1-4)</div>
+      <div class="roadmap-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+        <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+          <div>
+            <h2 class="roadmap-heading" id="roadmap-main-heading">Roadmap Publikasi Survei 2026</h2>
+            <div class="roadmap-subheading">Jadwal target rilis per bulan dan minggu (1-4)</div>
+          </div>
+          <div style="position:relative;display:inline-flex;align-items:center;">
+            <i class="fa-solid fa-calendar-days" style="position:absolute;left:10px;color:#2563eb;font-size:12px;pointer-events:none;z-index:2"></i>
+            <select id="roadmap-year-filter" class="filter-year-highlight" onchange="handleRoadmapYearChange(this.value)" title="Pilih Periode Tahun Roadmap">
+              <option value="2025">Tahun 2025</option>
+              <option value="2026" selected>Tahun 2026</option>
+              <option value="2027">Tahun 2027</option>
+              <option value="2028">Tahun 2028</option>
+            </select>
+          </div>
         </div>
         <div class="roadmap-legend">
           <span class="legend-item"><span class="legend-dot dot-selesai"></span> Selesai Publikasi</span>
@@ -2353,6 +2350,7 @@ window.addEventListener('focus', () => {
           <option value="2025">Tahun 2025</option>
           <option value="2026">Tahun 2026</option>
           <option value="2027">Tahun 2027</option>
+          <option value="2028">Tahun 2028</option>
         </select>
       </div>
       <button class="filter-reset" onclick="resetTableFilters()"><i class="fa-solid fa-rotate-left"></i> Reset</button>
@@ -2629,6 +2627,7 @@ window.addEventListener('focus', () => {
               <option value="2025">Tahun 2025</option>
               <option value="2026">Tahun 2026</option>
               <option value="2027">Tahun 2027</option>
+              <option value="2028">Tahun 2028</option>
             </select>
           </div>
           <div class="filter-divider" id="p-unit-divider"></div>
@@ -2795,6 +2794,8 @@ window.addEventListener('focus', () => {
                   <option value="">Semua Tahun</option>
                   <option value="2025">Tahun 2025</option>
                   <option value="2026">Tahun 2026</option>
+                  <option value="2027">Tahun 2027</option>
+                  <option value="2028">Tahun 2028</option>
                 </select>
               </div>
               <div class="filter-divider"></div>
@@ -5175,9 +5176,26 @@ function renderCharts(){
    ══════════════════════════════════════════════════════════ */
 function renderTimeline(data){ renderRoadmap(data); } // alias kept for callers
 
-function renderRoadmap(data){
-  // Only 2026 scheduled items grouped by month
-  const scheduled=data.filter(d=>d.jadwal&&d.tahun==='2026')
+let activeRoadmapYear = '2026';
+
+function handleRoadmapYearChange(yr) {
+  activeRoadmapYear = String(yr || '2026');
+  const heading = document.getElementById('roadmap-main-heading');
+  if(heading) heading.textContent = 'Roadmap Publikasi Survei ' + activeRoadmapYear;
+  const sel = document.getElementById('roadmap-year-filter');
+  if(sel) sel.value = activeRoadmapYear;
+  const d = (typeof filteredData !== 'undefined' && filteredData && filteredData.length) ? filteredData : RAW;
+  renderRoadmap(d, activeRoadmapYear);
+}
+
+function renderRoadmap(data, year){
+  const targetYear = String(year || activeRoadmapYear || '2026');
+  const heading = document.getElementById('roadmap-main-heading');
+  if(heading) heading.textContent = 'Roadmap Publikasi Survei ' + targetYear;
+  const sel = document.getElementById('roadmap-year-filter');
+  if(sel && sel.value !== targetYear) sel.value = targetYear;
+
+  const scheduled = data.filter(d => d.jadwal && String(d.tahun || 2026) === targetYear)
     .sort((a,b)=>{ const ma=getMonthNum(a.jadwal),mb=getMonthNum(b.jadwal); return ma!==mb?ma-mb:getWeekNum(a.jadwal)-getWeekNum(b.jadwal); });
 
   const byMonth={};
@@ -5210,7 +5228,7 @@ function renderRoadmap(data){
   if(!grid) return;
 
   if(!Object.keys(byMonth).length){
-    grid.innerHTML='<div class="empty-state" style="grid-column:1/-1"><i class="fa-solid fa-calendar-xmark"></i>Tidak ada jadwal ditemukan untuk unit kerja yang dipilih</div>';
+    grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1"><i class="fa-solid fa-calendar-xmark"></i>Tidak ada jadwal publikasi ditemukan untuk tahun ${targetYear}</div>`;
     return;
   }
 
@@ -5221,22 +5239,24 @@ function renderRoadmap(data){
       <div class="roadmap-month-header">
         <div class="roadmap-month-title">
           <i class="fa-solid fa-calendar-days" style="font-size:12px;opacity:.8"></i>
-          ${month} 2026
+          ${month} ${targetYear}
           ${overdueCount>0?`<span style="background:#ef4444;color:#fff;border-radius:10px;padding:2px 8px;font-size:10px;font-weight:700;margin-left:6px"><i class="fa-solid fa-triangle-exclamation"></i> ${overdueCount} terlambat</span>`:''}
         </div>
         <span class="roadmap-month-count">${items.length} agenda</span>
       </div>
       <div class="roadmap-month-body">
-        ${items.map(d=>{
+        ${items.map((d, itemIdx)=>{
           const sl=statusLabel(d), od=isOverdue(d);
           const uc=UNIT_COLORS[getPrimaryUnit(d.unit)]||UNIT_COLORS['MULTI'];
-          return `<div class="roadmap-pub-card${od?' overdue':''}" onclick="openModal(${d.no-1})">
+          const numDisplay = d.no ? `#${d.no}` : `#${itemIdx + 1}`;
+          return `<div class="roadmap-pub-card${od?' overdue':''}" onclick="openModal(${d.no ? d.no - 1 : itemIdx})">
             <div class="roadmap-pub-top">
               <span class="roadmap-unit-badge" style="background:${uc.bg};color:${uc.text};border:1px solid ${uc.border}">${d.unit}</span>
+              <span style="font-size:11px;font-weight:800;color:#1e40af;background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:2px 7px;display:inline-flex;align-items:center;">${numDisplay}</span>
               <span class="roadmap-status-badge ${sl.cls}">${sl.text}</span>
               ${getStatus(d) === 'belum' ? `<div style="margin-top:2px">${renderStageBadge(d)}</div>` : ''}
             </div>
-            <div class="roadmap-pub-title">${d.judul}</div>
+            <div class="roadmap-pub-title"><span style="color:#2563eb;font-weight:800;margin-right:4px;">${numDisplay}.</span> ${d.judul}</div>
             ${renderLinks(d)}
             <div class="roadmap-pub-footer">
               <span class="roadmap-week-info"><i class="fa-regular fa-clock" style="color:#d97706"></i> ${month} (${getWeekNum(d.jadwal)||1})</span>
@@ -6317,23 +6337,17 @@ function handlePrismLogin(e) {
   if (alertEl) alertEl.style.display = 'none';
 
   const uInput = document.getElementById('landing-username');
-  const sel = document.getElementById('landing-jabatan');
   const enteredUsername = uInput ? uInput.value.trim() : '';
-  const enteredJabatan = sel ? sel.value.trim() : '';
 
-  const query = enteredUsername || enteredJabatan;
-  if (!query) {
-    showLoginError('Silakan pilih nama jabatan atau masukkan username Anda.');
+  if (!enteredUsername) {
+    showLoginError('Silakan masukkan username Anda.');
     if (uInput) uInput.focus();
     return false;
   }
 
-  let matched = null;
-  if (enteredUsername) matched = findUserAccount(enteredUsername);
-  if (!matched && enteredJabatan) matched = findUserAccount(enteredJabatan);
-
+  const matched = findUserAccount(enteredUsername);
   if (!matched) {
-    showLoginError('Akun username/jabatan tidak ditemukan dalam sistem PRISM.');
+    showLoginError('Akun username tidak ditemukan dalam sistem PRISMO.');
     return false;
   }
 
