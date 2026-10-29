@@ -7973,16 +7973,23 @@ renderCharts();
 renderRoadmap(filteredData);
 renderTable();
 
-// Initial check: if no user logged in, open landing login SIPANTAU immediately
+// Initial check: pastikan selalu tampilkan halaman login saat pertama kali link dibuka/diklik
 (function initLandingState(){
-  const user = getCurrentUser();
-  if(!user) {
-    showLandingLogin();
-  } else {
-    hideLandingLogin();
-    openDeputiPortal();
+  try {
+    // Bersihkan sesi aktif sebelumnya agar saat pertama kali membuka web harus login terlebih dahulu
+    localStorage.removeItem('lan_current_user');
+  } catch(e){}
+
+  showLandingLogin();
+
+  const view = document.getElementById('deputi-portal-view');
+  if (view) {
+    view.style.display = 'none';
+    view.classList.remove('active');
   }
-  // Sync user accounts & data from Supabase
+  clearLoginForm();
+
+  // Sync user accounts & data from Supabase di background
   if (typeof syncUsersFromSupabase === 'function') syncUsersFromSupabase();
   if (typeof syncDataFromSupabase === 'function') syncDataFromSupabase(false);
 })();
