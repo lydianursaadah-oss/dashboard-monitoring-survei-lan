@@ -33,13 +33,7 @@
       return false;
     }
 
-function handleJabatanChange(val) {
-      var alertEl = document.getElementById('sipantau-login-alert');
-      if (alertEl) alertEl.style.display = 'none';
-      // Kolom username dan password tetap dibiarkan kosong agar pengguna mengisinya sendiri secara manual
-    }
-
-    function handleUsernameInput(val) {
+function handleUsernameInput(val) {
       var alertEl = document.getElementById('sipantau-login-alert');
       if (alertEl) alertEl.style.display = 'none';
     }
@@ -51,16 +45,13 @@ function handleJabatanChange(val) {
       }
 
       var uInput = document.getElementById('landing-username');
-      var sel = document.getElementById('landing-jabatan');
       var enteredUsername = uInput ? uInput.value.trim() : '';
-      var enteredJabatan = sel ? sel.value.trim() : '';
       var alertEl = document.getElementById('sipantau-login-alert');
 
-      var query = enteredUsername || enteredJabatan;
-      if (!query) {
+      if (!enteredUsername) {
         if (alertEl) {
           alertEl.style.display = 'flex';
-          alertEl.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> <span>Silakan pilih nama jabatan atau masukkan username Anda.</span>';
+          alertEl.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> <span>Silakan masukkan username Anda.</span>';
         }
         if (uInput) uInput.focus();
         return false;
@@ -69,20 +60,17 @@ function handleJabatanChange(val) {
       var matched = null;
       if (typeof findUserAccount === 'function') {
         if (enteredUsername) matched = findUserAccount(enteredUsername);
-        if (!matched && enteredJabatan) matched = findUserAccount(enteredJabatan);
       }
       if (!matched && typeof DEFAULT_USERS_DB !== 'undefined') {
         matched = DEFAULT_USERS_DB.find(function(u){
-          var q = query.toLowerCase();
-          return (u.username && u.username.toLowerCase() === q) ||
-                 (u.jabatan && u.jabatan.toLowerCase() === q) ||
-                 (u.unit && u.unit.toLowerCase() === q);
+          var q = enteredUsername.toLowerCase();
+          return (u.username && u.username.toLowerCase() === q);
         });
       }
       if (!matched) {
         if (alertEl) {
           alertEl.style.display = 'flex';
-          alertEl.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> <span>Akun username/jabatan tidak ditemukan dalam sistem PRISM.</span>';
+          alertEl.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> <span>Akun username tidak ditemukan dalam sistem PRISMO.</span>';
         }
         return false;
       }
@@ -6324,8 +6312,6 @@ function clearLoginForm() {
   if (u) u.value = '';
   const pwd = document.getElementById('landing-password');
   if (pwd) pwd.value = '';
-  const sel = document.getElementById('landing-jabatan');
-  if (sel) sel.selectedIndex = 0;
 }
 
 function handlePrismLogin(e) {
