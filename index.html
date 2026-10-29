@@ -6,7 +6,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <title>PRISM - Monitoring Publikasi LAN RI</title>
+  <title>PRISMO - Monitoring Publikasi LAN RI</title>
   <script>
     // Fail-safe global password toggle & immediate login handler
     function togglePasswordVisibility(e) {
@@ -1344,7 +1344,7 @@ function handleJabatanChange(val) {
         <div class="prism-top-brand">
           <img src="logo-lan.png" alt="Logo LAN RI" class="prism-brand-logo"/>
           <div>
-            <h1 class="prism-brand-name">PRISM</h1>
+            <h1 class="prism-brand-name">PRISMO</h1>
             <div class="prism-brand-sub">Publication Review, Insights &amp; Strategic Monitoring</div>
           </div>
         </div>
@@ -1560,7 +1560,7 @@ function handleJabatanChange(val) {
 
       <!-- BOTTOM CAPTION -->
       <div class="prism-art-bottom">
-        <div class="prism-art-title">PRISM: Monitoring Strategis Publikasi LAN RI</div>
+        <div class="prism-art-title">PRISMO: Monitoring Strategis Publikasi LAN RI</div>
         <div class="prism-art-desc">
           Sistem terpadu peninjauan instrumen, disposisi pimpinan, dan pemantauan capaian riset kebijakan di seluruh satuan kerja LAN RI.
         </div>
@@ -1577,31 +1577,16 @@ function handleJabatanChange(val) {
       <img src="favicon.png" alt="Logo LAN RI" class="logo-badge" title="Klik 5x untuk akses Admin" />
       <div>
         <div class="logo-title-row">
-          <span class="logo-title">Monitoring Publikasi LAN RI</span>
+          <span class="logo-title">PRISMO — Monitoring Publikasi LAN RI</span>
         </div>
-        <div class="logo-sub">Lembaga Administrasi Negara - Sistem Monitoring Publikasi</div>
+        <div class="logo-sub">Lembaga Administrasi Negara - Sistem Monitoring Publikasi Online (PRISMO)</div>
       </div>
     </div>
     <div class="header-right">
-      <!-- User / Login Navigation Widget -->
+      <!-- User / Login Navigation Widget (Hanya Tombol Login Portal) -->
       <div id="nav-auth-container">
         <!-- Rendered by JS: either Login button or User Profile -->
       </div>
-      <div style="width:1px;height:24px;background:var(--border);margin:0 4px"></div>
-<!-- Supabase Database Sync Badge -->
-      <div class="gs-badge" id="gs-badge" onclick="openGasModal()" title="Status & Sinkronisasi Database Supabase LAN RI">
-        <div class="gs-dot"></div>
-        <span class="gs-label" id="gs-label">Terhubung Supabase (LAN RI)</span>
-        <i class="fa-solid fa-database" style="font-size:11px;opacity:.8;margin-left:3px"></i>
-      </div>
-      <!-- Refresh Button -->
-      <button class="btn-refresh" onclick="syncDataFromSupabase(true)" title="Sinkronkan data langsung dari Supabase">
-        <i class="fa-solid fa-rotate" id="refresh-icon"></i>
-      </button>
-      <!-- Tambah Agenda Button -->
-      <button class="btn-add-agenda" onclick="openAddAgendaModal()">
-        <i class="fa-solid fa-circle-plus"></i> Tambah Agenda
-      </button>
     </div>
   </div>
 
@@ -1615,9 +1600,8 @@ function handleJabatanChange(val) {
         </select>
       </div>
       <nav class="nav-tabs-custom">
-        <div class="nav-tab" data-tab="overview"><i class="fa-regular fa-clock"></i> Ringkasan & Analisis</div>
+        <div class="nav-tab" data-tab="overview"><i class="fa-regular fa-clock"></i> Ringkasan &amp; Analisis</div>
         <div class="nav-tab active" data-tab="timeline"><i class="fa-regular fa-calendar"></i> Jadwal Rilis 2026</div>
-        <div class="nav-tab" data-tab="records"><i class="fa-solid fa-sliders"></i> Data & Update Progress</div>
       </nav>
     </div>
   </div>
@@ -2063,11 +2047,15 @@ window.addEventListener('focus', () => {
 
     <div class="filter-bar">
       <label><i class="fa-solid fa-sliders" style="margin-right:5px;color:var(--accent)"></i>Filter:</label>
-      <select id="f-year" onchange="applyFilters()">
-        <option value="">Semua Tahun</option>
-        <option value="2025">2025</option>
-        <option value="2026">2026</option>
-      </select>
+      <div style="position:relative;display:inline-flex;align-items:center;">
+        <i class="fa-solid fa-calendar-days" style="position:absolute;left:10px;color:#2563eb;font-size:12px;pointer-events:none;z-index:2"></i>
+        <select id="f-year" class="filter-year-highlight" onchange="applyFilters()" title="Filter Berdasarkan Periode Tahun">
+          <option value="">Semua Tahun</option>
+          <option value="2025">Tahun 2025</option>
+          <option value="2026">Tahun 2026</option>
+          <option value="2027">Tahun 2027</option>
+        </select>
+      </div>
       <div class="filter-divider"></div>
       <select id="f-unit" onchange="applyFilters()"><option value="">Semua Unit</option></select>
       <div class="filter-divider"></div>
@@ -2186,9 +2174,17 @@ window.addEventListener('focus', () => {
         <div class="card-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
           <span class="card-title"><i class="fa-solid fa-grip"></i> Distribusi Jadwal per Minggu</span>
           <div style="display:flex;align-items:center;gap:6px">
-            <button class="filter-reset" onclick="changeHeatmapYear(-1)" style="padding:3px 9px;font-size:11px" title="Periode Tahun Sebelumnya"><i class="fa-solid fa-chevron-left"></i> Prev</button>
-            <span id="heatmap-year-badge" style="font-size:11.5px;font-weight:800;padding:3px 10px;background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe;border-radius:14px">Tahun 2026</span>
-            <button class="filter-reset" onclick="changeHeatmapYear(1)" style="padding:3px 9px;font-size:11px" title="Periode Tahun Berikutnya">Next <i class="fa-solid fa-chevron-right"></i></button>
+            <button type="button" class="filter-reset" onclick="changeHeatmapYear(-1)" style="padding:4px 11px;font-size:11.5px;font-weight:700;border-radius:7px;cursor:pointer;background:#f8fafc;border:1px solid #cbd5e1;color:#1e293b" title="Periode Tahun Sebelumnya"><i class="fa-solid fa-chevron-left"></i> Prev</button>
+            <div style="position:relative;display:inline-flex;align-items:center;">
+              <i class="fa-solid fa-calendar-days" style="position:absolute;left:10px;color:#2563eb;font-size:11.5px;pointer-events:none;z-index:2"></i>
+              <select id="heatmap-year-select" onchange="setHeatmapYear(parseInt(this.value))" class="filter-year-highlight" style="font-size:11.5px;font-weight:800;padding:4px 12px 4px 28px;outline:none;cursor:pointer" title="Pilih Periode Tahun">
+                <option value="2025">Tahun 2025</option>
+                <option value="2026" selected>Tahun 2026</option>
+                <option value="2027">Tahun 2027</option>
+                <option value="2028">Tahun 2028</option>
+              </select>
+            </div>
+            <button type="button" class="filter-reset" onclick="changeHeatmapYear(1)" style="padding:4px 11px;font-size:11.5px;font-weight:700;border-radius:7px;cursor:pointer;background:#f8fafc;border:1px solid #cbd5e1;color:#1e293b" title="Periode Tahun Berikutnya">Next <i class="fa-solid fa-chevron-right"></i></button>
           </div>
         </div>
         <div class="card-body" id="heatmap-container"></div>
@@ -2356,6 +2352,7 @@ window.addEventListener('focus', () => {
           <option value="">Semua Tahun</option>
           <option value="2025">Tahun 2025</option>
           <option value="2026">Tahun 2026</option>
+          <option value="2027">Tahun 2027</option>
         </select>
       </div>
       <button class="filter-reset" onclick="resetTableFilters()"><i class="fa-solid fa-rotate-left"></i> Reset</button>
@@ -2501,7 +2498,7 @@ window.addEventListener('focus', () => {
         <i class="fa-solid fa-bars"></i>
       </button>
       <div style="display:flex;align-items:center;gap:10px">
-        <span class="sindisa-top-title">PRISM — Sistem Monitoring Publikasi LAN RI</span>
+        <span class="sindisa-top-title">PRISMO — Sistem Monitoring Publikasi LAN RI</span>
       </div>
     </div>
     <div class="sindisa-topbar-right">
@@ -2531,12 +2528,12 @@ window.addEventListener('focus', () => {
           <polygon points="20,22 36,13 36,29 20,38" fill="#2563eb" />
         </svg>
         <div style="line-height:1.2">
-          <div class="sindisa-brand-text" style="font-size:17px;font-weight:900;color:#1e293b;letter-spacing:0.5px;">PRISM</div>
+          <div class="sindisa-brand-text" style="font-size:17px;font-weight:900;color:#1e293b;letter-spacing:0.5px;">PRISMO</div>
           <div style="font-size:10px;font-weight:700;color:#64748b;letter-spacing:0.5px;">LAN RI</div>
         </div>
       </div>
 
-      <div class="sindisa-section-title" style="font-size:10.5px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:0.8px;padding:12px 22px 6px;">MENU PRISM</div>
+      <div class="sindisa-section-title" style="font-size:10.5px;font-weight:800;color:#94a3b8;text-transform:uppercase;letter-spacing:0.8px;padding:12px 22px 6px;">MENU PRISMO</div>
       <ul class="sindisa-menu" id="sipantau-role-menu">
         <li class="sindisa-menu-item active" data-tab-id="dashboard" onclick="openTab('dashboard'); highlightMenuItem(this)">
           <i class="fa-solid fa-chart-pie"></i>
@@ -2631,6 +2628,7 @@ window.addEventListener('focus', () => {
               <option value="">Semua Tahun</option>
               <option value="2025">Tahun 2025</option>
               <option value="2026">Tahun 2026</option>
+              <option value="2027">Tahun 2027</option>
             </select>
           </div>
           <div class="filter-divider" id="p-unit-divider"></div>
@@ -4601,7 +4599,7 @@ function applyFilters(){
   const year=document.getElementById('f-year').value, unit=document.getElementById('f-unit').value,
         cluster=document.getElementById('f-cluster').value, status=document.getElementById('f-status').value;
   filteredData = RAW.filter(d=>{
-    if(year    && d.tahun!==year) return false;
+    if(year    && String(d.tahun)!==String(year)) return false;
     if(unit    && !getAllUnits(d.unit).includes(unit)) return false;
     if(cluster && d.cluster!==cluster) return false;
     if(status  && status==='overdue' && !isOverdue(d)) return false;
@@ -4832,13 +4830,21 @@ function baseOpts(extra={}){
    ══════════════════════════════════════════════════════════ */
 let activeHeatmapYear = 2026;
 
-function changeHeatmapYear(delta) {
-  activeHeatmapYear += delta;
-  if(activeHeatmapYear < 2025) activeHeatmapYear = 2025;
-  if(activeHeatmapYear > 2030) activeHeatmapYear = 2030;
+function setHeatmapYear(year) {
+  activeHeatmapYear = parseInt(year) || 2026;
+  const sel = document.getElementById('heatmap-year-select');
+  if(sel) sel.value = String(activeHeatmapYear);
   const badge = document.getElementById('heatmap-year-badge');
   if(badge) badge.textContent = 'Tahun ' + activeHeatmapYear;
-  renderHeatmap(filteredData);
+  const d = (typeof filteredData !== 'undefined' && filteredData && filteredData.length) ? filteredData : RAW;
+  renderHeatmap(d);
+}
+
+function changeHeatmapYear(delta) {
+  let y = (typeof activeHeatmapYear !== 'undefined' ? activeHeatmapYear : 2026) + delta;
+  if(y < 2025) y = 2025;
+  if(y > 2030) y = 2030;
+  setHeatmapYear(y);
 }
 
 function openWeeklyCellModal(monthIndex, weekNum) {
@@ -5162,35 +5168,6 @@ function renderCharts(){
   renderChannelsPage(data);
   /* ─── Alerts Page ─── */
   renderAlertsPage(data);
-}
-
-/* ══════════════════════════════════════════════════════════
-   HEATMAP
-   ══════════════════════════════════════════════════════════ */
-function renderHeatmap(data){
-  const matrix={};
-  data.filter(d=>d.jadwal).forEach(d=>{
-    const mi=MONTH_ORDER.findIndex(mo=>d.jadwal.toLowerCase().includes(mo.toLowerCase()));
-    const w=getWeekNum(d.jadwal);
-    if(mi>=0&&w>0) { const k=`${mi}-${w}`; matrix[k]=(matrix[k]||0)+1; }
-  });
-  const max=Math.max(...Object.values(matrix),1);
-  const heatColor=v=>{ if(!v) return '#f1f5f9'; const i=v/max; if(i<0.25) return '#bfdbfe'; if(i<0.5) return '#60a5fa'; if(i<0.75) return '#3b82f6'; return '#1d4ed8'; };
-  const textColor=v=>{ if(!v) return '#94a3b8'; const i=v/max; return i>0.4?'#fff':'#1d4ed8'; };
-  document.getElementById('heatmap-container').innerHTML=`
-    <div style="display:grid;grid-template-columns:auto repeat(12,1fr);gap:3px;font-size:9px;color:#94a3b8;font-family:Inter">
-      <div></div>
-      ${MONTH_ORDER.map(m=>`<div style="text-align:center;padding-bottom:5px;font-weight:600;color:#64748b">${m.slice(0,3)}</div>`).join('')}
-      ${[1,2,3,4].map(w=>`
-        <div style="display:flex;align-items:center;font-weight:700;padding-right:7px;color:#64748b">W${w}</div>
-        ${MONTH_ORDER.map((m,mi)=>{ const v=matrix[`${mi}-${w}`]||0; return `<div class="heatmap-cell" style="background:${heatColor(v)};color:${textColor(v)};height:30px;border-radius:5px" title="${m} Minggu ${w}: ${v} publikasi">${v||''}</div>`; }).join('')}
-      `).join('')}
-    </div>
-    <div class="heatmap-legend">
-      <span>Sedikit</span>
-      ${[0,0.25,0.5,0.75,1].map(i=>`<div class="heatmap-legend-cell" style="background:${heatColor(i*max)}"></div>`).join('')}
-      <span>Banyak</span>
-    </div>`;
 }
 
 /* ══════════════════════════════════════════════════════════
