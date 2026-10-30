@@ -5243,6 +5243,7 @@ function handleRoadmapYearChange(yr) {
   if(sel) sel.value = activeRoadmapYear;
   const d = (typeof filteredData !== 'undefined' && filteredData && filteredData.length) ? filteredData : RAW;
   renderRoadmap(d, activeRoadmapYear);
+  if (typeof renderCumulativeChart === 'function') renderCumulativeChart(d);
 }
 
 function renderRoadmap(data, year){
@@ -5252,8 +5253,14 @@ function renderRoadmap(data, year){
   const sel = document.getElementById('roadmap-year-filter');
   if(sel && sel.value !== targetYear) sel.value = targetYear;
 
-  const scheduled = data.filter(d => d.jadwal && String(d.tahun || 2026) === targetYear)
+  const currentData = (data && data.length) ? data : (typeof RAW !== 'undefined' ? RAW : []);
+  let scheduled = currentData.filter(d => d.jadwal && String(d.tahun || 2026) === targetYear)
     .sort((a,b)=>{ const ma=getMonthNum(a.jadwal),mb=getMonthNum(b.jadwal); return ma!==mb?ma-mb:getWeekNum(a.jadwal)-getWeekNum(b.jadwal); });
+
+  if (scheduled.length === 0 && typeof RAW !== 'undefined' && RAW.some(d => d.jadwal && String(d.tahun || 2026) === targetYear)) {
+    scheduled = RAW.filter(d => d.jadwal && String(d.tahun || 2026) === targetYear)
+      .sort((a,b)=>{ const ma=getMonthNum(a.jadwal),mb=getMonthNum(b.jadwal); return ma!==mb?ma-mb:getWeekNum(a.jadwal)-getWeekNum(b.jadwal); });
+  }
 
   const byMonth={};
   MONTH_ORDER.forEach(m=>{ const found=scheduled.filter(d=>d.jadwal.toLowerCase().includes(m.toLowerCase())); if(found.length) byMonth[m]=found; });
@@ -5804,12 +5811,23 @@ window.saveChannelLinkFromModal = saveChannelLinkFromModal;
 document.querySelectorAll('.nav-tab').forEach(tab=>{
   tab.addEventListener('click',()=>{
     document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
-    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p=>{
+      p.classList.remove('active');
+      p.style.removeProperty('display');
+    });
     tab.classList.add('active');
     const id=tab.dataset.tab;
-    document.getElementById(`page-${id}`)?.classList.add('active');
+    const targetPage = document.getElementById(`page-${id}`);
+    if (targetPage) {
+      targetPage.classList.add('active');
+      targetPage.style.display = 'block';
+    }
     if(id==='records') renderTable();
-    if(id==='timeline') renderRoadmap(filteredData);
+    if(id==='timeline') {
+      const yr = (document.getElementById('roadmap-year-filter') && document.getElementById('roadmap-year-filter').value) || activeRoadmapYear || '2026';
+      renderRoadmap(filteredData, yr);
+      if (typeof renderCumulativeChart === 'function') renderCumulativeChart(filteredData);
+    }
     if(id==='overview') renderCharts();
   });
 });
@@ -8158,12 +8176,11 @@ function exitDeputiPortal() {
 
   // Pastikan halaman overview aktif di main dashboard
   document.querySelectorAll('.page').forEach(p => {
+    p.style.removeProperty('display');
     if (p.id === 'page-overview') {
       p.classList.add('active');
-      p.style.display = '';
     } else {
       p.classList.remove('active');
-      p.style.display = 'none';
     }
   });
 
