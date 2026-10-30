@@ -1859,6 +1859,7 @@ async function syncDataFromSupabase(isManual = false) {
         try { localStorage.setItem('lan_pub_data', JSON.stringify(mapped)); } catch(e){}
 
         refreshAllPRISMViews();
+        if (typeof syncPrismoProposalsFromSupabase === 'function') syncPrismoProposalsFromSupabase();
         const nowStr = new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
         setGasBadge('', `Terhubung Supabase (${data.length} Survei · ${nowStr})`);
 
@@ -7842,6 +7843,9 @@ function openTab(tabName) {
     if (dynPanel) {
       dynPanel.style.display = 'block';
       renderDynamicRoleTab(tabName, getCurrentUser());
+      if (typeof syncPrismoProposalsFromSupabase === 'function') {
+        syncPrismoProposalsFromSupabase();
+      }
     }
   }
 
@@ -8054,6 +8058,67 @@ function savePrismoProposals(list) {
     localStorage.setItem('lan_prismo_proposals_v3', JSON.stringify(list));
   } catch(e) { console.warn(e); }
   if (typeof updatePortalBadges === 'function') updatePortalBadges();
+  pushPrismoProposalsToSupabase(list);
+}
+
+// Sinkronisasi data usulan kegiatan PRISMO ke tabel 'prismo_proposals' di Supabase
+async function pushPrismoProposalsToSupabase(list) {
+  if (typeof SUPABASE_CONFIG === 'undefined' || !SUPABASE_CONFIG.url || !SUPABASE_CONFIG.anonKey) return;
+  try {
+    const res = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/prismo_proposals`, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_CONFIG.anonKey,
+        'Authorization': `Bearer ${SUPABASE_CONFIG.anonKey}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'resolution=merge-duplicates'
+      },
+      body: JSON.stringify(list)
+    });
+    if (res.ok) {
+      console.log(`[SUPABASE PRISMO] Berhasil mengunggah ${list.length} usulan kegiatan ke Supabase.`);
+    } else {
+      console.warn('[SUPABASE PRISMO PUSH WARNING]', await res.text());
+    }
+  } catch(err) {
+    console.warn('[SUPABASE PRISMO PUSH ERROR]', err);
+  }
+}
+
+// Ambil data usulan kegiatan PRISMO langsung dari Cloud Supabase
+async function syncPrismoProposalsFromSupabase() {
+  if (typeof SUPABASE_CONFIG === 'undefined' || !SUPABASE_CONFIG.url || !SUPABASE_CONFIG.anonKey) return;
+  try {
+    const res = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/prismo_proposals?select=*&order=id.asc`, {
+      headers: {
+        'apikey': SUPABASE_CONFIG.anonKey,
+        'Authorization': `Bearer ${SUPABASE_CONFIG.anonKey}`
+      }
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        localStorage.setItem('lan_prismo_proposals_v3', JSON.stringify(data));
+        const curr = getCurrentUser();
+        const dynPanel = document.getElementById('sindisa-panel-dynamic');
+        const activeTab = document.querySelector('#sipantau-role-menu .sindisa-menu-item.active')?.getAttribute('data-tab-id');
+        if (dynPanel && dynPanel.style.display !== 'none' && activeTab) {
+          renderDynamicRoleTab(activeTab, curr);
+        }
+        if (typeof renderSindisaAccTable === 'function') {
+          try { renderSindisaAccTable(); } catch(e){}
+        }
+        if (typeof updatePortalBadges === 'function') updatePortalBadges();
+        console.log(`[SUPABASE PRISMO] Sinkronisasi ${data.length} usulan dari Supabase berhasil.`);
+        return data;
+      } else if (Array.isArray(data) && data.length === 0) {
+        console.log('[SUPABASE PRISMO] Tabel Supabase kosong, melakukan inisialisasi default...');
+        await pushPrismoProposalsToSupabase(DEFAULT_PRISMO_PROPOSALS);
+      }
+    }
+  } catch(err) {
+    console.warn('[SUPABASE PRISMO SYNC ERROR]', err);
+  }
 }
 
 function getPrismoProposalById(id) {
@@ -9783,9 +9848,12 @@ function openDeputiPortal(targetTab) {
   try { openTab(initialTab); } catch(e){ console.warn(e); }
   try { initPortalInteractiveDashboard(); } catch(e){ console.warn(e); }
 
-// Background Supabase sync
+  // Background Supabase sync
   if (typeof syncDataFromSupabase === 'function') {
     setTimeout(() => { syncDataFromSupabase(false); }, 500);
+  }
+  if (typeof syncPrismoProposalsFromSupabase === 'function') {
+    setTimeout(() => { syncPrismoProposalsFromSupabase(); }, 600);
   }
 }
 
@@ -10285,6 +10353,7 @@ renderTable();
   // Sync user accounts & data from Supabase di background
   if (typeof syncUsersFromSupabase === 'function') syncUsersFromSupabase();
   if (typeof syncDataFromSupabase === 'function') syncDataFromSupabase(false);
+  if (typeof syncPrismoProposalsFromSupabase === 'function') syncPrismoProposalsFromSupabase();
 })();
 </script>
 </body>
