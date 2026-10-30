@@ -2634,7 +2634,7 @@ window.addEventListener('focus', () => {
             <select id="p-year" class="filter-year-highlight" onchange="applyPortalFilters()" title="Filter Berdasarkan Periode Tahun">
               <option value="">Semua Tahun</option>
               <option value="2025">Tahun 2025</option>
-              <option value="2026">Tahun 2026</option>
+              <option value="2026" selected>Tahun 2026</option>
               <option value="2027">Tahun 2027</option>
               <option value="2028">Tahun 2028</option>
             </select>
@@ -2802,7 +2802,7 @@ window.addEventListener('focus', () => {
                 <select id="portal-r-year" class="filter-year-highlight" onchange="renderPortalTable()" title="Filter Berdasarkan Periode Tahun">
                   <option value="">Semua Tahun</option>
                   <option value="2025">Tahun 2025</option>
-                  <option value="2026">Tahun 2026</option>
+                  <option value="2026" selected>Tahun 2026</option>
                   <option value="2027">Tahun 2027</option>
                   <option value="2028">Tahun 2028</option>
                 </select>
@@ -2818,6 +2818,7 @@ window.addEventListener('focus', () => {
                 <option value="belum">Belum Selesai</option>
                 <option value="overdue">Melewati Deadline</option>
               </select>
+              <button class="filter-reset" onclick="resetPortalTableFilters()"><i class="fa-solid fa-rotate-left"></i> Reset</button>
             </div>
             <div style="overflow-x:auto;">
               <table class="table-custom" id="portal-records-table" style="width:100%;border-collapse:collapse;">
@@ -3353,6 +3354,75 @@ window.addEventListener('focus', () => {
         <button type="button" onclick="closeAddChannelLinkModal()" style="padding:8px 16px;border-radius:8px;background:var(--bg3);border:1px solid var(--border);color:var(--text2);font-size:12px;cursor:pointer;font-weight:600">Batal</button>
         <button type="submit" id="btn-save-channel-link" style="padding:8px 20px;border-radius:8px;background:#2563eb;color:#fff;border:none;font-size:12px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;box-shadow:0 2px 6px rgba(37,99,235,0.3)">
           <i class="fa-solid fa-check"></i> Simpan &amp; Aktifkan Link
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ═══════════════════ MODAL: UPDATE PROGRESS PORTAL ═══════════════════ -->
+<div class="modal-overlay" id="portal-progress-modal" onclick="if(event.target===this)closePortalProgressModal()">
+  <div class="modal" style="max-width:540px;padding:24px;text-align:left;">
+    <div class="modal-close" onclick="closePortalProgressModal()"><i class="fa-solid fa-xmark"></i></div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+      <div style="width:42px;height:42px;border-radius:12px;background:#eff6ff;color:#2563eb;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0;">
+        <i class="fa-solid fa-list-check"></i>
+      </div>
+      <div>
+        <h3 style="font-size:16px;font-weight:800;color:#1e293b;margin:0;">Update Progress Kegiatan</h3>
+        <div style="font-size:12px;color:#64748b;margin-top:2px;">Perbarui tahapan pelaksanaan &amp; status survei</div>
+      </div>
+    </div>
+
+    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px 14px;margin-bottom:16px;">
+      <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;">Survei:</div>
+      <div style="font-size:13.5px;font-weight:700;color:#1e293b;margin-top:3px;line-height:1.4;" id="prog-modal-title">—</div>
+      <div style="display:flex;gap:8px;margin-top:8px;align-items:center;flex-wrap:wrap;">
+        <span class="badge" id="prog-modal-unit" style="background:#eff6ff;color:#1e40af;font-size:11px;font-weight:700;">Unit</span>
+        <span class="badge" id="prog-modal-cluster" style="background:#f1f5f9;color:#475569;font-size:11px;">Cluster</span>
+        <span class="badge" id="prog-modal-no" style="background:#f1f5f9;color:#64748b;font-size:11px;">#1</span>
+      </div>
+    </div>
+
+    <form id="portal-progress-form" onsubmit="savePortalProgress(event)">
+      <input type="hidden" id="prog-modal-rec-no" value="" />
+      
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+        <div>
+          <label style="font-size:11.5px;font-weight:700;color:#334155;display:block;margin-bottom:4px;">Status Publikasi *</label>
+          <select id="prog-modal-status" onchange="handleProgStatusChange(this.value)" style="width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:8px;font-size:12.5px;outline:none;" required>
+            <option value="Belum Selesai">Belum Selesai (Dalam Proses)</option>
+            <option value="Selesai">Selesai (Sudah Terbit)</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:11.5px;font-weight:700;color:#334155;display:block;margin-bottom:4px;">Tahapan Pelaksanaan *</label>
+          <select id="prog-modal-tahap" style="width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:8px;font-size:12.5px;outline:none;" required>
+            <option value="Persiapan">Tahap 1: Persiapan</option>
+            <option value="Penyusunan instrumen">Tahap 2: Penyusunan Instrumen</option>
+            <option value="Pengumpulan data">Tahap 3: Pengumpulan Data</option>
+            <option value="Pengolahan data">Tahap 4: Pengolahan Data</option>
+            <option value="Penyusunan laporan">Tahap 5: Penyusunan Laporan</option>
+            <option value="Publikasi">Tahap 6: Publikasi</option>
+            <option value="Selesai">Tahap 7: Selesai</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="margin-bottom:12px;">
+        <label style="font-size:11.5px;font-weight:700;color:#334155;display:block;margin-bottom:4px;">Target Jadwal / Periode Terbit</label>
+        <input type="text" id="prog-modal-jadwal" placeholder="Contoh: Maret (W2) atau Mei (W1)" style="width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:8px;font-size:12.5px;outline:none;box-sizing:border-box;" />
+      </div>
+
+      <div style="margin-bottom:12px;">
+        <label style="font-size:11.5px;font-weight:700;color:#334155;display:block;margin-bottom:4px;">Ringkasan Update / Catatan Progres</label>
+        <textarea id="prog-modal-ket" rows="3" placeholder="Tuliskan perkembangan terbaru tahapan survei saat ini..." style="width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:8px;font-size:12.5px;outline:none;resize:vertical;box-sizing:border-box;font-family:inherit;"></textarea>
+      </div>
+
+      <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:18px;border-top:1px solid #e2e8f0;padding-top:14px;">
+        <button type="button" onclick="closePortalProgressModal()" style="padding:8px 16px;background:#f1f5f9;border:1px solid #cbd5e1;border-radius:8px;font-size:12.5px;font-weight:600;color:#475569;cursor:pointer;">Batal</button>
+        <button type="submit" id="prog-modal-save-btn" style="padding:8px 20px;background:#2563eb;color:#fff;border:none;border-radius:8px;font-size:12.5px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;box-shadow:0 2px 6px rgba(37,99,235,0.3);">
+          <i class="fa-solid fa-floppy-disk"></i> Simpan Progress
         </button>
       </div>
     </form>
@@ -6509,6 +6579,11 @@ function initPortalDropdowns() {
       cSelect.appendChild(o);
     });
   }
+
+  const pYear = document.getElementById('p-year');
+  if(pYear && !pYear.value) {
+    pYear.value = '2026';
+  }
 }
 
 function applyPortalFilters() {
@@ -6521,7 +6596,7 @@ function applyPortalFilters() {
   const status = document.getElementById('p-status') ? document.getElementById('p-status').value : '';
 
   portalFilteredData = RAW.filter(d => {
-    if(year && d.tahun !== year) return false;
+    if(year && String(d.tahun) !== String(year)) return false;
     if(unit && !getAllUnits(d.unit).includes(unit)) return false;
     if(cluster && d.cluster !== cluster) return false;
     if(status && status === 'overdue' && !isOverdue(d)) return false;
@@ -6557,17 +6632,18 @@ function renderPortalKPIs() {
   const pctBelum = total ? Math.round(belum/total*100) : 0;
 
   const selectedUnit = (document.getElementById('p-unit') && document.getElementById('p-unit').value) || '';
+  const selectedYear = (document.getElementById('p-year') && document.getElementById('p-year').value) || '';
 
   let fourthKpi;
   if(selectedUnit) {
     const predikat = pct >= 85 ? 'Sangat Baik (A)' : pct >= 65 ? 'Baik (B)' : pct >= 40 ? 'Cukup (C)' : 'Perlu Percepatan';
     fourthKpi = {type:'total', icon:'fa-award', value:`${pct}%`, label:`Capaian ${selectedUnit}`, sub:`Predikat: ${predikat}`, color:'#7c3aed', ibg:'#f5f3ff', delta:null};
   } else {
-    fourthKpi = {type:'unit', icon:'fa-building', value:9, label:'Unit Aktif 2026', sub:'Unit dengan publikasi 2026', color:'#7c3aed', ibg:'#f5f3ff', delta:null, clickable:false};
+    fourthKpi = {type:'unit', icon:'fa-building', value:9, label:selectedYear ? `Unit Aktif ${selectedYear}` : 'Unit Aktif', sub:selectedYear ? `Unit dengan publikasi ${selectedYear}` : 'Unit dengan publikasi survei', color:'#7c3aed', ibg:'#f5f3ff', delta:null, clickable:false};
   }
 
   const kpis = [
-    {type:'total',   icon:'fa-file-lines',    value:total,     label:selectedUnit ? `Total Survei ${selectedUnit}` : 'Total Publikasi', sub:'Klik untuk lihat Jadwal Rilis →', color:'#1e40af', ibg:'#eff6ff', delta:null},
+    {type:'total',   icon:'fa-file-lines',    value:total,     label:selectedUnit ? `Total Survei ${selectedUnit}` : 'Total Publikasi', sub:selectedYear ? `Tahun ${selectedYear} · Klik lihat Jadwal Rilis →` : 'Semua tahun & unit · Klik lihat list', color:'#1e40af', ibg:'#eff6ff', delta:null},
     {type:'selesai', icon:'fa-circle-check',  value:selesai,   label:'Selesai Publikasi', sub:`${pct}% selesai · Klik lihat list`, color:'#16a34a', ibg:'#f0fdf4', delta:{cls:'delta-good',text:`${pct}%`}},
     {type:'belum',   icon:'fa-hourglass-half',value:belum,     label:'Dalam Proses',   sub:`${belum} survei berjalan · Klik lihat list`, color:'#dc2626', ibg:'#fef2f2', delta:{cls:'delta-bad', text:`${pctBelum}%`}},
     fourthKpi,
@@ -6620,10 +6696,11 @@ function renderPortalCharts() {
   // 2. Monthly Bar
   try {
     if(portalCharts['monthly']) portalCharts['monthly'].destroy();
-    const data2026 = data.filter(d=>d.tahun==='2026'&&d.jadwal);
+    const selYear = (document.getElementById('p-year') && document.getElementById('p-year').value) || '';
+    const dataMonthly = data.filter(d => (!selYear || String(d.tahun) === String(selYear)) && d.jadwal);
     const monthCounts = {};
     MONTH_ORDER.forEach(m => monthCounts[m] = {selesai:0, belum:0});
-    data2026.forEach(d => {
+    dataMonthly.forEach(d => {
       const m = MONTH_ORDER.find(mo => d.jadwal.toLowerCase().includes(mo.toLowerCase()));
       if(m) monthCounts[m][getStatus(d)]++;
     });
@@ -7327,6 +7404,10 @@ function openTab(tabName) {
 
     if(tabName === 'dashboard') {
       initPortalDropdowns();
+      const pYear = document.getElementById('p-year');
+      if(pYear && !pYear.value) pYear.value = '2026';
+      const prYear = document.getElementById('portal-r-year');
+      if(prYear && !prYear.value) prYear.value = '2026';
       applyPortalFilters();
     } else if(tabName === 'pengumuman') {
       renderSindisaPengumuman();
@@ -7736,6 +7817,11 @@ function switchPortalSubtab(subtab, btn) {
   } else if (subtab === 'timeline') {
     renderPortalRoadmap();
   } else if (subtab === 'records') {
+    const pYear = document.getElementById('p-year');
+    const prYear = document.getElementById('portal-r-year');
+    if (prYear && !prYear.value && pYear && pYear.value) {
+      prYear.value = pYear.value;
+    }
     renderPortalTable();
   }
 }
@@ -7769,19 +7855,24 @@ function renderPortalTable() {
 
   const sourceData = (portalFilteredData && portalFilteredData.length) ? portalFilteredData : RAW;
   const list = sourceData.filter(d => {
-    if (yr && String(d.tahun || '') !== yr) return false;
+    if (yr && String(d.tahun || '') !== String(yr)) return false;
     if (u && !getAllUnits(d.unit).includes(u)) return false;
     if (c && d.cluster !== c) return false;
     if (s === 'overdue' && !isOverdue(d)) return false;
     if (s && s !== 'overdue' && getStatus(d) !== s) return false;
     if (q) {
-      const match = (d.nama_survei || '').toLowerCase().includes(q) ||
+      const match = (d.judul || d.nama_survei || '').toLowerCase().includes(q) ||
                     (d.unit || '').toLowerCase().includes(q) ||
                     (d.cluster || '').toLowerCase().includes(q);
       if (!match) return false;
     }
     return true;
   });
+
+  if (!list.length) {
+    tbody.innerHTML = '<tr><td colspan="8" style="padding:32px;text-align:center;color:#94a3b8;font-size:13px;">Tidak ada data survei yang cocok dengan filter.</td></tr>';
+    return;
+  }
 
   tbody.innerHTML = list.map((d, idx) => {
     const st = getStatus(d);
@@ -7794,16 +7885,18 @@ function renderPortalTable() {
       <tr>
         <td style="font-weight:700;color:#64748b;">${idx + 1}</td>
         <td>
-          <div style="font-weight:700;color:#1e293b;font-size:13px;">${escapeHtml(d.nama_survei || '-')}</div>
-          <div style="font-size:11.5px;color:#64748b;margin-top:2px;">${escapeHtml(d.jenis_publikasi || '')}</div>
+          <div style="font-weight:700;color:#1e293b;font-size:13px;">${escapeHtml(d.judul || d.nama_survei || '-')}</div>
+          <div style="font-size:11.5px;color:#64748b;margin-top:2px;">${escapeHtml(d.jenis || d.jenis_publikasi || 'Survei')} · Tahun ${d.tahun || 2026}</div>
         </td>
         <td><span class="badge" style="background:#eff6ff;color:#1e40af;font-size:11.5px;font-weight:700;">${escapeHtml(d.unit || '-')}</span></td>
         <td style="font-size:12px;color:#475569;">${escapeHtml(d.cluster || '-')}</td>
         <td style="font-size:12px;font-weight:600;color:#1e293b;">${escapeHtml(d.jadwal || '-')}</td>
         <td><span class="badge ${badgeCls}">${badgeText}</span></td>
-        <td style="font-size:12px;color:#334155;">${escapeHtml(stage.name || '-')}</td>
+        <td style="font-size:12px;color:#334155;">
+          ${renderStageBadge(d)}
+        </td>
         <td>
-          <button onclick="openEditModal(${d.id})" style="padding:4px 10px;background:#f1f5f9;border:1px solid #cbd5e1;border-radius:6px;font-size:11.5px;font-weight:600;cursor:pointer;color:#1e293b;">
+          <button onclick="openPortalProgressModal(${d.no})" style="padding:6px 12px;background:#2563eb;color:#fff;border:none;border-radius:7px;font-size:11.5px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:5px;box-shadow:0 1px 3px rgba(37,99,235,0.25);transition:all .15s;" onmouseover="this.style.background='#1d4ed8'" onmouseout="this.style.background='#2563eb'">
             <i class="fa-solid fa-pen-to-square"></i> Update
           </button>
         </td>
@@ -7811,6 +7904,138 @@ function renderPortalTable() {
     `;
   }).join('');
 }
+
+function resetPortalTableFilters() {
+  const s = document.getElementById('portal-r-search'); if(s) s.value = '';
+  const y = document.getElementById('portal-r-year'); if(y) y.value = '';
+  const u = document.getElementById('portal-r-unit'); if(u) u.value = '';
+  const c = document.getElementById('portal-r-cluster'); if(c) c.value = '';
+  const st = document.getElementById('portal-r-status'); if(st) st.value = '';
+  renderPortalTable();
+}
+
+function openPortalProgressModal(no) {
+  const rec = RAW.find(r => r.no === no);
+  if (!rec) return;
+
+  const m = document.getElementById('portal-progress-modal');
+  if (!m) return;
+
+  document.getElementById('prog-modal-rec-no').value = rec.no;
+  document.getElementById('prog-modal-title').textContent = rec.judul || rec.nama_survei || ('Survei #' + rec.no);
+  document.getElementById('prog-modal-unit').textContent = rec.unit || '-';
+  document.getElementById('prog-modal-cluster').textContent = rec.cluster || '-';
+  document.getElementById('prog-modal-no').textContent = '#' + rec.no;
+
+  const st = getStatus(rec);
+  const statusSel = document.getElementById('prog-modal-status');
+  if (statusSel) {
+    statusSel.value = (st === 'selesai') ? 'Selesai' : 'Belum Selesai';
+  }
+
+  const stage = getStageInfo(rec);
+  const tahapSel = document.getElementById('prog-modal-tahap');
+  if (tahapSel) {
+    tahapSel.value = (st === 'selesai') ? 'Selesai' : (stage.name || 'Penyusunan instrumen');
+  }
+
+  document.getElementById('prog-modal-jadwal').value = rec.jadwal || '';
+
+  const ketText = (rec.ket || '').replace(/^Selesai\s*[-:·]?\s*/i, '').replace(/^Belum Selesai\s*[-:·]?\s*/i, '').trim();
+  document.getElementById('prog-modal-ket').value = ketText;
+
+  m.classList.add('open');
+  m.style.display = 'flex';
+}
+
+function closePortalProgressModal() {
+  const m = document.getElementById('portal-progress-modal');
+  if (m) {
+    m.classList.remove('open');
+    m.style.display = 'none';
+  }
+}
+
+function handleProgStatusChange(val) {
+  const tahapSel = document.getElementById('prog-modal-tahap');
+  if (tahapSel) {
+    if (val === 'Selesai') {
+      tahapSel.value = 'Selesai';
+    } else if (tahapSel.value === 'Selesai') {
+      tahapSel.value = 'Pengumpulan data';
+    }
+  }
+}
+
+async function savePortalProgress(e) {
+  if (e) e.preventDefault();
+  const no = parseInt(document.getElementById('prog-modal-rec-no').value);
+  const rec = RAW.find(r => r.no === no);
+  if (!rec) return;
+
+  const newStatus = document.getElementById('prog-modal-status').value;
+  const newTahap = document.getElementById('prog-modal-tahap').value;
+  const newJadwal = document.getElementById('prog-modal-jadwal').value.trim();
+  const newNote = document.getElementById('prog-modal-ket').value.trim();
+
+  const isSelesai = (newStatus === 'Selesai');
+  rec.status = isSelesai ? 'Selesai' : 'Belum Selesai';
+  rec.jadwal = newJadwal || rec.jadwal;
+
+  if (isSelesai) {
+    rec.ket = newNote ? `Selesai - ${newNote}` : 'Selesai Publikasi';
+    rec.tahapan = 'Selesai';
+  } else {
+    rec.ket = newNote ? `Tahap ${newTahap} - ${newNote}` : `Tahap ${newTahap}`;
+    rec.tahapan = newTahap;
+  }
+
+  try {
+    localStorage.setItem('lan_pub_data', JSON.stringify(RAW));
+  } catch(err) {
+    console.warn('LocalStorage error:', err);
+  }
+
+  const btn = document.getElementById('prog-modal-save-btn');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan…';
+  }
+
+  try {
+    if (supabaseClient) {
+      const sbRow = {
+        status: rec.status,
+        ket: rec.ket,
+        jadwal: rec.jadwal
+      };
+      const { error } = await supabaseClient.from('publikasi').update(sbRow).eq('no', rec.no);
+      if (error) console.warn('[SUPABASE UPDATE ERROR]', error);
+      else console.log('[SUPABASE UPDATE SUCCESS] Updated #', rec.no);
+    }
+  } catch(err) {
+    console.warn('[SUPABASE EXCEPTION]', err);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Simpan Progress';
+    }
+  }
+
+  closePortalProgressModal();
+  showNotificationToast(`✅ Progress survei #${rec.no} ("${rec.judul || rec.nama_survei}") berhasil diperbarui!`, 'success');
+
+  if (typeof applyPortalFilters === 'function') applyPortalFilters();
+  if (typeof renderPortalTable === 'function') renderPortalTable();
+  if (typeof refreshAllPRISMViews === 'function') refreshAllPRISMViews();
+}
+
+window.openEditModal = openPortalProgressModal;
+window.openPortalProgressModal = openPortalProgressModal;
+window.closePortalProgressModal = closePortalProgressModal;
+window.handleProgStatusChange = handleProgStatusChange;
+window.savePortalProgress = savePortalProgress;
+window.resetPortalTableFilters = resetPortalTableFilters;
 
 function initPortalInteractiveDashboard() {
   const uSel = document.getElementById('p-unit');
@@ -7850,7 +8075,9 @@ function initPortalInteractiveDashboard() {
   safePopulate(rCluster, distinctClusters, 'Semua Cluster');
 
   const pYear = document.getElementById('p-year');
-  if (pYear && !pYear.value) pYear.value = '';
+  if (pYear && !pYear.value) pYear.value = '2026';
+  const prYear = document.getElementById('portal-r-year');
+  if (prYear && !prYear.value) prYear.value = '2026';
 
   try { applyPortalFilters(); } catch(e){ console.error('applyPortalFilters error:', e); }
   try { switchPortalSubtab('overview'); } catch(e){ console.error('switchPortalSubtab error:', e); }
