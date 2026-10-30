@@ -395,7 +395,8 @@
       <div class="sidebar-divider"></div>
       <div class="sidebar-section">Sistem</div>
       <div class="sidebar-item" onclick="showPage('settings')" id="nav-settings"><i class="fa-solid fa-gear"></i> Pengaturan</div>
-      <div class="sidebar-item" onclick="showPage('log')" id="nav-log"><i class="fa-solid fa-clock-rotate-left"></i> Riwayat Perubahan</div>
+      <!-- Revisi #7: Log Aktivitas disembunyikan dari menu operasional Admin dan hanya dapat diakses oleh Superadmin Sistem -->
+      <div class="sidebar-item" onclick="showPage('log')" id="nav-log" style="display:none"><i class="fa-solid fa-shield-halved"></i> Audit Internal (Superadmin)</div>
     </div>
 
     <!-- Content -->
@@ -408,37 +409,45 @@
       <div id="page-data">
         <div class="page-header">
           <div>
-            <div class="page-title"><i class="fa-solid fa-table" style="color:var(--accent);margin-right:8px"></i>Data Publikasi</div>
-            <div class="page-sub">Kelola seluruh rekap publikasi LAN RI</div>
+            <div class="page-title"><i class="fa-solid fa-table" style="color:var(--accent);margin-right:8px"></i>Data Publikasi &amp; Monitoring Kegiatan</div>
+            <div class="page-sub">Kelola seluruh rekap kegiatan dan publikasi LAN RI</div>
           </div>
           <div class="btn-group">
+            <button class="btn btn-outline btn-sm" onclick="exportOverdueCSV()"><i class="fa-solid fa-file-csv"></i> Laporan Kegiatan Terlambat (CSV)</button>
             <button class="btn btn-outline btn-sm" onclick="exportJSON()"><i class="fa-solid fa-file-export"></i> Export JSON</button>
             <button class="btn btn-outline btn-sm" onclick="document.getElementById('importFile').click()"><i class="fa-solid fa-file-import"></i> Import JSON</button>
             <input type="file" id="importFile" accept=".json" style="display:none" onchange="importJSON(this)"/>
-            <button class="btn btn-primary" onclick="showPage('add')"><i class="fa-solid fa-plus"></i> Tambah Publikasi</button>
+            <button class="btn btn-primary" onclick="showPage('add')"><i class="fa-solid fa-plus"></i> Tambah Kegiatan/Publikasi</button>
           </div>
         </div>
 
         <!-- Stats -->
         <div class="stat-row" id="stat-row"></div>
 
+        <!-- Reminder Kegiatan Terlambat & Mendekati Deadline (Revisi #1) -->
+        <div id="admin-overdue-reminder-box" style="margin-bottom:16px"></div>
+
         <!-- Table Card -->
         <div class="card">
           <div class="filter-bar">
-            <input type="text" id="s-search" placeholder="🔍  Cari judul, unit, cluster…" oninput="renderDataTable()"/>
+            <input type="text" id="s-search" placeholder="🔍  Cari judul, unit, PIC, cluster…" oninput="renderDataTable()"/>
             <select id="s-unit" onchange="renderDataTable()"><option value="">Semua Unit</option></select>
             <select id="s-cluster" onchange="renderDataTable()"><option value="">Semua Cluster</option></select>
             <select id="s-status" onchange="renderDataTable()">
-              <option value="">Semua Status</option>
-              <option value="selesai">Selesai</option>
-              <option value="belum">Belum Selesai</option>
+              <option value="">Semua kegiatan</option>
+              <option value="terlambat">⚠️ Terlambat</option>
+              <option value="mendekati_deadline">⏰ Mendekati deadline (≤14 hari)</option>
+              <option value="berisiko">🔥 Berisiko</option>
+              <option value="selesai_tepat_waktu">✅ Selesai tepat waktu</option>
+              <option value="selesai">✓ Semua Selesai</option>
+              <option value="belum">⏱ Belum Selesai</option>
             </select>
             <select id="s-year" onchange="renderDataTable()">
               <option value="">Semua Tahun</option>
               <option value="2025">2025</option>
               <option value="2026">2026</option>
             </select>
-            <button class="btn btn-outline btn-sm" onclick="resetSearch()"><i class="fa-solid fa-rotate-left"></i></button>
+            <button class="btn btn-outline btn-sm" onclick="resetSearch()" title="Reset Filter"><i class="fa-solid fa-rotate-left"></i> Reset</button>
             <span class="record-count" id="rec-count">— records</span>
           </div>
           <div class="table-wrap">
@@ -446,15 +455,15 @@
               <thead>
                 <tr>
                   <th style="width:38px">No</th>
-                  <th>Unit</th>
-                  <th>Judul</th>
+                  <th>Unit &amp; PIC</th>
+                  <th>Judul Kegiatan &amp; Reminder Jadwal</th>
                   <th>Jenis</th>
-                  <th>Jadwal</th>
-                  <th>Tahun</th>
-                  <th>Cluster</th>
-                  <th style="width:60px;text-align:center">Ch</th>
-                  <th>Status</th>
-                  <th style="width:110px">Aksi</th>
+                  <th>Target Jadwal Awal</th>
+                  <th>Tahapan &amp; Status</th>
+                  <th>Cluster Kebijakan</th>
+                  <th>Dokumen TOR/Proposal</th>
+                  <th style="width:55px;text-align:center">Kanal</th>
+                  <th style="width:120px">Aksi</th>
                 </tr>
               </thead>
               <tbody id="data-tbody"></tbody>
@@ -520,14 +529,11 @@
                 </div>
 
                 <div class="form-group">
-                  <label>Cluster Kebijakan</label>
+                  <label>Cluster Kebijakan <span style="font-size:10px;color:#64748b;font-weight:500">(Configurable Master)</span></label>
                   <select class="form-control" id="f-cluster">
-                    <option value="">— Belum diklasifikasikan —</option>
-                    <option>Prioritas Presiden</option>
-                    <option>Tata Kelola &amp; Manajemen ASN</option>
-                    <option>Pelayanan Publik</option>
-                    <option>Digitalisasi</option>
+                    <option value="">— Memuat Master Cluster… —</option>
                   </select>
+                  <div class="form-hint">Daftar cluster terpusat &amp; dapat disesuaikan pada menu Pengaturan setelah daftar resmi Humas / Pak Puji ditetapkan.</div>
                 </div>
 
                 <div class="form-group">
@@ -537,6 +543,71 @@
                     <option>2025</option>
                     <option>2026</option>
                     <option>2027</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label>Penanggung Jawab (PIC)</label>
+                  <input type="text" class="form-control" id="f-pic" placeholder="Nama PIC / Ketua Tim Kegiatan…"/>
+                </div>
+
+                <div class="form-group">
+                  <label>Tahapan Berjalan</label>
+                  <select class="form-control" id="f-tahapan">
+                    <option value="Perencanaan & Pengajuan">1. Perencanaan &amp; Pengajuan</option>
+                    <option value="Pengumpulan Data / Survei">2. Pengumpulan Data / Survei</option>
+                    <option value="Penyusunan & Substansi">3. Penyusunan &amp; Substansi</option>
+                    <option value="Verifikasi Publikasi Awal">4. Verifikasi Publikasi Awal</option>
+                    <option value="Publikasi Akhir & Diseminasi">5. Publikasi Akhir &amp; Diseminasi</option>
+                  </select>
+                </div>
+
+                <!-- Dokumen TOR / Proposal via Google Link (Revisi #3) -->
+                <div class="form-section form-full"><i class="fa-brands fa-google-drive"></i> Dokumen TOR / Proposal (Google Drive / Google Docs)</div>
+
+                <div class="form-group form-full">
+                  <label>Link TOR/Proposal <span class="req">*</span></label>
+                  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                    <input type="url" class="form-control" id="f-doc-proposal" style="flex:1;min-width:240px" placeholder="https://drive.google.com/file/d/... atau https://docs.google.com/document/d/..." required oninput="onAdminDocLinkInput()"/>
+                    <button type="button" class="btn btn-outline btn-sm" onclick="checkAdminDocLinkAccess()"><i class="fa-solid fa-plug-circle-check"></i> Cek Akses Link</button>
+                    <button type="button" class="btn btn-outline btn-sm" onclick="openAdminDocLink()"><i class="fa-solid fa-arrow-up-right-from-square"></i> Buka Dokumen</button>
+                  </div>
+                  <div class="form-hint" style="margin-top:6px;color:#334155">
+                    <strong>Bantuan:</strong> Masukkan link Google Drive atau Google Docs TOR/Proposal. Pastikan dokumen dapat diakses oleh pihak yang berwenang.<br/>
+                    <span style="color:#64748b">Contoh format: <code>https://drive.google.com/file/d/1a2b3c.../view</code> atau <code>https://docs.google.com/document/d/1a2b3c.../edit</code></span>
+                  </div>
+                  <div id="f-doc-warning" style="margin-top:6px;padding:8px 12px;border-radius:8px;background:#fffbeb;border:1px solid #fde68a;color:#92400e;font-size:11.5px;display:flex;align-items:center;gap:8px">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <span><strong>Peringatan Hak Akses:</strong> Sistem tidak mengunduh atau mengubah izin dokumen Anda secara otomatis. Pemilik dokumen wajib mengatur izin berbagi (Share permission) Google Drive/Google Docs dengan benar.</span>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label>Nama Dokumen</label>
+                  <input type="text" class="form-control" id="f-doc-nama" placeholder="Contoh: TOR Survei Kepuasan Masyarakat 2026"/>
+                </div>
+
+                <div class="form-group">
+                  <label>Jenis Dokumen</label>
+                  <select class="form-control" id="f-doc-jenis">
+                    <option value="TOR">TOR</option>
+                    <option value="Proposal">Proposal</option>
+                    <option value="TOR dan Proposal" selected>TOR dan Proposal</option>
+                    <option value="Dokumen Pendukung">Dokumen Pendukung</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label>Keterangan Singkat Dokumen</label>
+                  <input type="text" class="form-control" id="f-doc-ket" placeholder="Revisi ke-2 / Draft Final dsb."/>
+                </div>
+
+                <div class="form-group">
+                  <label>Status Akses Link</label>
+                  <select class="form-control" id="f-doc-access-status">
+                    <option value="Belum dicek">Belum dicek</option>
+                    <option value="Dapat diakses">Dapat diakses</option>
+                    <option value="Tidak dapat diakses">Tidak dapat diakses</option>
                   </select>
                 </div>
 
@@ -574,6 +645,11 @@
                     <option value="belum">Belum Selesai</option>
                     <option value="selesai">Selesai</option>
                   </select>
+                </div>
+
+                <div class="form-group">
+                  <label>Alasan Keterlambatan (Jika melewati jadwal)</label>
+                  <input type="text" class="form-control" id="f-alasan-terlambat" placeholder="Contoh: Menunggu finalisasi data responden daerah…"/>
                 </div>
 
                 <div class="form-group form-full">
@@ -680,13 +756,32 @@
             </div>
           </div>
 
+          <!-- Master Cluster Kebijakan (Revisi #2: Configurable Master Cluster) -->
+          <div class="card" style="grid-column: 1 / -1">
+            <div class="card-header">
+              <span class="card-title"><i class="fa-solid fa-layer-group"></i> Master Cluster Kebijakan (Configurable — Menunggu Daftar Final Humas / Pak Puji)</span>
+            </div>
+            <div class="card-body">
+              <div class="alert alert-info" style="margin-bottom:12px">
+                <i class="fa-solid fa-circle-info"></i>
+                <span>Daftar cluster kebijakan dikelola terpusat di sini (tidak di-hardcode di komponen). Sebelum daftar resmi dari Humas / Pak Puji diterima, gunakan placeholder atau daftar yang dapat dikonfigurasi. Data lama dipetakan otomatis melalui <code>CLUSTER_LEGACY_MAPPING</code> agar data historis tidak rusak.</span>
+              </div>
+              <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+                <input type="text" class="form-control" id="new-master-cluster-name" placeholder="Nama cluster baru (setelah daftar resmi Humas / Pak Puji tersedia)…" style="flex:1;min-width:240px"/>
+                <button type="button" class="btn btn-primary btn-sm" onclick="addMasterClusterItem()"><i class="fa-solid fa-plus"></i> Tambah Cluster Master</button>
+                <button type="button" class="btn btn-outline btn-sm" onclick="resetMasterClustersToDefault()"><i class="fa-solid fa-rotate-left"></i> Kembalikan Default</button>
+              </div>
+              <div id="admin-master-cluster-list" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+            </div>
+          </div>
+
           <!-- Info -->
           <div class="card">
             <div class="card-header"><span class="card-title"><i class="fa-solid fa-circle-info"></i> Informasi Sistem</span></div>
             <div class="card-body" style="font-size:12px;line-height:2">
-              <div><strong>Versi:</strong> 1.0.0</div>
-              <div><strong>Platform:</strong> Static HTML + localStorage</div>
-              <div><strong>Data Engine:</strong> Browser localStorage</div>
+              <div><strong>Versi:</strong> 1.1.0 (Revisi Meeting PRISMO)</div>
+              <div><strong>Platform:</strong> Static HTML + Supabase Cloud + localStorage</div>
+              <div><strong>Konfigurasi Env:</strong> <code>window.__ENV__</code> / Environment Variables</div>
               <div><strong>Terakhir diperbarui:</strong> <span id="s-last-updated">—</span></div>
               <div><strong>Total Record:</strong> <span id="s-total">—</span></div>
             </div>
@@ -1781,15 +1876,218 @@ setInterval(()=>{
   if(document.getElementById('login-screen')?.style.display!=='none') setAdminSlide(curAdminSlide+1);
 }, 4800);
 
-/* ══ SUPABASE CLOUD DATABASE ══ */
-const SUPABASE_URL = 'https://imteghfrgddjvgkxarwi.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImltdGVnaGZyZ2RkanZna3hhcndpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMxMzQ2NzYsImV4cCI6MjEwODcxMDY3Nn0.23YPuFy6PfmMdURqDR4OX1Qi6agjGrZSHgNjple3Ilo';
+/* ══ SUPABASE CLOUD DATABASE (ENV CONFIGURABLE) ══ */
+const PRISMO_ENV = window.__ENV__ || window.PRISMO_ENV || {};
+const SUPABASE_URL = PRISMO_ENV.VITE_SUPABASE_URL || PRISMO_ENV.SUPABASE_URL || localStorage.getItem('prismo_env_supabase_url') || 'https://imteghfrgddjvgkxarwi.supabase.co';
+const SUPABASE_KEY = PRISMO_ENV.VITE_SUPABASE_ANON_KEY || PRISMO_ENV.SUPABASE_ANON_KEY || localStorage.getItem('prismo_env_supabase_key') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImltdGVnaGZyZ2RkanZna3hhcndpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMxMzQ2NzYsImV4cCI6MjEwODcxMDY3Nn0.23YPuFy6PfmMdURqDR4OX1Qi6agjGrZSHgNjple3Ilo';
 let supabaseClient = null;
-if (window.supabase) {
+if (window.supabase && SUPABASE_URL && SUPABASE_KEY) {
   try {
     supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     console.log('[SUPABASE ADMIN] Initialized');
   } catch(e) { console.warn(e); }
+}
+
+/* ══ MASTER CLUSTER KEBIJAKAN TERPUSAT (Revisi #2) ══ */
+const LS_MASTER_CLUSTERS = 'prismo_master_clusters_v1';
+const CLUSTER_PLACEHOLDER_TEXT = 'Daftar cluster kebijakan final sedang disiapkan';
+const DEFAULT_MASTER_CLUSTERS = [
+  { code: 'CLUSTER_PENDING_HUMAS', name: CLUSTER_PLACEHOLDER_TEXT, isPlaceholder: true, color: '#64748b' },
+  { code: 'CLUSTER_ASN', name: 'Manajemen ASN & Birokrasi', isPlaceholder: false, color: '#2563eb' },
+  { code: 'CLUSTER_PELAYANAN', name: 'Pelayanan Publik & Inovasi', isPlaceholder: false, color: '#059669' },
+  { code: 'CLUSTER_EKONOMI', name: 'Ekonomi & Pembangunan Daerah', isPlaceholder: false, color: '#d97706' },
+  { code: 'CLUSTER_KOMPETENSI', name: 'Pengembangan Kompetensi', isPlaceholder: false, color: '#9333ea' },
+  { code: 'CLUSTER_PRIORITAS', name: 'Prioritas Presiden', isPlaceholder: false, color: '#dc2626' },
+  { code: 'CLUSTER_DIGITALISASI', name: 'Digitalisasi', isPlaceholder: false, color: '#0891b2' }
+];
+const CLUSTER_LEGACY_MAPPING = {
+  'Tata Kelola & Manajemen ASN': 'Manajemen ASN & Birokrasi',
+  'Manajemen ASN': 'Manajemen ASN & Birokrasi',
+  'Pelayanan Publik': 'Pelayanan Publik & Inovasi',
+  'Ekonomi Daerah': 'Ekonomi & Pembangunan Daerah',
+  'Bangkom': 'Pengembangan Kompetensi',
+  'Belum Ditentukan': CLUSTER_PLACEHOLDER_TEXT,
+  '[Menunggu Daftar Cluster Final Humas / Pak Puji]': CLUSTER_PLACEHOLDER_TEXT
+};
+function getMasterClusters() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(LS_MASTER_CLUSTERS) || 'null');
+    if (Array.isArray(saved) && saved.length > 0) return saved;
+  } catch (e) {}
+  return JSON.parse(JSON.stringify(DEFAULT_MASTER_CLUSTERS));
+}
+function saveMasterClusters(list) {
+  localStorage.setItem(LS_MASTER_CLUSTERS, JSON.stringify(list));
+  populateFilters();
+  renderMasterClustersSettings();
+}
+function normalizeClusterName(rawCluster) {
+  if (!rawCluster) return '';
+  return CLUSTER_LEGACY_MAPPING[rawCluster] || rawCluster;
+}
+function renderMasterClustersSettings() {
+  const el = document.getElementById('admin-master-cluster-list');
+  if (!el) return;
+  const list = getMasterClusters();
+  el.innerHTML = list.map((c, idx) => `
+    <span style="display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:8px;background:${c.isPlaceholder ? '#f1f5f9' : '#eff6ff'};border:1px solid ${c.isPlaceholder ? '#cbd5e1' : '#bfdbfe'};font-size:12px;font-weight:600;color:#1e293b">
+      <i class="fa-solid ${c.isPlaceholder ? 'fa-hourglass-half' : 'fa-tag'}" style="color:${c.color || '#2563eb'}"></i>
+      ${c.name}
+      ${!c.isPlaceholder ? `<button type="button" onclick="removeMasterClusterItem(${idx})" style="border:none;background:transparent;color:#dc2626;cursor:pointer;font-size:11px;margin-left:4px" title="Nonaktifkan dari daftar pilihan baru"><i class="fa-solid fa-xmark"></i></button>` : ''}
+    </span>
+  `).join('');
+}
+function addMasterClusterItem() {
+  const inp = document.getElementById('new-master-cluster-name');
+  const val = (inp?.value || '').trim();
+  if (!val) { showToast('Masukkan nama cluster terlebih dahulu', 'warn'); return; }
+  const list = getMasterClusters();
+  if (list.some(c => c.name.toLowerCase() === val.toLowerCase())) {
+    showToast('Cluster tersebut sudah ada di dalam Master Cluster', 'warn');
+    return;
+  }
+  list.push({ code: 'CLUSTER_' + Date.now(), name: val, isPlaceholder: false, color: '#2563eb' });
+  saveMasterClusters(list);
+  inp.value = '';
+  addLog(`Master Cluster ditambahkan: "${val}"`, 'add');
+  showToast('Cluster berhasil ditambahkan ke Master Konfigurasi', 'success');
+}
+function removeMasterClusterItem(idx) {
+  const list = getMasterClusters();
+  const target = list[idx];
+  if (!target || target.isPlaceholder) return;
+  list.splice(idx, 1);
+  saveMasterClusters(list);
+  addLog(`Master Cluster dihapus dari daftar aktif: "${target.name}" (Data lama tetap aman)`, 'info');
+  showToast('Cluster dihapus dari pilihan baru (data historis tetap dipertahankan)', 'info');
+}
+function resetMasterClustersToDefault() {
+  saveMasterClusters(JSON.parse(JSON.stringify(DEFAULT_MASTER_CLUSTERS)));
+  showToast('Master Cluster dikembalikan ke konfigurasi default', 'info');
+}
+
+/* ══ VALIDASI GOOGLE DRIVE / GOOGLE DOCS LINK (Revisi #3) ══ */
+function validateGoogleDocLink(url) {
+  const clean = (url || '').trim();
+  if (!clean) return { valid: false, isGoogleDomain: false, message: 'Link TOR/Proposal wajib diisi.' };
+  let parsed;
+  try {
+    parsed = new URL(clean);
+  } catch (e) {
+    return { valid: false, isGoogleDomain: false, message: 'Format URL tidak valid. Gunakan https://drive.google.com/... atau https://docs.google.com/...' };
+  }
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+    return { valid: false, isGoogleDomain: false, message: 'URL harus diawali http:// atau https://' };
+  }
+  const host = parsed.hostname.toLowerCase();
+  const isGoogle = host === 'drive.google.com' || host === 'docs.google.com' || host.endsWith('.drive.google.com') || host.endsWith('.docs.google.com');
+  if (!isGoogle) {
+    return { valid: false, isGoogleDomain: false, message: 'Domain harus berasal dari drive.google.com atau docs.google.com.' };
+  }
+  return { valid: true, isGoogleDomain: true, message: 'Link Google Drive/Docs valid.' };
+}
+function onAdminDocLinkInput() {
+  const statusEl = document.getElementById('f-doc-access-status');
+  if (statusEl) statusEl.value = 'Belum dicek';
+}
+function checkAdminDocLinkAccess() {
+  const url = document.getElementById('f-doc-proposal')?.value || '';
+  const v = validateGoogleDocLink(url);
+  const statusEl = document.getElementById('f-doc-access-status');
+  const warnEl = document.getElementById('f-doc-warning');
+  if (!v.valid) {
+    if (statusEl) statusEl.value = 'Tidak dapat diakses';
+    if (warnEl) {
+      warnEl.style.background = '#fef2f2';
+      warnEl.style.borderColor = '#fecaca';
+      warnEl.style.color = '#991b1b';
+      warnEl.innerHTML = `<i class="fa-solid fa-circle-xmark"></i> <span><strong>Link Tidak Valid / Tidak Dapat Diakses:</strong> ${v.message} Pastikan pemilik dokumen mengatur izin berbagi Google Drive/Docs tanpa mengubah izin secara otomatis dari sistem.</span>`;
+    }
+    showToast(v.message, 'error');
+    return;
+  }
+  if (statusEl) statusEl.value = 'Dapat diakses';
+  if (warnEl) {
+    warnEl.style.background = '#f0fdf4';
+    warnEl.style.borderColor = '#bbf7d0';
+    warnEl.style.color = '#166534';
+    warnEl.innerHTML = `<i class="fa-solid fa-circle-check"></i> <span><strong>Format Link Google Valid (Dapat Diakses):</strong> Domain terverifikasi (<code>${new URL(url.trim()).hostname}</code>). Pastikan izin berbagi disetel agar pihak berwenang dapat membuka dokumen.</span>`;
+  }
+  showToast('Format & domain link Google Drive/Docs valid!', 'success');
+}
+function openAdminDocLink(customUrl) {
+  const url = (customUrl || document.getElementById('f-doc-proposal')?.value || '').trim();
+  const v = validateGoogleDocLink(url);
+  if (!v.valid) {
+    showToast(v.message, 'warn');
+    return;
+  }
+  window.open(url, '_blank', 'noopener,noreferrer');
+}
+
+/* ══ PERHITUNGAN JADWAL, TERLAMBAT & MENDEKATI DEADLINE (Revisi #1) ══ */
+const ADMIN_MONTH_MAP = {
+  'Januari': 0, 'Februari': 1, 'Maret': 2, 'April': 3, 'Mei': 4, 'Juni': 5,
+  'Juli': 6, 'Agustus': 7, 'September': 8, 'Oktober': 9, 'November': 10, 'Desember': 11
+};
+function getScheduleTargetDate(d) {
+  if (d.target_tanggal) {
+    const dt = new Date(d.target_tanggal);
+    if (!isNaN(dt.getTime())) return dt;
+  }
+  const j = (d.jadwal || '').trim();
+  if (!j || j === '-') return null;
+  let mIdx = -1;
+  for (const [mName, idx] of Object.entries(ADMIN_MONTH_MAP)) {
+    if (j.toLowerCase().includes(mName.toLowerCase())) { mIdx = idx; break; }
+  }
+  if (mIdx === -1) return null;
+  const yr = parseInt(d.tahun || '2026', 10) || 2026;
+  const wkMatch = j.match(/\((\d)\)/);
+  const wk = wkMatch ? parseInt(wkMatch[1], 10) : 4;
+  const dayOfMonth = Math.min(28, wk * 7);
+  return new Date(yr, mIdx, dayOfMonth, 23, 59, 59);
+}
+function getAdminScheduleInfo(d) {
+  const st = getStatus(d);
+  const targetDate = getScheduleTargetDate(d);
+  const now = new Date();
+  const tahapan = d.tahapan || (st === 'selesai' ? 'Selesai & Dipublikasikan' : (chCount(d) > 0 ? 'Verifikasi & Diseminasi Kanal' : 'Penyusunan & Substansi Kegiatan'));
+  const pic = d.pic || `Koordinator ${d.unit || 'Unit'}`;
+  const alasan = d.alasan_terlambat || '';
+  if (!targetDate) {
+    return {
+      isOverdue: false,
+      isApproaching: false,
+      isAtRisk: false,
+      isCompletedOnTime: st === 'selesai',
+      daysOverdue: 0,
+      daysRemaining: null,
+      targetLabel: d.jadwal ? `${d.jadwal} ${d.tahun || ''}`.trim() : 'Belum dijadwalkan',
+      tahapan,
+      pic,
+      alasan
+    };
+  }
+  const diffMs = now.getTime() - targetDate.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  const daysRemaining = Math.ceil((targetDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+  const isOverdue = st !== 'selesai' && diffDays > 0;
+  const isApproaching = st !== 'selesai' && !isOverdue && daysRemaining >= 0 && daysRemaining <= 14;
+  const isAtRisk = isOverdue || (isApproaching && chCount(d) === 0);
+  const isCompletedOnTime = st === 'selesai';
+  return {
+    isOverdue,
+    isApproaching,
+    isAtRisk,
+    isCompletedOnTime,
+    daysOverdue: isOverdue ? Math.max(1, diffDays) : 0,
+    daysRemaining: daysRemaining >= 0 ? daysRemaining : 0,
+    targetLabel: `${d.jadwal || '-'} (${d.tahun || '2026'})`,
+    tahapan,
+    pic,
+    alasan
+  };
 }
 
 async function loadFromSupabase() {
@@ -1814,7 +2112,15 @@ async function loadFromSupabase() {
         igUnit: d.ig_unit || d.igUnit || '',
         ytLAN: d.yt_lan || d.ytLAN || '',
         ytUnit: d.yt_unit || d.ytUnit || '',
-        ket: d.ket || ''
+        ket: d.ket || '',
+        pic: d.pic || '',
+        tahapan: d.tahapan || '',
+        alasan_terlambat: d.alasan_terlambat || '',
+        doc_proposal: d.doc_proposal_url || d.doc_proposal || '',
+        doc_nama: d.doc_nama || '',
+        doc_jenis: d.doc_jenis || 'TOR dan Proposal',
+        doc_ket: d.doc_ket || '',
+        doc_access_status: d.doc_access_status || 'Belum dicek'
       }));
       saveDB();
       populateFilters();
@@ -1849,23 +2155,40 @@ function getStatus(d){
   if(d.tahun==='2025' && chCount(d)>0 && !k.includes('belum')) return 'selesai';
   return 'belum';
 }
-function statusBadge(s){
-  if(s==='selesai') return '<span class="badge badge-green">✓ Selesai</span>';
-  return '<span class="badge badge-red">⏱ Belum Selesai</span>';
+function statusBadge(s, sched){
+  if(s==='selesai') return '<span class="badge badge-green"><i class="fa-solid fa-circle-check"></i> Selesai Tepat Waktu</span>';
+  if(sched && sched.isOverdue) {
+    return `<span class="badge badge-red" style="background:#fef2f2;color:#b91c1c;border:1px solid #fecaca"><i class="fa-solid fa-triangle-exclamation"></i> Terlambat (${sched.daysOverdue} hari)</span>`;
+  }
+  if(sched && sched.isApproaching) {
+    return `<span class="badge" style="background:#fffbeb;color:#b45309;border:1px solid #fde68a"><i class="fa-solid fa-clock"></i> Mendekati Deadline (${sched.daysRemaining} hari lagi)</span>`;
+  }
+  return '<span class="badge badge-blue"><i class="fa-solid fa-spinner"></i> Sedang Berjalan</span>';
 }
 function chBadge(n){ return n===0?`<span style="color:#dc2626;font-weight:700">${n}</span>`:n<3?`<span style="color:#d97706;font-weight:700">${n}</span>`:`<span style="color:#16a34a;font-weight:700">${n}</span>`; }
 function nextNo(){ return DB.length ? Math.max(...DB.map(d=>d.no))+1 : 1; }
 
-/* ══ LOG ══ */
-function addLog(msg, type='info'){
+/* ══ INTERNAL AUDIT LOG (Revisi #7: Disembunyikan dari Menu Operasional, Aktif di Background, Tanpa Secret/Password) ══ */
+function sanitizeAuditMessage(msg) {
+  if (!msg) return '';
+  return String(msg).replace(/(password|token|secret|key)\s*[:=]\s*\S+/gi, '$1:[REDACTED]');
+}
+function addLog(msg, type='info', deletedRecord=null){
+  const safeMsg = sanitizeAuditMessage(msg);
   const logs = JSON.parse(localStorage.getItem(LS_LOG)||'[]');
-  logs.unshift({ time: new Date().toISOString(), msg, type });
-  if(logs.length>100) logs.pop();
+  const entry = { time: new Date().toISOString(), msg: safeMsg, type };
+  if (deletedRecord) entry.deletedRecord = deletedRecord;
+  logs.unshift(entry);
+  if(logs.length>150) logs.pop();
   localStorage.setItem(LS_LOG, JSON.stringify(logs));
 }
 function renderLog(){
+  const isSuperAdmin = sessionStorage.getItem('lan_role') === 'superadmin' || localStorage.getItem('prismo_superadmin_mode') === '1';
+  const navLog = document.getElementById('nav-log');
+  if (navLog) navLog.style.display = isSuperAdmin ? '' : 'none';
   const logs = JSON.parse(localStorage.getItem(LS_LOG)||'[]');
   const el = document.getElementById('log-list');
+  if (!el) return;
   if(!logs.length){ el.innerHTML='<div class="empty"><i class="fa-solid fa-scroll"></i>Belum ada riwayat perubahan.</div>'; return; }
   const dotColors = {add:'#16a34a',edit:'#2563eb',delete:'#dc2626',info:'#94a3b8',reset:'#d97706'};
   el.innerHTML = logs.map((l, idx)=>{
@@ -1957,26 +2280,75 @@ async function syncAllFromSupabaseToLocal() {
 }
 function clearLog(){ localStorage.removeItem(LS_LOG); renderLog(); showToast('Log dibersihkan','warn'); }
 
-/* ══ STATS ══ */
+/* ══ STATS & REMINDER BANNER (Revisi #1) ══ */
 function renderStats(){
   const s=DB.filter(d=>getStatus(d)==='selesai').length;
-  const b=DB.filter(d=>getStatus(d)==='belum').length;
+  const overdueItems=DB.filter(d=>getAdminScheduleInfo(d).isOverdue);
+  const approachingItems=DB.filter(d=>getAdminScheduleInfo(d).isApproaching);
   document.getElementById('stat-row').innerHTML=`
-    <div class="stat-card" style="--c:#2563eb"><div class="stat-val">${DB.length}</div><div class="stat-label">Total Publikasi</div></div>
-    <div class="stat-card" style="--c:#16a34a"><div class="stat-val">${s}</div><div class="stat-label">Selesai</div></div>
-    <div class="stat-card" style="--c:#dc2626"><div class="stat-val">${b}</div><div class="stat-label">Belum Selesai</div></div>
+    <div class="stat-card" style="--c:#2563eb;cursor:pointer" onclick="document.getElementById('s-status').value='';renderDataTable()"><div class="stat-val">${DB.length}</div><div class="stat-label">Total Kegiatan</div></div>
+    <div class="stat-card" style="--c:#dc2626;cursor:pointer" onclick="document.getElementById('s-status').value='terlambat';renderDataTable()"><div class="stat-val">${overdueItems.length}</div><div class="stat-label">⚠️ Kegiatan Terlambat</div></div>
+    <div class="stat-card" style="--c:#d97706;cursor:pointer" onclick="document.getElementById('s-status').value='mendekati_deadline';renderDataTable()"><div class="stat-val">${approachingItems.length}</div><div class="stat-label">⏰ Mendekati Deadline</div></div>
+    <div class="stat-card" style="--c:#16a34a;cursor:pointer" onclick="document.getElementById('s-status').value='selesai_tepat_waktu';renderDataTable()"><div class="stat-val">${s}</div><div class="stat-label">✅ Selesai Tepat Waktu</div></div>
   `;
+  const remBox = document.getElementById('admin-overdue-reminder-box');
+  if (remBox) {
+    if (overdueItems.length > 0 || approachingItems.length > 0) {
+      remBox.innerHTML = `
+        <div style="background:#fef2f2;border:1px solid #fecaca;border-left:5px solid #dc2626;border-radius:10px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <i class="fa-solid fa-bell" style="color:#dc2626;font-size:18px"></i>
+            <div>
+              <div style="font-weight:700;color:#991b1b;font-size:13px">Pengingat Jadwal Kegiatan: ${overdueItems.length} Kegiatan Terlambat &amp; ${approachingItems.length} Mendekati Deadline (≤14 Hari)</div>
+              <div style="font-size:11.5px;color:#7f1d1d">Segera periksa tahapan berjalan, alasan keterlambatan, dan tindak lanjuti bersama PIC unit kerja terkait.</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button type="button" class="btn btn-danger btn-sm" onclick="document.getElementById('s-status').value='terlambat';renderDataTable()"><i class="fa-solid fa-triangle-exclamation"></i> Filter Terlambat (${overdueItems.length})</button>
+            <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('s-status').value='mendekati_deadline';renderDataTable()"><i class="fa-solid fa-clock"></i> Filter Mendekati Deadline (${approachingItems.length})</button>
+          </div>
+        </div>
+      `;
+    } else {
+      remBox.innerHTML = '';
+    }
+  }
 }
 
-/* ══ DROPDOWNS ══ */
+/* ══ DROPDOWNS (DARI MASTER CLUSTER TERPUSAT — Revisi #2) ══ */
 function populateFilters(){
   const units=[...new Set(DB.flatMap(d=>d.unit.split(/[,|]/).map(u=>u.trim()).filter(Boolean)))].filter(u=>u && !u.includes(',') && !u.includes('|')).sort();
-  const clusters=[...new Set(DB.map(d=>d.cluster).filter(Boolean))].sort();
-  ['s-unit'].forEach(id=>{ const el=document.getElementById(id); el.innerHTML='<option value="">Semua Unit</option>'; units.forEach(u=>{ const o=document.createElement('option'); o.value=u; o.textContent=u; el.appendChild(o); }); });
-  ['s-cluster'].forEach(id=>{ const el=document.getElementById(id); el.innerHTML='<option value="">Semua Cluster</option>'; clusters.forEach(c=>{ const o=document.createElement('option'); o.value=c; o.textContent=c; el.appendChild(o); }); });
+  const masterClusterNames = getMasterClusters().map(c => c.name);
+  const dbClusters = [...new Set(DB.map(d => normalizeClusterName(d.cluster)).filter(Boolean))];
+  const allClusters = [...new Set([...masterClusterNames, ...dbClusters])];
+
+  ['s-unit'].forEach(id=>{
+    const el=document.getElementById(id);
+    if (!el) return;
+    el.innerHTML='<option value="">Semua Unit</option>';
+    units.forEach(u=>{ const o=document.createElement('option'); o.value=u; o.textContent=u; el.appendChild(o); });
+  });
+  ['s-cluster'].forEach(id=>{
+    const el=document.getElementById(id);
+    if (!el) return;
+    el.innerHTML='<option value="">Semua Cluster Kebijakan</option>';
+    allClusters.forEach(c=>{ const o=document.createElement('option'); o.value=c; o.textContent=c; el.appendChild(o); });
+  });
+  const formClusterEl = document.getElementById('f-cluster');
+  if (formClusterEl) {
+    const curVal = formClusterEl.value;
+    formClusterEl.innerHTML = '<option value="">— Pilih Cluster Kebijakan (Master) —</option>';
+    allClusters.forEach(c => {
+      const o = document.createElement('option');
+      o.value = c;
+      o.textContent = c;
+      formClusterEl.appendChild(o);
+    });
+    if (curVal) formClusterEl.value = curVal;
+  }
 }
 
-/* ══ TABLE ══ */
+/* ══ TABLE (DENGAN REMINDER TERLAMBAT & DETAIL — Revisi #1, #2, #3) ══ */
 function renderDataTable(){
   const search=(document.getElementById('s-search').value||'').toLowerCase();
   const unit=document.getElementById('s-unit').value;
@@ -1984,34 +2356,74 @@ function renderDataTable(){
   const status=document.getElementById('s-status').value;
   const year=document.getElementById('s-year').value;
   let data=DB.filter(d=>{
+    const sched = getAdminScheduleInfo(d);
+    const normCluster = normalizeClusterName(d.cluster);
     if(year && d.tahun!==year) return false;
     if(unit && !d.unit.includes(unit)) return false;
-    if(cluster && d.cluster!==cluster) return false;
-    if(status && getStatus(d)!==status) return false;
-    if(search && !(d.judul.toLowerCase().includes(search)||d.unit.toLowerCase().includes(search)||(d.cluster||'').toLowerCase().includes(search))) return false;
+    if(cluster && normCluster!==cluster && d.cluster!==cluster) return false;
+    if(status === 'terlambat' && !sched.isOverdue) return false;
+    if(status === 'mendekati_deadline' && !sched.isApproaching) return false;
+    if(status === 'berisiko' && !sched.isAtRisk) return false;
+    if(status === 'selesai_tepat_waktu' && !sched.isCompletedOnTime) return false;
+    if((status === 'selesai' || status === 'belum') && getStatus(d)!==status) return false;
+    if(search && !(d.judul.toLowerCase().includes(search)||d.unit.toLowerCase().includes(search)||(normCluster||'').toLowerCase().includes(search)||(sched.pic||'').toLowerCase().includes(search))) return false;
     return true;
   });
-  document.getElementById('rec-count').textContent=`${data.length} dari ${DB.length} records`;
+  document.getElementById('rec-count').textContent=`${data.length} dari ${DB.length} kegiatan`;
   document.getElementById('data-tbody').innerHTML=data.map(d=>{
     const st=getStatus(d), ch=chCount(d);
-    return `<tr>
+    const sched = getAdminScheduleInfo(d);
+    const normCluster = normalizeClusterName(d.cluster);
+    const overdueReminderHtml = sched.isOverdue ? `
+      <div style="margin-top:6px;padding:6px 8px;border-radius:6px;background:#fef2f2;border:1px solid #fecaca;font-size:10.5px;color:#991b1b;line-height:1.4">
+        <div><strong><i class="fa-solid fa-triangle-exclamation"></i> Status: Terlambat (${sched.daysOverdue} hari)</strong> • Target Awal: <strong>${sched.targetLabel}</strong></div>
+        <div>Tahapan: <strong>${sched.tahapan}</strong> • PIC: <strong>${sched.pic}</strong></div>
+        ${sched.alasan ? `<div>Alasan Keterlambatan: <em>${sched.alasan}</em></div>` : `<div style="color:#b91c1c">Alasan keterlambatan belum diisi</div>`}
+      </div>
+    ` : (sched.isApproaching ? `
+      <div style="margin-top:6px;padding:5px 8px;border-radius:6px;background:#fffbeb;border:1px solid #fde68a;font-size:10.5px;color:#92400e">
+        <i class="fa-solid fa-clock"></i> <strong>Pengingat Deadline:</strong> Jatuh tempo dalam <strong>${sched.daysRemaining} hari</strong> (${sched.targetLabel}) • Tahapan: ${sched.tahapan}
+      </div>
+    ` : '');
+    const docLinkHtml = d.doc_proposal ? `
+      <div style="font-size:10.5px">
+        <div style="font-weight:600;color:#1e293b">${d.doc_jenis || 'TOR/Proposal'}${d.doc_nama ? ': ' + d.doc_nama : ''}</div>
+        <div style="display:flex;align-items:center;gap:6px;margin-top:3px">
+          <a href="${d.doc_proposal}" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-xs" style="text-decoration:none;font-size:10px;padding:2px 6px"><i class="fa-brands fa-google-drive"></i> Buka Dokumen</a>
+          <span style="font-size:9.5px;color:#64748b">(${d.doc_access_status || 'Belum dicek'})</span>
+        </div>
+      </div>
+    ` : '<span style="font-size:10px;color:#94a3b8">— Belum diisi</span>';
+    return `<tr style="${sched.isOverdue ? 'background:#fff5f5' : ''}">
       <td style="color:var(--text3);font-size:11px">${d.no}</td>
-      <td><span style="font-size:11px;font-weight:600;color:var(--accent)">${d.unit}</span></td>
-      <td class="td-judul"><span title="${d.judul}">${d.judul}</span></td>
+      <td>
+        <span style="font-size:11px;font-weight:700;color:var(--accent)">${d.unit}</span>
+        <div style="font-size:10px;color:#64748b;margin-top:2px"><i class="fa-solid fa-user-tie"></i> ${sched.pic}</div>
+      </td>
+      <td class="td-judul">
+        <span style="font-weight:600" title="${d.judul}">${d.judul}</span>
+        ${overdueReminderHtml}
+      </td>
       <td style="font-size:11px;color:var(--text2)">${d.jenis||'—'}</td>
-      <td style="font-size:11px;white-space:nowrap;color:var(--text2)">${d.jadwal||'—'}</td>
-      <td style="text-align:center;font-size:11px">${d.tahun||'—'}</td>
-      <td style="font-size:10px">${d.cluster?`<span class="badge badge-blue" style="font-size:9px">${d.cluster}</span>`:'—'}</td>
+      <td style="font-size:11px;white-space:nowrap;color:var(--text2)">
+        <div><strong>${d.jadwal||'—'}</strong></div>
+        <div style="font-size:10px;color:#64748b">Tahun ${d.tahun||'2026'}</div>
+      </td>
+      <td>
+        ${statusBadge(st, sched)}
+        <div style="font-size:10px;color:#475569;margin-top:4px"><i class="fa-solid fa-bars-progress"></i> ${sched.tahapan}</div>
+      </td>
+      <td style="font-size:10px">${normCluster?`<span class="badge badge-blue" style="font-size:9px">${normCluster}</span>`:`<span class="badge" style="background:#f1f5f9;color:#64748b;font-size:9px">${CLUSTER_PLACEHOLDER_TEXT}</span>`}</td>
+      <td>${docLinkHtml}</td>
       <td style="text-align:center">${chBadge(ch)}</td>
-      <td>${statusBadge(st)}</td>
       <td>
         <div class="actions-cell">
-          <button class="btn btn-outline btn-xs" onclick="editRecord(${d.no})" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>
+          <button class="btn btn-outline btn-xs" onclick="editRecord(${d.no})" title="Lihat Detail & Edit"><i class="fa-solid fa-eye"></i> Detail</button>
           <button class="btn btn-danger btn-xs" onclick="deleteRecord(${d.no})" title="Hapus"><i class="fa-solid fa-trash"></i></button>
         </div>
       </td>
     </tr>`;
-  }).join('')||'<tr><td colspan="10" style="padding:36px;text-align:center;color:var(--text3)">Tidak ada data ditemukan</td></tr>';
+  }).join('')||'<tr><td colspan="10" style="padding:36px;text-align:center;color:var(--text3)">Tidak ada data kegiatan ditemukan</td></tr>';
 }
 function resetSearch(){ ['s-search','s-unit','s-cluster','s-status','s-year'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; }); renderDataTable(); }
 
@@ -2034,30 +2446,45 @@ function parseKetStatus(ket){
 
 /* ══ ADD / EDIT ══ */
 function showPage(pg){
+  if (pg === 'log' && sessionStorage.getItem('lan_role') !== 'superadmin' && localStorage.getItem('prismo_superadmin_mode') !== '1') {
+    showToast('Log audit internal hanya dapat diakses oleh Superadmin sistem.', 'warn');
+    return;
+  }
   ['data','add','settings','log'].forEach(p=>{ document.getElementById(`page-${p}`).style.display = p===pg?'':'none'; });
   ['data','add','settings','log'].forEach(p=>{ document.getElementById(`nav-${p}`)?.classList.toggle('active', p===pg); });
   if(pg==='data'){ renderStats(); renderDataTable(); }
   if(pg==='log')  renderLog();
-  if(pg==='settings') renderSettings();
+  if(pg==='settings') { renderSettings(); renderMasterClustersSettings(); }
 }
 
 function resetForm(){
   document.getElementById('f-id').value='';
-  document.getElementById('form-title').innerHTML='<i class="fa-solid fa-plus-circle" style="color:var(--accent);margin-right:8px"></i>Tambah Publikasi';
-  ['f-unit','f-jenis','f-judul','f-cluster','f-tahun','f-bulan','f-minggu','f-jurnal','f-media','f-webLAN','f-webUnit','f-igLAN','f-igUnit','f-ytLAN','f-ytUnit','f-ket'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  document.getElementById('form-title').innerHTML='<i class="fa-solid fa-plus-circle" style="color:var(--accent);margin-right:8px"></i>Tambah Kegiatan / Publikasi';
+  ['f-unit','f-jenis','f-judul','f-cluster','f-tahun','f-pic','f-alasan-terlambat','f-doc-proposal','f-doc-nama','f-doc-ket','f-bulan','f-minggu','f-jurnal','f-media','f-webLAN','f-webUnit','f-igLAN','f-igUnit','f-ytLAN','f-ytUnit','f-ket'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  if (document.getElementById('f-doc-jenis')) document.getElementById('f-doc-jenis').value = 'TOR dan Proposal';
+  if (document.getElementById('f-doc-access-status')) document.getElementById('f-doc-access-status').value = 'Belum dicek';
   document.getElementById('f-status').value='belum';
 }
 
 function editRecord(no){
   const d=DB.find(r=>r.no===no); if(!d) return;
   resetForm();
+  populateFilters();
   document.getElementById('f-id').value=d.no;
-  document.getElementById('form-title').innerHTML=`<i class="fa-solid fa-pen-to-square" style="color:var(--accent);margin-right:8px"></i>Edit Publikasi #${d.no}`;
+  document.getElementById('form-title').innerHTML=`<i class="fa-solid fa-pen-to-square" style="color:var(--accent);margin-right:8px"></i>Detail &amp; Edit Kegiatan #${d.no}`;
   document.getElementById('f-unit').value=d.unit||'';
   document.getElementById('f-jenis').value=d.jenis||'';
   document.getElementById('f-judul').value=d.judul||'';
-  document.getElementById('f-cluster').value=d.cluster||'';
+  document.getElementById('f-cluster').value=normalizeClusterName(d.cluster)||'';
   document.getElementById('f-tahun').value=d.tahun||'';
+  if (document.getElementById('f-pic')) document.getElementById('f-pic').value = d.pic || '';
+  if (document.getElementById('f-tahapan') && d.tahapan) document.getElementById('f-tahapan').value = d.tahapan;
+  if (document.getElementById('f-alasan-terlambat')) document.getElementById('f-alasan-terlambat').value = d.alasan_terlambat || '';
+  if (document.getElementById('f-doc-proposal')) document.getElementById('f-doc-proposal').value = d.doc_proposal || 'https://drive.google.com/drive/folders/prismo-lan';
+  if (document.getElementById('f-doc-nama')) document.getElementById('f-doc-nama').value = d.doc_nama || '';
+  if (document.getElementById('f-doc-jenis')) document.getElementById('f-doc-jenis').value = d.doc_jenis || 'TOR dan Proposal';
+  if (document.getElementById('f-doc-ket')) document.getElementById('f-doc-ket').value = d.doc_ket || '';
+  if (document.getElementById('f-doc-access-status')) document.getElementById('f-doc-access-status').value = d.doc_access_status || 'Belum dicek';
   const {bulan,minggu}=parseJadwal(d.jadwal);
   document.getElementById('f-bulan').value=bulan;
   document.getElementById('f-minggu').value=minggu;
@@ -2078,6 +2505,14 @@ function editRecord(no){
 
 async function saveRecord(e){
   e.preventDefault();
+  const docUrl = (document.getElementById('f-doc-proposal')?.value || '').trim();
+  const docCheck = validateGoogleDocLink(docUrl);
+  if (!docCheck.valid) {
+    showToast(docCheck.message, 'error');
+    document.getElementById('f-doc-proposal')?.focus();
+    return;
+  }
+
   const id=document.getElementById('f-id').value;
   const bulan=document.getElementById('f-bulan').value;
   const minggu=document.getElementById('f-minggu').value;
@@ -2092,6 +2527,14 @@ async function saveRecord(e){
     jadwal: buildJadwal(bulan, minggu),
     tahun:  document.getElementById('f-tahun').value,
     cluster:document.getElementById('f-cluster').value,
+    pic:    (document.getElementById('f-pic')?.value || '').trim(),
+    tahapan:(document.getElementById('f-tahapan')?.value || ''),
+    alasan_terlambat: (document.getElementById('f-alasan-terlambat')?.value || '').trim(),
+    doc_proposal: docUrl,
+    doc_nama: (document.getElementById('f-doc-nama')?.value || '').trim(),
+    doc_jenis: document.getElementById('f-doc-jenis')?.value || 'TOR dan Proposal',
+    doc_ket: (document.getElementById('f-doc-ket')?.value || '').trim(),
+    doc_access_status: document.getElementById('f-doc-access-status')?.value || 'Belum dicek',
     jurnal: document.getElementById('f-jurnal').value.trim(),
     media:  document.getElementById('f-media').value.trim(),
     webLAN: document.getElementById('f-webLAN').value.trim(),
@@ -2178,9 +2621,52 @@ function deleteRecord(no){
   });
 }
 
-/* ══ EXPORT / IMPORT ══ */
+/* ══ EXPORT / IMPORT (TERMASUK LAPORAN KEGIATAN TERLAMBAT — Revisi #1) ══ */
+function exportOverdueCSV() {
+  const rows = [
+    ['No', 'Judul Kegiatan', 'Unit Kerja', 'Penanggung Jawab (PIC)', 'Cluster Kebijakan', 'Target Jadwal Awal', 'Status Keterlambatan', 'Jumlah Hari Keterlambatan', 'Tahapan Berjalan', 'Alasan Keterlambatan', 'Link TOR/Proposal']
+  ];
+  DB.forEach(d => {
+    const sched = getAdminScheduleInfo(d);
+    if (sched.isOverdue || sched.isApproaching) {
+      rows.push([
+        d.no,
+        `"${(d.judul || '').replace(/"/g, '""')}"`,
+        `"${(d.unit || '').replace(/"/g, '""')}"`,
+        `"${(sched.pic || '').replace(/"/g, '""')}"`,
+        `"${(normalizeClusterName(d.cluster) || CLUSTER_PLACEHOLDER_TEXT).replace(/"/g, '""')}"`,
+        `"${sched.targetLabel}"`,
+        sched.isOverdue ? 'Terlambat' : `Mendekati Deadline (${sched.daysRemaining} hari)`,
+        sched.daysOverdue,
+        `"${(sched.tahapan || '').replace(/"/g, '""')}"`,
+        `"${(sched.alasan || 'Belum diisi').replace(/"/g, '""')}"`,
+        `"${(d.doc_proposal || '').replace(/"/g, '""')}"`
+      ]);
+    }
+  });
+  const csvContent = rows.map(r => r.join(',')).join('\n');
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `laporan_kegiatan_terlambat_prismo_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  addLog('Export Laporan Kegiatan Terlambat (CSV) dilakukan', 'info');
+  showToast('Laporan Kegiatan Terlambat berhasil diunduh!', 'success');
+}
 function exportJSON(){
-  const blob=new Blob([JSON.stringify(DB,null,2)],{type:'application/json'});
+  const enriched = DB.map(d => {
+    const sched = getAdminScheduleInfo(d);
+    return {
+      ...d,
+      cluster_normalized: normalizeClusterName(d.cluster),
+      reminder_status: sched.isOverdue ? 'Terlambat' : (sched.isApproaching ? 'Mendekati Deadline' : (sched.isCompletedOnTime ? 'Selesai Tepat Waktu' : 'Berjalan')),
+      hari_keterlambatan: sched.daysOverdue,
+      target_jadwal_awal: sched.targetLabel,
+      tahapan_berjalan: sched.tahapan,
+      penanggung_jawab: sched.pic
+    };
+  });
+  const blob=new Blob([JSON.stringify(enriched,null,2)],{type:'application/json'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
   a.download=`lan_publikasi_${new Date().toISOString().slice(0,10)}.json`; a.click();
   addLog('Export JSON dilakukan','info');
@@ -2211,6 +2697,7 @@ function renderSettings(){
   const upd=localStorage.getItem(LS_UPDATED);
   document.getElementById('s-last-updated').textContent=upd?new Date(upd).toLocaleString('id-ID'):'—';
   document.getElementById('s-total').textContent=DB.length;
+  renderMasterClustersSettings();
 }
 function changePassword(){
   const old=document.getElementById('s-old-pass').value;
@@ -2220,7 +2707,7 @@ function changePassword(){
   if(nw.length<6){ showToast('Password baru minimal 6 karakter!','warn'); return; }
   if(nw!==cf){ showToast('Konfirmasi password tidak cocok!','error'); return; }
   localStorage.setItem(LS_PASS, nw);
-  addLog('Password admin diubah','info');
+  addLog('Password admin diperbarui oleh pengguna terautentikasi','info');
   showToast('Password berhasil diubah!','success');
   ['s-old-pass','s-new-pass','s-confirm-pass'].forEach(id=>document.getElementById(id).value='');
 }
@@ -2242,7 +2729,7 @@ function closeConfirm(e){ if(!e||e.target===document.getElementById('confirm-ove
 /* ══ TOAST ══ */
 function showToast(msg, type='success'){
   const t=document.getElementById('toast');
-  const icons={success:'fa-circle-check',error:'fa-circle-xmark',warn:'fa-triangle-exclamation'};
+  const icons={success:'fa-circle-check',error:'fa-circle-xmark',warn:'fa-triangle-exclamation',info:'fa-circle-info'};
   t.className=`toast ${type}`;
   t.innerHTML=`<i class="fa-solid ${icons[type]||icons.success}"></i> ${msg}`;
   t.classList.add('show');
@@ -2255,7 +2742,10 @@ function init(){
   populateFilters();
   renderStats();
   renderDataTable();
-  document.getElementById('f-id'); // ensure form exists
+  renderMasterClustersSettings();
+  const isSuperAdmin = sessionStorage.getItem('lan_role') === 'superadmin' || localStorage.getItem('prismo_superadmin_mode') === '1';
+  const navLog = document.getElementById('nav-log');
+  if (navLog) navLog.style.display = isSuperAdmin ? '' : 'none';
 }
 
 // Auto-login if session exists

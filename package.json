@@ -1,0 +1,14 @@
+{
+  "name": "dashboard-monitoring-survei-lan",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare"
+  },
+  "dependencies": {
+    "nuxt": "^4.1.3"
+  }
+}
