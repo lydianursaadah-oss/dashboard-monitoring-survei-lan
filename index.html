@@ -2046,7 +2046,7 @@ window.addEventListener('focus', () => {
         <select id="f-year" class="filter-year-highlight" onchange="applyFilters()" title="Filter Berdasarkan Periode Tahun">
           <option value="">Semua Tahun</option>
           <option value="2025">Tahun 2025</option>
-          <option value="2026">Tahun 2026</option>
+          <option value="2026" selected>Tahun 2026</option>
           <option value="2027">Tahun 2027</option>
           <option value="2028">Tahun 2028</option>
         </select>
@@ -2117,7 +2117,7 @@ window.addEventListener('focus', () => {
       </div>
       <div class="card">
         <div class="card-header">
-          <span class="card-title"><i class="fa-solid fa-chart-bar"></i> Publikasi per Bulan (2026)</span>
+          <span class="card-title" id="title-chart-monthly"><i class="fa-solid fa-chart-bar"></i> Publikasi per Bulan (2026)</span>
         </div>
         <div class="card-body">
           <div class="chart-wrap" style="height:220px"><canvas id="chart-monthly"></canvas></div>
@@ -2357,7 +2357,7 @@ window.addEventListener('focus', () => {
         <select id="r-year" class="filter-year-highlight" onchange="renderTable()" title="Filter Berdasarkan Periode Tahun">
           <option value="">Semua Tahun</option>
           <option value="2025">Tahun 2025</option>
-          <option value="2026">Tahun 2026</option>
+          <option value="2026" selected>Tahun 2026</option>
           <option value="2027">Tahun 2027</option>
           <option value="2028">Tahun 2028</option>
         </select>
@@ -4598,10 +4598,12 @@ function applyFilters(){
     return true;
   });
   renderKPIs(); renderCharts(); renderReminderAndPerformance(filteredData);
+  if (typeof renderRoadmap === 'function') renderRoadmap(filteredData, year || activeRoadmapYear);
 }
 function resetFilters(){
   ['f-year','f-unit','f-cluster','f-status'].forEach(id=>document.getElementById(id).value='');
-  filteredData=[...RAW]; renderKPIs(); renderCharts();
+  filteredData=[...RAW]; renderKPIs(); renderCharts(); renderReminderAndPerformance(filteredData);
+  if (typeof renderRoadmap === 'function') renderRoadmap(filteredData, activeRoadmapYear);
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -4749,13 +4751,14 @@ function renderKPIs(){
   const pct=total?Math.round(selesai/total*100):0;
   const pctBelum=total?Math.round(belum/total*100):0;
   const selectedUnit = (document.getElementById('f-unit') && document.getElementById('f-unit').value) || '';
-  const units2026 = selectedUnit ? 1 : 9;
+  const selectedYear = (document.getElementById('f-year') && document.getElementById('f-year').value) || '';
+  const unitsCount = selectedUnit ? 1 : 9;
 
   const kpis=[
-    {type:'total',   icon:'fa-file-lines',    value:total,     label:'Total Publikasi', sub:'Semua tahun & unit · Klik lihat list',         color:'#2563eb', ibg:'#eff6ff', delta:null},
+    {type:'total',   icon:'fa-file-lines',    value:total,     label:'Total Publikasi', sub:selectedYear ? `Tahun ${selectedYear} · Klik lihat list` : 'Semua tahun & unit · Klik lihat list',         color:'#2563eb', ibg:'#eff6ff', delta:null},
     {type:'selesai', icon:'fa-circle-check',  value:selesai,   label:'Selesai',         sub:`${pct}% selesai · Klik lihat list`,           color:'#16a34a', ibg:'#f0fdf4', delta:{cls:'delta-good',text:`${pct}%`}},
     {type:'belum',   icon:'fa-hourglass-half',value:belum,     label:'Belum Selesai',   sub:`${belum} survei berjalan · Klik lihat list`, color:'#dc2626', ibg:'#fef2f2', delta:{cls:'delta-bad', text:`${pctBelum}%`}},
-    {type:'unit',    icon:'fa-building',      value:units2026, label:'Unit Aktif 2026', sub:'Unit dengan publikasi 2026',                 color:'#7c3aed', ibg:'#f5f3ff', delta:null, clickable:false},
+    {type:'unit',    icon:'fa-building',      value:unitsCount, label:selectedYear ? `Unit Aktif ${selectedYear}` : 'Unit Aktif', sub:selectedYear ? `Unit dengan publikasi ${selectedYear}` : 'Unit dengan publikasi survei', color:'#7c3aed', ibg:'#f5f3ff', delta:null, clickable:false},
   ];
   document.getElementById('kpi-grid').innerHTML = kpis.map(k => {
     const isClickable = k.clickable !== false;
@@ -5074,10 +5077,15 @@ function renderCharts(){
 
   /* ─── Monthly Bar ─── */
   destroyChart('monthly');
-  const data2026=data.filter(d=>d.tahun==='2026'&&d.jadwal);
+  const selYear = (document.getElementById('f-year') && document.getElementById('f-year').value) || '';
+  const chartTitleEl = document.getElementById('title-chart-monthly');
+  if (chartTitleEl) {
+    chartTitleEl.innerHTML = `<i class="fa-solid fa-chart-bar"></i> Publikasi per Bulan ${selYear ? '(' + selYear + ')' : ''}`;
+  }
+  const dataMonthly = data.filter(d => (!selYear || String(d.tahun) === String(selYear)) && d.jadwal);
   const monthCounts={};
   MONTH_ORDER.forEach(m=>monthCounts[m]={selesai:0,belum:0});
-  data2026.forEach(d=>{ const m=MONTH_ORDER.find(mo=>d.jadwal.toLowerCase().includes(mo.toLowerCase())); if(m) monthCounts[m][getStatus(d)]++; });
+  dataMonthly.forEach(d=>{ const m=MONTH_ORDER.find(mo=>d.jadwal.toLowerCase().includes(mo.toLowerCase())); if(m) monthCounts[m][getStatus(d)]++; });
   charts['monthly']=new Chart(document.getElementById('chart-monthly'),{
     type:'bar',
     data:{
@@ -8329,10 +8337,11 @@ renderAuthNav();
   } catch(e){}
 })();
 populateDropdowns();
-filteredData=[...RAW];
-renderKPIs();
-renderCharts();
-renderRoadmap(filteredData);
+const fYearInit = document.getElementById('f-year');
+if (fYearInit) fYearInit.value = '2026';
+const rYearInit = document.getElementById('r-year');
+if (rYearInit) rYearInit.value = '2026';
+applyFilters();
 renderTable();
 
 // Initial check: pastikan selalu tampilkan halaman login saat pertama kali link dibuka/diklik
