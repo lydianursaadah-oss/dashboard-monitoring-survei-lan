@@ -2834,7 +2834,7 @@ window.addEventListener('focus', () => {
       </div><!-- /sindisa-panel-dashboard -->
 
       <!-- TAB PANEL 1: PENGUMUMAN & ARAHAN -->
-      <div class="sindisa-panel-box" id="sindisa-panel-pengumuman">
+      <div class="sindisa-panel-box" id="sindisa-panel-pengumuman" style="display:none">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;border-bottom:1px solid #f1f5f9;padding-bottom:10px">
           <h4 style="font-size:15px;font-weight:800;color:#1e293b">Papan Informasi & Memo Kebijakan Deputi</h4>
           <button id="btn-tambah-memo" onclick="openTambahPengumumanModal()" style="padding:6px 12px;background:#1e40af;color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer;font-weight:600">
@@ -6332,6 +6332,17 @@ function renderStageDots(d) {
 /* ══════════════════════════════════════════════════════════
    USER AUTHENTICATION & SESSION MANAGEMENT
    ══════════════════════════════════════════════════════════ */
+function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+if (typeof window !== 'undefined') window.escapeHtml = escapeHtml;
+
 function getCurrentUser() {
   try {
     const u = localStorage.getItem('lan_current_user');
@@ -7817,6 +7828,11 @@ function openTab(tabName) {
   const isStandard = ['dashboard', 'pengumuman'].includes(tabName);
   const dynPanel = document.getElementById('sindisa-panel-dynamic');
 
+  const welcomeActions = document.getElementById('sindisa-welcome-actions');
+  if (welcomeActions) {
+    welcomeActions.style.display = (tabName === 'dashboard') ? 'flex' : 'none';
+  }
+
   // Sembunyikan panel standar
   standardPanels.forEach(p => {
     const el = document.getElementById('sindisa-panel-' + p);
@@ -9239,6 +9255,20 @@ function renderDynamicRoleTab(tabName, user) {
       container.innerHTML = renderPrismoPerbaikanUnit(user);
       if (typeof updatePortalBadges === 'function') updatePortalBadges();
       return;
+
+    case 'progress_kegiatan':
+      headerHtml = `
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+          <div>
+            <h3 style="font-size:18px;font-weight:800;color:#1e293b;margin-bottom:4px;">
+              <i class="fa-solid fa-bars-progress" style="color:#2563eb;margin-right:8px;"></i> Progress Pelaksanaan Kegiatan Survei
+            </h3>
+            <p style="font-size:12.5px;color:#64748b;">Pantau tahapan berjalan, target rilis, dan capaian publikasi ${userUnit ? 'Unit ' + userUnit : 'Unit Kerja'}</p>
+          </div>
+        </div>
+      `;
+      bodyHtml = renderWorkflowTable(relevantData, 'progress');
+      break;
 
     // ── ROLE ADMIN DSPK2AN ──────────────────────────
     case 'inbox_pengajuan':
