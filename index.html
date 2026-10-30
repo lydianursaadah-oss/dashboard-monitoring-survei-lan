@@ -105,8 +105,8 @@ function handleUsernameInput(val) {
       // Show portal view
       var view = document.getElementById('deputi-portal-view');
       if (view) {
+        view.style.removeProperty('display');
         view.style.display = 'block';
-        view.style.setProperty('display', 'block', 'important');
         view.classList.add('active');
       }
       document.body.style.overflow = 'hidden';
@@ -2509,10 +2509,6 @@ window.addEventListener('focus', () => {
       </div>
     </div>
     <div class="sindisa-topbar-right">
-      <!-- TOMBOL BERALIH KE DASHBOARD PUBLIK -->
-      <button onclick="exitDeputiPortal()" class="sindisa-public-btn" title="Beralih dan lihat Dashboard Publik Semua Unit" style="padding:6px 14px;border-radius:8px;border:1.5px solid #bfdbfe;background:#eff6ff;color:#1e40af;font-size:12px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .2s;">
-        <i class="fa-solid fa-globe"></i> Dashboard Publik
-      </button>
       <div class="sindisa-user-greet" onclick="toggleUserDropdown(event)">
         <img src="favicon.png" class="sindisa-user-pic" alt="Avatar"/>
         <span id="sindisa-header-username">Hi, Kepala Deputi</span>
@@ -6466,9 +6462,23 @@ function showLandingLogin() {
 }
 
 function hideLandingLogin() {
-  const landing = document.getElementById('sipantau-login-landing');
-  if (landing) landing.style.display = 'none';
-  document.body.style.overflow = '';
+  if (typeof exitDeputiPortal === 'function') {
+    exitDeputiPortal();
+  } else {
+    const landing = document.getElementById('sipantau-login-landing');
+    if (landing) {
+      landing.classList.remove('active');
+      landing.style.removeProperty('display');
+      landing.style.display = 'none';
+    }
+    const view = document.getElementById('deputi-portal-view');
+    if (view) {
+      view.classList.remove('active');
+      view.style.removeProperty('display');
+      view.style.display = 'none';
+    }
+    document.body.style.overflow = '';
+  }
 }
 
 // Pastikan form login selalu bersih & kosong saat halaman pertama kali dibuka
@@ -8136,8 +8146,44 @@ function openDeputiPortal(targetTab) {
 
 function exitDeputiPortal() {
   const view = document.getElementById('deputi-portal-view');
-  if(view) view.classList.remove('active');
+  if(view) {
+    view.classList.remove('active');
+    view.style.removeProperty('display');
+    view.style.display = 'none';
+  }
+  const landing = document.getElementById('sipantau-login-landing');
+  if (landing) {
+    landing.classList.remove('active');
+    landing.style.removeProperty('display');
+    landing.style.display = 'none';
+  }
+  const loginModal = document.getElementById('login-modal-overlay');
+  if (loginModal) loginModal.classList.remove('open');
+
   document.body.style.overflow = '';
+
+  // Pastikan halaman overview aktif di main dashboard
+  document.querySelectorAll('.page').forEach(p => {
+    if (p.id === 'page-overview') {
+      p.classList.add('active');
+      p.style.display = '';
+    } else {
+      p.classList.remove('active');
+      p.style.display = 'none';
+    }
+  });
+
+  // Pastikan tab navigasi atas berada di 'Ringkasan & Analisis'
+  document.querySelectorAll('.nav-tab').forEach(t => {
+    if (t.dataset.tab === 'overview') {
+      t.classList.add('active');
+    } else {
+      t.classList.remove('active');
+    }
+  });
+
+  if (typeof renderAuthNav === 'function') renderAuthNav();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function toggleSindisaSidebar() {
@@ -8579,6 +8625,7 @@ renderTable();
 
   const view = document.getElementById('deputi-portal-view');
   if (view) {
+    view.style.removeProperty('display');
     view.style.display = 'none';
     view.classList.remove('active');
   }
