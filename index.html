@@ -126,6 +126,32 @@ function handleUsernameInput(val) {
       try {
         if (typeof setCurrentUser === 'function') setCurrentUser(userObj);
         else localStorage.setItem('lan_current_user', JSON.stringify(userObj));
+
+        var remCheckbox = document.getElementById('landing-remember');
+        if (remCheckbox && remCheckbox.checked) {
+          if (typeof saveRememberedLogin === 'function') {
+            saveRememberedLogin(matched.username, enteredPwd, matched);
+          } else {
+            var rawList = localStorage.getItem('prismo_remembered_logins') || localStorage.getItem('lan_remembered_logins') || '[]';
+            var parsedList = [];
+            try { parsedList = JSON.parse(rawList); } catch(e) {}
+            if (!Array.isArray(parsedList)) parsedList = [];
+            parsedList = parsedList.filter(function(x){ return x && x.username && x.username.toLowerCase() !== matched.username.toLowerCase(); });
+            parsedList.unshift({
+              username: matched.username,
+              password: enteredPwd,
+              nama: matched.nama || matched.username,
+              jabatan: matched.jabatan || '',
+              unit: matched.unit || '',
+              role: matched.role || 'default_unit',
+              savedAt: Date.now()
+            });
+            if (parsedList.length > 15) parsedList = parsedList.slice(0, 15);
+            localStorage.setItem('prismo_remembered_logins', JSON.stringify(parsedList));
+            localStorage.setItem('lan_remembered_logins', JSON.stringify(parsedList));
+            localStorage.setItem('prismo_last_remembered_user', matched.username);
+          }
+        }
       } catch(err) {}
 
       try {
@@ -1218,6 +1244,130 @@ function handleUsernameInput(val) {
       line-height: 1;
     }
 
+    /* Riwayat Akun Username (Remember Me Dropdown) */
+    .prism-username-dropdown {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      right: 0;
+      background: #ffffff;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.15), 0 8px 10px -6px rgba(15, 23, 42, 0.08);
+      z-index: 1000;
+      max-height: 240px;
+      overflow-y: auto;
+      padding: 6px;
+      animation: prismDropdownSlide 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes prismDropdownSlide {
+      from { opacity: 0; transform: translateY(-6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .prism-suggest-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 10px 8px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid #f1f5f9;
+      margin-bottom: 4px;
+    }
+    .prism-suggest-count {
+      font-size: 10px;
+      background: #eff6ff;
+      color: #2563eb;
+      padding: 2px 7px;
+      border-radius: 999px;
+      font-weight: 600;
+    }
+    .prism-suggest-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      position: relative;
+    }
+    .prism-suggest-item:hover, .prism-suggest-item.active {
+      background: #f1f5f9;
+    }
+    .prism-suggest-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: #eff6ff;
+      color: #2563eb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+    .prism-suggest-info {
+      flex: 1;
+      min-width: 0;
+      text-align: left;
+    }
+    .prism-suggest-user {
+      font-size: 13px;
+      font-weight: 700;
+      color: #0f172a;
+      line-height: 1.2;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .prism-suggest-sub {
+      font-size: 11px;
+      color: #64748b;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-top: 2px;
+    }
+    .prism-suggest-badge {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      color: #475569;
+      white-space: nowrap;
+    }
+    .prism-suggest-del {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      border: none;
+      background: transparent;
+      color: #94a3b8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 11px;
+      transition: all 0.15s ease;
+      flex-shrink: 0;
+    }
+    .prism-suggest-del:hover {
+      background: #fee2e2;
+      color: #ef4444;
+    }
+    .prism-suggest-empty {
+      padding: 12px 10px;
+      font-size: 12px;
+      color: #94a3b8;
+      text-align: center;
+    }
+
 
     /* Verification Code Row */
     .prism-captcha-row {
@@ -1352,11 +1502,13 @@ function handleUsernameInput(val) {
         <!-- FORM LOGIN -->
         <div class="prism-form-body">
           <!-- FIELD 1: USERNAME -->
-          <div class="prism-form-group">
+          <div class="prism-form-group" id="prism-username-group">
             <div class="prism-input-wrap" style="position:relative;display:flex;align-items:center;">
               <i class="fa-solid fa-user prism-icon-left" style="pointer-events:none;"></i>
-              <input type="text" id="landing-username" placeholder="Username" class="prism-input" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" value="" onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('landing-password').focus();}" />
+              <input type="text" id="landing-username" placeholder="Username" class="prism-input" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" value="" onclick="showUsernameSuggestions()" onfocus="showUsernameSuggestions()" oninput="handleUsernameSuggestionsInput(this.value)" onkeydown="handleUsernameKeyDown(event)" />
             </div>
+            <!-- DROPDOWN RIWAYAT USERNAME (REMEMBER ME) -->
+            <div id="landing-username-suggestions" class="prism-username-dropdown" style="display:none;"></div>
           </div>
 
           <!-- FIELD 2: PASSWORD (MANUAL & TOGGLE EYE) -->
@@ -6798,9 +6950,233 @@ function handleJabatanChange(val) {
   // Kolom username dan password tetap dibiarkan kosong agar pengguna mengisinya sendiri secara manual
 }
 
-function handleUsernameInput(val) {
+/* ══════════════════ PRISMO REMEMBER ME & USERNAME HISTORY ══════════════════ */
+function getRememberedLogins() {
+  try {
+    const raw = localStorage.getItem('prismo_remembered_logins') || localStorage.getItem('lan_remembered_logins');
+    if (!raw) return [];
+    const list = JSON.parse(raw);
+    return Array.isArray(list) ? list : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveRememberedLogin(username, password, matched) {
+  if (!username) return;
+  try {
+    let list = getRememberedLogins();
+    const uname = String(username).trim();
+    let acc = matched || findUserAccount(uname);
+    list = list.filter(item => item && item.username && item.username.toLowerCase() !== uname.toLowerCase());
+    list.unshift({
+      username: uname,
+      password: password || (acc ? acc.password : ''),
+      nama: (acc && acc.nama) || uname,
+      jabatan: (acc && acc.jabatan) || '',
+      unit: (acc && acc.unit) || '',
+      role: (acc && acc.role) || 'default_unit',
+      savedAt: Date.now()
+    });
+    if (list.length > 15) list = list.slice(0, 15);
+    localStorage.setItem('prismo_remembered_logins', JSON.stringify(list));
+    localStorage.setItem('lan_remembered_logins', JSON.stringify(list));
+    localStorage.setItem('prismo_last_remembered_user', uname);
+  } catch (e) {
+    console.warn('Gagal menyimpan riwayat login:', e);
+  }
+}
+
+function removeRememberedLogin(username, e) {
+  if (e) {
+    if (e.stopPropagation) e.stopPropagation();
+    if (e.preventDefault) e.preventDefault();
+  }
+  try {
+    let list = getRememberedLogins();
+    const uname = String(username).trim().toLowerCase();
+    list = list.filter(item => item && item.username && item.username.toLowerCase() !== uname);
+    localStorage.setItem('prismo_remembered_logins', JSON.stringify(list));
+    localStorage.setItem('lan_remembered_logins', JSON.stringify(list));
+    if ((localStorage.getItem('prismo_last_remembered_user') || '').toLowerCase() === uname) {
+      localStorage.removeItem('prismo_last_remembered_user');
+    }
+    const currentInput = document.getElementById('landing-username');
+    renderUsernameSuggestions(currentInput ? currentInput.value : '');
+  } catch (e) {
+    console.warn('Gagal menghapus riwayat login:', e);
+  }
+}
+
+function getRoleBadgeLabel(role) {
+  const r = String(role || '').toLowerCase();
+  if (r.includes('kepala')) return 'Kepala LAN';
+  if (r.includes('deputi')) return 'Deputi';
+  if (r.includes('admin_dspk2an') || r.includes('dspk2an')) return 'DSPK2AN';
+  if (r.includes('humas')) return 'Humas';
+  if (r.includes('inspektorat')) return 'Inspektorat';
+  if (r.includes('stia')) return 'STIA LAN';
+  if (r.includes('puslatbang')) return 'Puslatbang';
+  if (r.includes('unit')) return 'Unit Kerja';
+  return 'Pengguna';
+}
+
+function renderUsernameSuggestions(query) {
+  const dropdown = document.getElementById('landing-username-suggestions');
+  if (!dropdown) return;
+  const list = getRememberedLogins();
+  if (!list || list.length === 0) {
+    dropdown.style.display = 'none';
+    dropdown.innerHTML = '';
+    return;
+  }
+
+  const q = String(query || '').trim().toLowerCase();
+  const filtered = q
+    ? list.filter(item => 
+        (item.username && item.username.toLowerCase().includes(q)) ||
+        (item.nama && item.nama.toLowerCase().includes(q)) ||
+        (item.unit && item.unit.toLowerCase().includes(q)) ||
+        (item.jabatan && item.jabatan.toLowerCase().includes(q))
+      )
+    : list;
+
+  if (filtered.length === 0) {
+    if (q) {
+      dropdown.innerHTML = '<div class="prism-suggest-empty"><i class="fa-solid fa-user-slash" style="margin-right:6px;opacity:0.6;"></i>Tidak ada riwayat akun yang cocok</div>';
+      dropdown.style.display = 'block';
+    } else {
+      dropdown.style.display = 'none';
+      dropdown.innerHTML = '';
+    }
+    return;
+  }
+
+  const safeEscape = (typeof escapeHtml === 'function') ? escapeHtml : (str) => String(str || '').replace(/[&<>"']/g, s => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[s]);
+
+  let html = `
+    <div class="prism-suggest-header">
+      <span><i class="fa-solid fa-clock-rotate-left" style="color:#2563eb;margin-right:5px;"></i> Riwayat Akun Tersimpan</span>
+      <span class="prism-suggest-count">${filtered.length} Akun</span>
+    </div>
+    <div class="prism-suggest-list">
+  `;
+
+  filtered.forEach(item => {
+    const roleBadge = getRoleBadgeLabel(item.role);
+    const subTitle = item.jabatan || item.nama || item.unit || 'Akun PRISMO';
+    html += `
+      <div class="prism-suggest-item" onclick="selectRememberedAccount('${safeEscape(item.username)}')">
+        <div class="prism-suggest-icon">
+          <i class="fa-solid fa-user-check"></i>
+        </div>
+        <div class="prism-suggest-info">
+          <div class="prism-suggest-user">
+            <span>${safeEscape(item.username)}</span>
+            <span class="prism-suggest-badge">${safeEscape(roleBadge)}</span>
+          </div>
+          <div class="prism-suggest-sub" title="${safeEscape(subTitle)}">${safeEscape(subTitle)}</div>
+        </div>
+        <button type="button" class="prism-suggest-del" title="Hapus dari riwayat" onclick="removeRememberedLogin('${safeEscape(item.username)}', event)">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+    `;
+  });
+
+  html += '</div>';
+  dropdown.innerHTML = html;
+  dropdown.style.display = 'block';
+}
+
+function showUsernameSuggestions() {
+  const uInput = document.getElementById('landing-username');
+  const val = uInput ? uInput.value : '';
+  renderUsernameSuggestions(val);
+}
+
+function hideUsernameSuggestions() {
+  const dropdown = document.getElementById('landing-username-suggestions');
+  if (dropdown) {
+    dropdown.style.display = 'none';
+  }
+}
+
+function handleUsernameSuggestionsInput(val) {
   const alertEl = document.getElementById('sipantau-login-alert');
   if (alertEl) alertEl.style.display = 'none';
+  renderUsernameSuggestions(val);
+}
+
+function handleUsernameKeyDown(e) {
+  if (e.key === 'Escape') {
+    hideUsernameSuggestions();
+  } else if (e.key === 'Enter') {
+    const dropdown = document.getElementById('landing-username-suggestions');
+    if (dropdown && dropdown.style.display !== 'none') {
+      const firstItem = dropdown.querySelector('.prism-suggest-item');
+      if (firstItem) {
+        e.preventDefault();
+        firstItem.click();
+        return;
+      }
+    }
+    e.preventDefault();
+    const pwd = document.getElementById('landing-password');
+    if (pwd) pwd.focus();
+  }
+}
+
+function selectRememberedAccount(username) {
+  const list = getRememberedLogins();
+  const acc = list.find(item => item && item.username && item.username.toLowerCase() === String(username).toLowerCase());
+  const fallback = findUserAccount(username);
+
+  const uInput = document.getElementById('landing-username');
+  const pwdInput = document.getElementById('landing-password');
+  const remInput = document.getElementById('landing-remember');
+
+  if (uInput) {
+    uInput.value = (acc && acc.username) || username;
+  }
+  if (pwdInput) {
+    pwdInput.value = (acc && acc.password) || (fallback ? fallback.password : '');
+  }
+  if (remInput) {
+    remInput.checked = true;
+  }
+
+  hideUsernameSuggestions();
+
+  const alertEl = document.getElementById('sipantau-login-alert');
+  if (alertEl) alertEl.style.display = 'none';
+
+  if (uInput && pwdInput) {
+    uInput.style.borderColor = '#22c55e';
+    pwdInput.style.borderColor = '#22c55e';
+    setTimeout(() => {
+      uInput.style.borderColor = '';
+      pwdInput.style.borderColor = '';
+    }, 1200);
+  }
+
+  const btn = document.getElementById('btn-landing-submit');
+  if (btn) btn.focus();
+}
+
+// Global outside click listener to close dropdown
+document.addEventListener('click', function(e) {
+  const wrap = document.getElementById('prism-username-group');
+  const drop = document.getElementById('landing-username-suggestions');
+  if (drop && drop.style.display !== 'none') {
+    if (wrap && !wrap.contains(e.target)) {
+      hideUsernameSuggestions();
+    }
+  }
+});
+
+function handleUsernameInput(val) {
+  handleUsernameSuggestionsInput(val);
 }
 
 function showLoginError(msg) {
@@ -6815,6 +7191,7 @@ function clearLoginForm() {
   if (u) u.value = '';
   const pwd = document.getElementById('landing-password');
   if (pwd) pwd.value = '';
+  hideUsernameSuggestions();
 }
 
 function handlePrismLogin(e) {
@@ -6874,6 +7251,18 @@ function handlePrismLogin(e) {
     setCurrentUser(userObj);
   } catch (err) {
     console.warn('Storage warning:', err);
+  }
+
+  // Simpan riwayat login jika Remember Me dicentang
+  try {
+    const remCheckbox = document.getElementById('landing-remember');
+    if (remCheckbox && remCheckbox.checked) {
+      saveRememberedLogin(matched.username, enteredPwd, matched);
+    } else {
+      removeRememberedLogin(matched.username);
+    }
+  } catch (err) {
+    console.warn('Remember me save warning:', err);
   }
 
   hideLandingLogin();
