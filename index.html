@@ -2586,8 +2586,8 @@ window.addEventListener('focus', () => {
           <button id="btn-welcome-acc" onclick="openTab('proposal')" style="padding:7px 14px;background:#1e40af;color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer">
             <i class="fa-solid fa-bell" style="margin-right:5px"></i> Perlu ACC (<span id="sindisa-pending-num">3</span>)
           </button>
-          <button id="btn-welcome-usulan" onclick="openTab('aktivitas')" style="display:none;padding:7px 14px;background:#16a34a;color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer">
-            <i class="fa-solid fa-plus-circle" style="margin-right:5px"></i> Ajukan Publikasi / Aktivitas
+          <button id="btn-welcome-usulan" onclick="openPrismoPengajuanModal()" style="display:none;padding:7px 14px;background:#16a34a;color:#fff;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer">
+            <i class="fa-solid fa-plus-circle" style="margin-right:5px"></i> + Ajukan Usulan Kegiatan
           </button>
         </div>
 
@@ -7554,12 +7554,7 @@ function mountSindisaActivityCard(activePanel) {
     const btnAddEl = document.getElementById('btn-proposal-add');
     if(btnAddEl && unitLocked) {
       btnAddEl.onclick = function() {
-        const sel = document.getElementById('act-topik-select');
-        if(sel) {
-          sel.value = '__NEW__';
-          handleActTopikChange('__NEW__');
-        }
-        card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        openPrismoPengajuanModal();
       };
     } else if(btnAddEl) {
       btnAddEl.onclick = openAjukanDisposisiModal;
@@ -8005,24 +8000,58 @@ const DEFAULT_PRISMO_PROPOSALS = [
       { tgl: "2026-08-12 10:30", role: "Admin DSPK2AN", aksi: "Verifikasi dokumen dan meneruskan ke Kepala LAN" },
       { tgl: "2026-08-15 16:00", role: "Kepala LAN RI", aksi: "Memberikan persetujuan pelaksanaan (ACC)" }
     ]
+  },
+  {
+    id: "PRISMO-2026-005",
+    judul: "Survei Kesiapan Kerja & Kompetensi Digital Lulusan Politeknik STIA LAN",
+    unit: "STIA JKT",
+    jenis: "Survei",
+    cluster: "Tata Kelola & Manajemen ASN",
+    latar_belakang: "Mengevaluasi kesesuaian kurikulum vokasi administrasi negara dengan kebutuhan instansi pemerintah pusat.",
+    tujuan: "Menghasilkan rekomendasi penguatan kompetensi digital dan analitik bagi mahasiswa politeknik.",
+    pic: "Dr. Tri Atmojo Sejati, S.T., S.H., M.Si",
+    target_selesai: "2026-11-25",
+    jadwal: "Nov (4)",
+    tahun: 2026,
+    dokumen_proposal: "https://lan.go.id/docs/proposal-stia-jkt.pdf",
+    dokumen_jadwal: "https://lan.go.id/docs/jadwal-stia-jkt.xlsx",
+    status: "diajukan",
+    prioritas: "Tinggi",
+    diajukan_tgl: "2026-10-30",
+    diverifikasi_tgl: null,
+    disetujui_tgl: null,
+    checklist_admin: {
+      judul_jelas: true,
+      pic_tersedia: true,
+      jadwal_realistis: false,
+      dokumen_lengkap: true,
+      tidak_duplikat: true
+    },
+    catatan_admin: "",
+    keputusan_kepala: null,
+    catatan_kepala: "",
+    catatan_revisi: "",
+    riwayat: [
+      { tgl: "2026-10-30 08:30", role: "Unit Kerja (STIA JKT)", aksi: "Mengajukan usulan kegiatan survei baru" }
+    ]
   }
 ];
 
 function getPrismoProposals() {
   try {
-    const raw = localStorage.getItem('lan_prismo_proposals_v2');
+    const raw = localStorage.getItem('lan_prismo_proposals_v3');
     if (raw) {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) return parsed;
     }
   } catch(e) { console.warn(e); }
-  localStorage.setItem('lan_prismo_proposals_v2', JSON.stringify(DEFAULT_PRISMO_PROPOSALS));
+  localStorage.setItem('lan_prismo_proposals_v3', JSON.stringify(DEFAULT_PRISMO_PROPOSALS));
   return [...DEFAULT_PRISMO_PROPOSALS];
 }
 
 function savePrismoProposals(list) {
   try {
-    localStorage.setItem('lan_prismo_proposals_v2', JSON.stringify(list));
+    localStorage.setItem('lan_prismo_proposals_v3', JSON.stringify(list));
   } catch(e) { console.warn(e); }
   if (typeof updatePortalBadges === 'function') updatePortalBadges();
 }
@@ -8098,6 +8127,8 @@ function openPrismoPengajuanModal(idToEdit) {
   if (!modal) return;
   const curr = getCurrentUser();
   const unit = (curr && curr.unit) ? curr.unit : 'STIA BDG';
+  const unitLocked = (typeof isUnitUser === 'function') ? isUnitUser(curr) : false;
+  const unitSelect = document.getElementById('prismo-input-unit');
 
   document.getElementById('prismo-edit-id').value = idToEdit || '';
   const badge = document.getElementById('prismo-modal-mode-badge');
@@ -8113,7 +8144,10 @@ function openPrismoPengajuanModal(idToEdit) {
       document.getElementById('prismo-input-cluster').value = item.cluster || 'Pelayanan Publik';
       document.getElementById('prismo-input-latar').value = item.latar_belakang || '';
       document.getElementById('prismo-input-tujuan').value = item.tujuan || '';
-      document.getElementById('prismo-input-unit').value = item.unit || unit;
+      if (unitSelect) {
+        unitSelect.value = item.unit || unit;
+        unitSelect.disabled = unitLocked;
+      }
       document.getElementById('prismo-input-tahun').value = item.tahun || 2026;
       document.getElementById('prismo-input-target-tgl').value = item.target_selesai || '';
       document.getElementById('prismo-input-jadwal').value = item.jadwal || '';
@@ -8126,7 +8160,10 @@ function openPrismoPengajuanModal(idToEdit) {
     if (title) title.textContent = 'Form Usulan Kegiatan Survei / Kajian';
     document.getElementById('prismo-pengajuan-form').reset();
     document.getElementById('prismo-edit-id').value = '';
-    document.getElementById('prismo-input-unit').value = unit;
+    if (unitSelect) {
+      unitSelect.value = unit;
+      unitSelect.disabled = unitLocked;
+    }
     document.getElementById('prismo-input-tahun').value = 2026;
   }
 
@@ -8223,13 +8260,17 @@ function submitPrismoPengajuan(statusTarget) {
   const nowStr = new Date().toISOString().slice(0, 10);
   const nowTime = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
 
+  const unitVal = (curr && typeof isUnitUser === 'function' && isUnitUser(curr) && curr.unit)
+    ? curr.unit
+    : (document.getElementById('prismo-input-unit') ? document.getElementById('prismo-input-unit').value : 'STIA BDG');
+
   const dataObj = {
     judul: document.getElementById('prismo-input-judul').value.trim(),
     jenis: document.getElementById('prismo-input-jenis').value,
     cluster: document.getElementById('prismo-input-cluster').value,
     latar_belakang: document.getElementById('prismo-input-latar').value.trim(),
     tujuan: document.getElementById('prismo-input-tujuan').value.trim(),
-    unit: document.getElementById('prismo-input-unit').value,
+    unit: unitVal,
     tahun: parseInt(document.getElementById('prismo-input-tahun').value, 10) || 2026,
     target_selesai: document.getElementById('prismo-input-target-tgl').value,
     jadwal: document.getElementById('prismo-input-jadwal').value.trim() || 'Des (1)',
@@ -8293,7 +8334,13 @@ function submitPrismoPengajuan(statusTarget) {
   }
 
   closePrismoPengajuanModal();
-  renderDynamicRoleTab('pengajuan_kegiatan', curr);
+  const dynPanel = document.getElementById('sindisa-panel-dynamic');
+  if (dynPanel && dynPanel.style.display !== 'none') {
+    renderDynamicRoleTab('pengajuan_kegiatan', curr);
+  } else if (typeof openTab === 'function') {
+    openTab('pengajuan_kegiatan');
+  }
+  if (typeof updatePortalBadges === 'function') updatePortalBadges();
 }
 
 /* ── Controller Modal Checklist Admin (DSPK2AN) ── */
@@ -8655,7 +8702,14 @@ function closePrismoDetailModal() {
 function renderPrismoPengajuanUnit(user) {
   const userUnit = user ? user.unit : '';
   const allProposals = getPrismoProposals();
-  const list = allProposals.filter(p => !userUnit || p.unit === userUnit);
+  const list = allProposals.filter(p => {
+    if (!userUnit) return true;
+    const pUnits = (typeof getAllUnits === 'function') ? getAllUnits(p.unit) : [p.unit];
+    const uUnits = (typeof getAllUnits === 'function') ? getAllUnits(userUnit) : [userUnit];
+    return pUnits.some(u => uUnits.some(v => v.toLowerCase() === u.toLowerCase()))
+      || (p.unit && p.unit.toLowerCase().includes(userUnit.toLowerCase()))
+      || (userUnit && userUnit.toLowerCase().includes(p.unit.toLowerCase()));
+  });
 
   const total = list.length;
   const diajukanCnt = list.filter(p => p.status === 'diajukan').length;
@@ -8778,7 +8832,14 @@ function filterPrismoUnitTable() {
 function renderPrismoPerbaikanUnit(user) {
   const userUnit = user ? user.unit : '';
   const allProposals = getPrismoProposals();
-  const list = allProposals.filter(p => (!userUnit || p.unit === userUnit) && (p.status === 'perlu_perbaikan' || (p.catatan_revisi && p.catatan_revisi.trim())));
+  const list = allProposals.filter(p => {
+    const matchUnit = !userUnit || (
+      ((typeof getAllUnits === 'function') ? getAllUnits(p.unit) : [p.unit]).some(u => ((typeof getAllUnits === 'function') ? getAllUnits(userUnit) : [userUnit]).some(v => v.toLowerCase() === u.toLowerCase()))
+      || (p.unit && p.unit.toLowerCase().includes(userUnit.toLowerCase()))
+      || (userUnit && userUnit.toLowerCase().includes(p.unit.toLowerCase()))
+    );
+    return matchUnit && (p.status === 'perlu_perbaikan' || (p.catatan_revisi && p.catatan_revisi.trim()));
+  });
 
   return `
     <div style="margin-bottom:20px;">
@@ -9896,8 +9957,11 @@ function renderSindisaAccTable() {
     } else {
       btnAddEl.style.display = '';
       btnAddEl.innerHTML = unitLocked
-        ? '<i class="fa-solid fa-plus-circle"></i> Ajukan Publikasi / Aktivitas'
+        ? '<i class="fa-solid fa-plus-circle"></i> + Ajukan Usulan Kegiatan'
         : '<i class="fa-solid fa-plus-circle"></i> Beri Disposisi Baru';
+      if (unitLocked) {
+        btnAddEl.onclick = function() { openPrismoPengajuanModal(); };
+      }
     }
   }
   if(thActionEl) {
