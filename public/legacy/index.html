@@ -1463,10 +1463,29 @@ function handleUsernameInput(val) {
     .prism-float-anim { animation: prismFloat 4.5s ease-in-out infinite; }
     .prism-pulse-anim { animation: prismPulse 3s ease-in-out infinite; }
 
+    .planning-form { display:grid; grid-template-columns:repeat(4,minmax(130px,1fr)); gap:10px; align-items:center; }
+    .initiative-form { grid-template-columns:repeat(3,minmax(150px,1fr)); }
+    .planning-form input,.planning-form select,.planning-form textarea { width:100%; min-width:0; box-sizing:border-box; padding:10px 11px; border:1px solid #cbd5e1; border-radius:8px; color:#1e293b; background:#fff; font-size:12px; font-family:inherit; }
+    .planning-form input:focus,.planning-form select:focus,.planning-form textarea:focus { outline:2px solid #bfdbfe; border-color:#3b82f6; }
+    .planning-button { border:0; border-radius:8px; padding:10px 13px; background:#2563eb; color:#fff; font-size:12px; font-weight:700; font-family:inherit; cursor:pointer; }
+    .planning-button:hover { background:#1d4ed8; }
+    .planning-table-wrap { overflow-x:auto; }
+    .planning-table { width:100%; border-collapse:collapse; font-size:12px; }
+    .planning-table th { padding:10px 9px; text-align:left; color:#64748b; background:#f8fafc; white-space:nowrap; }
+    .planning-table td { padding:11px 9px; border-top:1px solid #e2e8f0; color:#334155; vertical-align:top; }
+    .planning-table td:first-child { font-weight:700; color:#1e293b; }
+    .planning-count { color:#64748b; font-size:12px; }
+    .planning-empty { padding:28px 10px; text-align:center; color:#94a3b8; font-size:12px; }
+    .planning-delete { border:0; background:transparent; color:#dc2626; cursor:pointer; padding:5px 8px; }
+    .planning-status { display:inline-block; padding:4px 8px; border-radius:99px; background:#eff6ff; color:#1d4ed8; white-space:nowrap; font-size:11px; font-weight:700; }
+    .planning-unit-note { margin:0 0 12px; padding:9px 11px; border-radius:8px; background:#eff6ff; color:#1e40af; font-size:12px; }
+
     @media (max-width: 860px) {
       .prism-login-card { grid-template-columns: 1fr; max-width: 440px; }
       .prism-login-right { display: none; }
+      .planning-form,.initiative-form { grid-template-columns:repeat(2,minmax(130px,1fr)); }
     }
+    @media (max-width: 540px) { .planning-form,.initiative-form { grid-template-columns:1fr; } }
 
   </style>
 </head>
@@ -3900,9 +3919,6 @@ window.addEventListener('focus', () => {
         <button type="button" onclick="prismoAdminTeruskanKeDeputi()" style="display:inline-flex;align-items:center;gap:6px;padding:9px 16px;background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;border-radius:8px;font-size:12.5px;font-weight:700;cursor:pointer;">
           <i class="fa-solid fa-user-shield"></i> Teruskan ke Deputi
         </button>
-        <button type="button" onclick="prismoAdminTeruskanKeKepala()" style="display:inline-flex;align-items:center;gap:6px;padding:9px 18px;background:#2563eb;color:#fff;border:none;border-radius:8px;font-size:12.5px;font-weight:700;cursor:pointer;box-shadow:0 2px 6px rgba(37,99,235,0.25);">
-          <i class="fa-solid fa-stamp"></i> Teruskan ke Kepala LAN
-        </button>
       </div>
     </div>
   </div>
@@ -4016,13 +4032,13 @@ window.addEventListener('focus', () => {
   </div>
 </div>
 
-<!-- ═══════════════════ MODAL TAHAP 2: DETAIL LENGKAP USULAN & TIMELINE ALUR ═══════════════════ -->
+<!-- Detail ringkas usulan -->
 <div class="modal-overlay" id="prismo-detail-usulan-modal" onclick="if(event.target===this)closePrismoDetailModal()">
-  <div class="modal" style="max-width:720px;padding:24px 28px;">
+  <div class="modal" style="max-width:600px;padding:22px 24px;">
     <div class="modal-close" onclick="closePrismoDetailModal()"><i class="fa-solid fa-xmark"></i></div>
     
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
-      <span style="background:#eff6ff;color:#2563eb;font-size:11px;font-weight:800;padding:3px 10px;border-radius:6px;border:1px solid #bfdbfe;">DETAIL USULAN KEGIATAN</span>
+      <span style="background:#eff6ff;color:#2563eb;font-size:11px;font-weight:800;padding:3px 10px;border-radius:6px;border:1px solid #bfdbfe;">RINGKASAN USULAN</span>
       <span id="prismo-detail-modal-id" style="font-size:12px;font-weight:800;color:#1e293b;"></span>
       <span id="prismo-detail-overdue-badge"></span>
     </div>
@@ -4034,32 +4050,26 @@ window.addEventListener('focus', () => {
     <!-- Overdue / Approaching Deadline Reminder Alert -->
     <div id="prismo-detail-schedule-alert" style="display:none;margin-bottom:14px;"></div>
 
-    <!-- Visual Stepper Alur Kegiatan (Hal. 6 Wireframe) -->
-    <div id="prismo-detail-stepper" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:14px;margin-bottom:18px;">
-      <!-- Diinjeksi otomatis via JavaScript -->
-    </div>
+    <div id="prismo-detail-stepper" style="margin-bottom:14px;"></div>
 
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:14px;font-size:12px;">
-      <div><strong style="color:#64748b;">Unit Pelaksana:</strong> <span id="prismo-detail-view-unit" style="font-weight:700;color:#1e293b;"></span></div>
-      <div><strong style="color:#64748b;">Jenis Kegiatan:</strong> <span id="prismo-detail-view-jenis" style="font-weight:600;color:#1e293b;"></span></div>
-      <div><strong style="color:#64748b;">Cluster Kebijakan:</strong> <span id="prismo-detail-view-cluster" style="font-weight:600;color:#1e293b;"></span></div>
-      <div><strong style="color:#64748b;">Target Selesai:</strong> <span id="prismo-detail-view-target" style="font-weight:600;color:#1e293b;"></span></div>
-      <div><strong style="color:#64748b;">Penanggung Jawab:</strong> <span id="prismo-detail-view-pic" style="font-weight:600;color:#1e293b;"></span></div>
-      <div><strong style="color:#64748b;">Status Saat Ini:</strong> <span id="prismo-detail-view-status"></span></div>
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px;font-size:12px;">
+      <span id="prismo-detail-view-status"></span>
+      <span style="color:#64748b;">Unit: <strong id="prismo-detail-view-unit" style="color:#1e293b;"></strong></span>
+      <span style="color:#64748b;">PIC: <strong id="prismo-detail-view-pic" style="color:#1e293b;"></strong></span>
+      <span style="color:#64748b;">Target: <strong id="prismo-detail-view-target" style="color:#1e293b;"></strong></span>
     </div>
 
     <div style="margin-bottom:16px;">
-      <div style="font-size:11.5px;font-weight:700;color:#334155;margin-bottom:4px;">Deskripsi &amp; Latar Belakang:</div>
-      <div id="prismo-detail-view-latar" style="font-size:12px;color:#475569;background:#f8fafc;padding:10px;border-radius:8px;border:1px solid #e2e8f0;line-height:1.6;"></div>
+      <div id="prismo-detail-view-latar" style="font-size:12px;color:#475569;background:#f8fafc;padding:12px;border-radius:8px;border:1px solid #e2e8f0;line-height:1.6;"></div>
     </div>
 
     <div style="margin-bottom:16px;">
-      <div style="font-size:11.5px;font-weight:700;color:#334155;margin-bottom:4px;">Catatan &amp; Riwayat Keputusan Pimpinan (Review/ACC):</div>
-      <div id="prismo-detail-view-notes" style="font-size:12px;color:#334155;background:#fffbeb;border:1px solid #fde68a;padding:10px;border-radius:8px;line-height:1.6;"></div>
+      <div style="font-size:11.5px;font-weight:700;color:#334155;margin-bottom:4px;">Catatan</div>
+      <div id="prismo-detail-view-notes" style="font-size:12px;color:#334155;line-height:1.6;"></div>
     </div>
 
-    <div style="margin-bottom:18px;">
-      <div style="font-size:11.5px;font-weight:700;color:#334155;margin-bottom:6px;">Dokumen TOR / Proposal (Google Drive / Google Docs):</div>
+    <div style="margin-bottom:14px;">
+      <div style="font-size:11.5px;font-weight:700;color:#334155;margin-bottom:6px;">Dokumen</div>
       <div id="prismo-detail-view-docs" style="display:flex;gap:10px;flex-wrap:wrap;"></div>
     </div>
 
@@ -6959,6 +6969,158 @@ window.saveChannelLinkFromModal = saveChannelLinkFromModal;
 /* ══════════════════════════════════════════════════════════
    TAB NAVIGATION
    ══════════════════════════════════════════════════════════ */
+const planningStorageKeys = { agenda: 'lan_agenda_tahunan_v1', inisiatif: 'lan_inisiatif_ak_dosen_v1' };
+function planningStorageKey(kind) {
+  const unit = String(getCurrentUser()?.unit || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  return `${planningStorageKeys[kind]}_${unit || 'unit'}`;
+}
+function readPlanningItems(kind) {
+  try {
+    const value = JSON.parse(localStorage.getItem(planningStorageKey(kind)) || '[]');
+    return Array.isArray(value) ? value : [];
+  } catch (error) { console.warn('Data perencanaan tidak dapat dibaca:', error); return []; }
+}
+function savePlanningItems(kind, items) {
+  try { localStorage.setItem(planningStorageKey(kind), JSON.stringify(items)); return true; }
+  catch (error) { alert('Data tidak dapat disimpan di browser ini. Periksa ruang penyimpanan browser.'); return false; }
+}
+function planningEscape(value) {
+  return String(value || '').replace(/[&<>"']/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[char]);
+}
+function formatPlanningDate(value) {
+  if (!value) return '—';
+  const date = new Date(`${value}T00:00:00`);
+  return Number.isNaN(date.getTime()) ? '—' : date.toLocaleDateString('id-ID', { day:'numeric', month:'short', year:'numeric' });
+}
+function renderPlanningPages() {
+  const agendaYear = document.getElementById('agenda-year-filter')?.value || String(new Date().getFullYear());
+  const currentUnit = String(getCurrentUser()?.unit || '').toLowerCase();
+  const isThisUnit = item => String(item.unit || '').toLowerCase() === currentUnit;
+  const agendaDrafts = readPlanningItems('agenda').filter(item => (item.tanggal || '').slice(0, 4) === agendaYear).sort((a,b) => (a.tanggal || '').localeCompare(b.tanggal || ''));
+  const agendaProposals = getPrismoProposals().filter(item => item.planning_source_kind === 'agenda' && isThisUnit(item) && String(item.tahun || '').slice(0, 4) === agendaYear);
+  const agendaItems = [...agendaDrafts, ...agendaProposals];
+  const agendaRows = document.getElementById('agenda-rows');
+  if (agendaRows) agendaRows.innerHTML = [
+    ...agendaDrafts.map(item => `<tr><td>${planningEscape(formatPlanningDate(item.tanggal))}</td><td>${planningEscape(item.judul)}</td><td>${planningEscape(item.jenis)}</td><td>${planningEscape(item.unit || '—')}<br><span style="color:#94a3b8">${planningEscape(item.pic || '—')}</span></td><td>${planningEscape(item.responden || '—')}</td><td><span class="planning-status">Draft</span></td><td><button class="planning-button planning-submit" type="button" data-submit-planning="agenda" data-planning-id="${planningEscape(item.id)}">Ajukan</button><button class="planning-delete" type="button" data-planning-kind="agenda" data-planning-id="${planningEscape(item.id)}" aria-label="Hapus draft"><i class="fa-solid fa-trash"></i></button></td></tr>`),
+    ...agendaProposals.map(item => `<tr><td>${planningEscape(formatPlanningDate(item.target_selesai))}</td><td>${planningEscape(item.judul)}<br><small>${planningEscape(item.id)}</small></td><td>${planningEscape(item.jenis)}</td><td>${planningEscape(item.unit || '—')}<br><span style="color:#94a3b8">${planningEscape(item.pic || '—')}</span></td><td>${planningEscape(item.target_responden || '—')}</td><td><span class="planning-status">${planningEscape(getPrismoStatusBadge(item.status).text)}</span></td><td><button class="planning-delete" type="button" onclick="openPrismoDetailModal('${planningEscape(item.id)}')" aria-label="Lihat status"><i class="fa-solid fa-eye"></i></button></td></tr>`)
+  ].join('');
+  const agendaEmpty = document.getElementById('agenda-empty'); if (agendaEmpty) agendaEmpty.hidden = agendaItems.length > 0;
+  const agendaCount = document.getElementById('agenda-count'); if (agendaCount) agendaCount.textContent = `${agendaItems.length} agenda`;
+
+  const initiativeDrafts = readPlanningItems('inisiatif').sort((a,b) => (a.target || '').localeCompare(b.target || ''));
+  const initiativeProposals = getPrismoProposals().filter(item => item.planning_source_kind === 'inisiatif' && isThisUnit(item));
+  const initiativeItems = [...initiativeDrafts, ...initiativeProposals];
+  const initiativeRows = document.getElementById('inisiatif-rows');
+  if (initiativeRows) initiativeRows.innerHTML = [
+    ...initiativeDrafts.map(item => `<tr><td>${planningEscape(item.judul)}</td><td>${planningEscape(item.pengusul)}</td><td>${planningEscape(item.tujuan || '—')}</td><td>${planningEscape(item.pic || '—')}</td><td>${planningEscape(formatPlanningDate(item.target))}</td><td><span class="planning-status">Draft</span></td><td><button class="planning-button planning-submit" type="button" data-submit-planning="inisiatif" data-planning-id="${planningEscape(item.id)}">Ajukan</button><button class="planning-delete" type="button" data-planning-kind="inisiatif" data-planning-id="${planningEscape(item.id)}" aria-label="Hapus draft"><i class="fa-solid fa-trash"></i></button></td></tr>`),
+    ...initiativeProposals.map(item => `<tr><td>${planningEscape(item.judul)}<br><small>${planningEscape(item.id)}</small></td><td>${planningEscape(item.pengusul || '—')}</td><td>${planningEscape(item.tujuan || '—')}</td><td>${planningEscape(item.pic || '—')}</td><td>${planningEscape(formatPlanningDate(item.target_selesai))}</td><td><span class="planning-status">${planningEscape(getPrismoStatusBadge(item.status).text)}</span></td><td><button class="planning-delete" type="button" onclick="openPrismoDetailModal('${planningEscape(item.id)}')" aria-label="Lihat status"><i class="fa-solid fa-eye"></i></button></td></tr>`)
+  ].join('');
+  const initiativeEmpty = document.getElementById('inisiatif-empty'); if (initiativeEmpty) initiativeEmpty.hidden = initiativeItems.length > 0;
+  const initiativeCount = document.getElementById('inisiatif-count'); if (initiativeCount) initiativeCount.textContent = `${initiativeItems.length} inisiatif`;
+}
+const agendaYearFilter = document.getElementById('agenda-year-filter');
+if (agendaYearFilter) {
+  const currentYear = new Date().getFullYear();
+  agendaYearFilter.innerHTML = Array.from({ length: 7 }, (_, index) => currentYear - 2 + index).map(year => `<option value="${year}" ${year === currentYear ? 'selected' : ''}>Tahun ${year}</option>`).join('');
+}
+document.addEventListener('submit', event => {
+  if (event.target.id !== 'agenda-form' && event.target.id !== 'inisiatif-form') return;
+  event.preventDefault();
+  const currentPlanningUser = getCurrentUser();
+  if (!isUnitUser(currentPlanningUser)) return;
+  const form = event.target;
+  const item = Object.fromEntries(new FormData(form).entries());
+  item.id = (crypto.randomUUID && crypto.randomUUID()) || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const kind = form.id === 'agenda-form' ? 'agenda' : 'inisiatif';
+  item.unit = currentPlanningUser.unit || '';
+  if (savePlanningItems(kind, [...readPlanningItems(kind), item])) { form.reset(); renderPlanningPages(); }
+});
+document.addEventListener('click', event => {
+  const submitButton = event.target.closest('[data-submit-planning]');
+  if (submitButton) {
+    void submitPlanningToWorkflow(submitButton.dataset.submitPlanning, submitButton.dataset.planningId);
+    return;
+  }
+  const button = event.target.closest('[data-planning-kind][data-planning-id]');
+  if (!button) return;
+  if (!isUnitUser(getCurrentUser())) return;
+  const kind = button.dataset.planningKind;
+  if (!planningStorageKeys[kind]) return;
+  if (!confirm('Hapus item ini?')) return;
+  savePlanningItems(kind, readPlanningItems(kind).filter(item => item.id !== button.dataset.planningId));
+  renderPlanningPages();
+});
+async function submitPlanningToWorkflow(kind, draftId) {
+  const user = getCurrentUser();
+  if (!isUnitUser(user) || !planningStorageKeys[kind]) return;
+  const drafts = readPlanningItems(kind);
+  const draft = drafts.find(item => item.id === draftId);
+  if (!draft) return;
+  if (!confirm(`Ajukan "${draft.judul}" ke Admin DSPK2AN?`)) return;
+  const list = getPrismoProposals();
+  const yearValue = kind === 'agenda' ? (draft.tanggal || '') : (draft.target || '');
+  const year = Number(yearValue.slice(0, 4)) || new Date().getFullYear();
+  const proposalId = `PRISMO-${year}-PLN-${Date.now()}`;
+  const kindLabel = kind === 'agenda' ? 'Agenda Tahunan' : 'Inisiatif AK/Dosen';
+  const targetDate = kind === 'agenda' ? draft.tanggal : draft.target;
+  const proposal = {
+    id: proposalId,
+    judul: draft.judul,
+    jenis: draft.jenis || 'Survei',
+    jenis_persetujuan: `Pengajuan Kegiatan — ${kindLabel}`,
+    planning_source_kind: kind,
+    planning_source_id: draft.id,
+    cluster: draft.cluster || getActiveClusterNames()[0] || '',
+    latar_belakang: draft.latar_belakang || `Diajukan melalui ${kindLabel} oleh ${draft.unit}.`,
+    tujuan: draft.tujuan || '',
+    unit: user.unit,
+    tahun: year,
+    target_selesai: targetDate || `${year}-12-31`,
+    target_responden: draft.responden || '',
+    jadwal: targetDate || `${year}-12-31`,
+    pic: draft.pic || draft.pengusul || user.name || user.unit,
+    dokumen_proposal: '',
+    tor_nama: `TOR/Proposal ${draft.judul}`,
+    tor_jenis: 'TOR dan Proposal',
+    tor_keterangan: '',
+    tor_status_akses: 'Belum dicek',
+    dokumen_jadwal: '',
+    status: 'diajukan',
+    prioritas: 'Normal',
+    diajukan_tgl: new Date().toISOString().slice(0, 10),
+    diverifikasi_tgl: null,
+    disetujui_tgl: null,
+    catatan_admin: '',
+    catatan_kepala: '',
+    catatan_revisi: '',
+    riwayat: [{ tgl: new Date().toLocaleString('id-ID'), role: user.name || user.unit, aksi: `Mengajukan ${kindLabel} ke Admin DSPK2AN` }]
+  };
+  const nextList = [proposal, ...list];
+  const synced = await pushPrismoProposalsToSupabase(nextList);
+  if (!synced) {
+    alert('Pengajuan belum terkirim ke alur bersama. Draft tetap tersimpan; periksa koneksi Supabase lalu coba lagi.');
+    return;
+  }
+  try { localStorage.setItem('lan_prismo_proposals_v3', JSON.stringify(nextList)); } catch (error) { console.warn(error); }
+  savePlanningItems(kind, drafts.filter(item => item.id !== draftId));
+  if (typeof updatePortalBadges === 'function') updatePortalBadges();
+  recordInternalAuditLog('PLANNING_SUBMITTED', { id: proposalId, source: kind, unit: user.unit });
+  renderPlanningPages();
+  alert(`Pengajuan ${proposalId} sudah masuk ke Inbox Admin DSPK2AN.`);
+}
+function renderPlanningUnitPage(kind, user) {
+  if (!isUnitUser(user) || !user.unit) return '<div class="card"><div class="card-body">Menu ini hanya tersedia untuk akun unit kerja.</div></div>';
+  const agenda = kind === 'agenda';
+  const unitLabel = planningEscape(user.unit);
+  const currentYear = new Date().getFullYear();
+  const clusterOptions = getActiveClusterNames().map(name => `<option value="${planningEscape(name)}">${planningEscape(name)}</option>`).join('');
+  const sharedFields = `<input name="judul" required maxlength="140" placeholder="Nama kegiatan / inisiatif" aria-label="Nama kegiatan atau inisiatif"><select name="jenis"><option>Survei</option><option>Analisis</option><option>Kajian</option></select><select name="cluster" required><option value="">Pilih cluster kebijakan</option>${clusterOptions}</select>`;
+  if (agenda) {
+    return `<div class="card" style="margin-bottom:16px"><div class="card-header"><span class="card-title"><i class="fa-solid fa-calendar-days"></i> Agenda Analisis/Survei Tahunan</span><select id="agenda-year-filter" class="filter-year-highlight" onchange="renderPlanningPages()" aria-label="Filter tahun agenda">${Array.from({length:7},(_,i)=>currentYear-2+i).map(year=>`<option value="${year}" ${year===currentYear?'selected':''}>Tahun ${year}</option>`).join('')}</select></div><div class="card-body"><p style="margin:0 0 12px;color:#64748b;font-size:12px">Simpan rencana sebagai draft, lalu ajukan ke Admin agar masuk ke alur persetujuan PRISMO.</p><div class="planning-unit-note">Unit penanggung jawab: <strong>${unitLabel}</strong></div><form id="agenda-form" class="planning-form">${sharedFields}<input name="pic" maxlength="100" placeholder="PIC" aria-label="PIC"><input name="responden" maxlength="100" placeholder="Target responden" aria-label="Target responden"><input name="tanggal" type="date" required aria-label="Target jadwal"><textarea name="tujuan" required maxlength="600" rows="2" placeholder="Tujuan dan ringkasan kegiatan" aria-label="Tujuan dan ringkasan kegiatan"></textarea><button class="planning-button" type="submit"><i class="fa-solid fa-floppy-disk"></i> Simpan Draft</button></form></div></div><div class="card"><div class="card-header"><span class="card-title">Agenda ${unitLabel}</span><span id="agenda-count" class="planning-count"></span></div><div class="card-body"><p style="margin:0 0 12px;color:#64748b;font-size:11px">Agenda berstatus draft dapat diajukan. Setelah dikirim, statusnya mengikuti proses Admin, Pimpinan, dan Humas.</p><div class="planning-table-wrap"><table class="planning-table"><thead><tr><th>Jadwal</th><th>Agenda</th><th>Jenis</th><th>Unit / PIC</th><th>Target responden</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="agenda-rows"></tbody></table></div><div id="agenda-empty" class="planning-empty" hidden>Belum ada agenda unit ini pada tahun terpilih.</div></div></div>`;
+  }
+  return `<div class="card" style="margin-bottom:16px"><div class="card-header"><span class="card-title"><i class="fa-solid fa-lightbulb"></i> Inisiatif AK/Dosen</span></div><div class="card-body"><p style="margin:0 0 12px;color:#64748b;font-size:12px">Catat gagasan AK atau dosen sebagai draft, lalu ajukan untuk diverifikasi dan diputuskan melalui alur PRISMO.</p><div class="planning-unit-note">Unit kerja: <strong>${unitLabel}</strong></div><form id="inisiatif-form" class="planning-form initiative-form">${sharedFields}<input name="pengusul" required maxlength="100" placeholder="Nama pengusul (AK / Dosen)" aria-label="Pengusul"><input name="pic" maxlength="100" placeholder="PIC tindak lanjut" aria-label="PIC tindak lanjut"><input name="target" type="date" aria-label="Target waktu"><textarea name="tujuan" required maxlength="600" rows="2" placeholder="Tujuan dan ringkasan inisiatif" aria-label="Tujuan dan ringkasan inisiatif"></textarea><button class="planning-button" type="submit"><i class="fa-solid fa-floppy-disk"></i> Simpan Draft</button></form></div></div><div class="card"><div class="card-header"><span class="card-title">Inisiatif ${unitLabel}</span><span id="inisiatif-count" class="planning-count"></span></div><div class="card-body"><p style="margin:0 0 12px;color:#64748b;font-size:11px">Draft dapat diajukan ke Admin. Usulan yang disetujui Pimpinan diteruskan sebagai kegiatan ke Humas.</p><div class="planning-table-wrap"><table class="planning-table"><thead><tr><th>Inisiatif</th><th>Pengusul</th><th>Tujuan</th><th>PIC</th><th>Target</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="inisiatif-rows"></tbody></table></div><div id="inisiatif-empty" class="planning-empty" hidden>Belum ada inisiatif untuk unit ini.</div></div></div>`;
+}
+
 document.querySelectorAll('.nav-tab').forEach(tab=>{
   tab.addEventListener('click',()=>{
     document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
@@ -7456,6 +7618,9 @@ const ROLE_CONFIGS = {
       { section: "MENU UTAMA" },
       { id: "dashboard", icon: "fa-chart-pie", label: "Dashboard Unit", action: "openTab('dashboard')" },
       { id: "pengumuman", icon: "fa-bullhorn", label: "Pengumuman", action: "openTab('pengumuman')" },
+      { section: "PERENCANAAN" },
+      { id: "agenda_tahunan", icon: "fa-calendar-days", label: "Agenda Analisis/Survei", action: "openTab('agenda_tahunan')" },
+      { id: "inisiatif_ak_dosen", icon: "fa-lightbulb", label: "Inisiatif AK/Dosen", action: "openTab('inisiatif_ak_dosen')" },
       { section: "KEGIATAN" },
       { id: "pengajuan_kegiatan", icon: "fa-file-circle-plus", label: "Pengajuan Kegiatan", action: "openTab('pengajuan_kegiatan')" },
       { id: "perbaikan_catatan", icon: "fa-clipboard-check", label: "Revisi Usulan", badge: true, action: "openTab('perbaikan_catatan')" },
@@ -8972,6 +9137,8 @@ const TAB_LABELS_MAP = {
   pengumuman: 'Pengumuman',
   profil_akun: 'Profil / Akun',
   pengajuan_kegiatan: 'Pengajuan Kegiatan',
+  agenda_tahunan: 'Agenda Analisis/Survei Tahunan',
+  inisiatif_ak_dosen: 'Inisiatif AK/Dosen',
   progress_kegiatan: 'Update Progress',
   perbaikan_catatan: 'Revisi Usulan',
   laporan_bukti: 'Laporan & Bukti',
@@ -9305,7 +9472,9 @@ function savePrismoProposals(list) {
 }
 
 function ensureApprovedProposalActivityRecords(proposals) {
-  const approved = (proposals || getPrismoProposals()).filter(p => p.status === 'disetujui' || p.status === 'disetujui_catatan');
+  const approved = (proposals || getPrismoProposals()).filter(p =>
+    ['disetujui', 'disetujui_catatan'].includes(p.status) && !isPrismoPublicationProposal(p)
+  );
   if (!approved.length) return [];
 
   let links = {};
@@ -9335,7 +9504,7 @@ function ensureApprovedProposalActivityRecords(proposals) {
         tahun: year,
         cluster: proposal.cluster || '',
         jurnal: '', media: '', webLAN: '', webUnit: '', igLAN: '', igUnit: '', ytLAN: '', ytUnit: '',
-        ket: `Belum Selesai — Tahap Persiapan. Usulan ${proposal.id} telah disetujui.`,
+        ket: `Belum Selesai — Tahap Persiapan. Usulan ${proposal.id} (${proposal.jenis_persetujuan || 'Pengajuan Kegiatan'}) telah disetujui.`,
         tahapan: 'Persiapan'
       };
       RAW.push(activity);
@@ -9442,7 +9611,7 @@ function renderPrismoProgressUnit(user) {
 
 // Sinkronisasi data usulan kegiatan PRISMO ke tabel 'prismo_proposals' di Supabase
 async function pushPrismoProposalsToSupabase(list) {
-  if (typeof SUPABASE_CONFIG === 'undefined' || !SUPABASE_CONFIG.url || !SUPABASE_CONFIG.anonKey) return;
+  if (typeof SUPABASE_CONFIG === 'undefined' || !SUPABASE_CONFIG.url || !SUPABASE_CONFIG.anonKey) return false;
   try {
     const rows = list.map(proposal => ({
       id: proposal.id,
@@ -9476,11 +9645,14 @@ async function pushPrismoProposalsToSupabase(list) {
     });
     if (res.ok) {
       console.log(`[SUPABASE PRISMO] Berhasil mengunggah ${list.length} usulan kegiatan ke Supabase.`);
+      return true;
     } else {
       console.warn('[SUPABASE PRISMO PUSH WARNING]', await res.text());
+      return false;
     }
   } catch(err) {
     console.warn('[SUPABASE PRISMO PUSH ERROR]', err);
+    return false;
   }
 }
 
@@ -9530,7 +9702,12 @@ function getPrismoProposalById(id) {
   return list.find(p => p.id === id) || null;
 }
 
-function getPrismoStatusBadge(status) {
+function isPrismoPublicationProposal(item) {
+  const type = String(item && item.jenis_persetujuan || '').toLowerCase();
+  return type.startsWith('publikasi awal') || type.startsWith('publikasi akhir');
+}
+
+function getPrismoStatusBadge(status, item) {
   switch (status) {
     case 'draft':
       return { text: 'Draft', bg: '#f1f5f9', color: '#475569', border: '#cbd5e1', icon: 'fa-file-pen' };
@@ -9538,12 +9715,13 @@ function getPrismoStatusBadge(status) {
       return { text: 'Diajukan', bg: '#eff6ff', color: '#2563eb', border: '#bfdbfe', icon: 'fa-paper-plane' };
     case 'perlu_perbaikan':
       return { text: 'Kembalikan untuk Revisi', bg: '#fff7ed', color: '#ea580c', border: '#fed7aa', icon: 'fa-rotate-left' };
-    case 'menunggu_kepala':
     case 'menunggu_deputi':
-      return { text: 'Menunggu ACC Pimpinan', bg: '#fefce8', color: '#ca8a04', border: '#fef08a', icon: 'fa-hourglass-half' };
+      return { text: 'Tahap 2 · Telaah Deputi', bg: '#fefce8', color: '#ca8a04', border: '#fef08a', icon: 'fa-hourglass-half' };
+    case 'menunggu_kepala':
+      return { text: 'Tahap 3 · Telaah Kepala', bg: '#eff6ff', color: '#1d4ed8', border: '#bfdbfe', icon: 'fa-hourglass-half' };
     case 'disetujui':
     case 'disetujui_catatan':
-      return { text: 'Disetujui (ACC)', bg: '#f0fdf4', color: '#16a34a', border: '#bbf7d0', icon: 'fa-circle-check' };
+      return { text: 'Disetujui', bg: '#f0fdf4', color: '#16a34a', border: '#bbf7d0', icon: 'fa-circle-check' };
     case 'ditolak':
       return { text: 'Ditolak', bg: '#fef2f2', color: '#dc2626', border: '#fecaca', icon: 'fa-circle-xmark' };
     default:
@@ -9953,18 +10131,19 @@ function openPrismoAdminModal(id) {
   const modal = document.getElementById('prismo-admin-checklist-modal');
   if (!modal) return;
 
-  document.getElementById('prismo-admin-modal-id').textContent = item.id;
+  document.getElementById('prismo-admin-modal-id').textContent = `${item.id} · ${item.jenis_persetujuan || 'Pengajuan Kegiatan'}`;
   document.getElementById('prismo-admin-modal-title').textContent = item.judul;
   document.getElementById('prismo-admin-view-unit').textContent = item.unit;
   document.getElementById('prismo-admin-view-cluster').textContent = resolveClusterName(item.cluster);
   document.getElementById('prismo-admin-view-target').textContent = `${item.target_selesai || '-'} (Jadwal: ${item.jadwal || '-'})`;
   document.getElementById('prismo-admin-view-pic').textContent = item.pic || '-';
   document.getElementById('prismo-admin-view-desc').innerHTML = `
+    <strong>Sumber pengajuan:</strong> ${escapeHtml(item.jenis_persetujuan || 'Pengajuan Kegiatan')}<br/>
     <strong>Latar Belakang:</strong> ${escapeHtml(item.latar_belakang || '-')}<br/>
     <strong>Tujuan:</strong> ${escapeHtml(item.tujuan || '-')}
   `;
 
-  const badge = getPrismoStatusBadge(item.status);
+  const badge = getPrismoStatusBadge(item.status, item);
   const badgeEl = document.getElementById('prismo-admin-status-badge');
   if (badgeEl) {
     badgeEl.innerHTML = `<span class="badge" style="background:${badge.bg};color:${badge.color};border:1px solid ${badge.border};font-weight:700;"><i class="fa-solid ${badge.icon}"></i> ${badge.text}</span>`;
@@ -10063,31 +10242,7 @@ function prismoAdminSimpanDraft() {
 }
 
 function prismoAdminTeruskanKeKepala() {
-  if (!activeAdminProposalId) return;
-  const list = getPrismoProposals();
-  const idx = list.findIndex(p => p.id === activeAdminProposalId);
-  if (idx === -1) return;
-
-  const chk = getAdminChecklistState();
-  const nowStr = new Date().toISOString().slice(0, 10);
-  const nowTime = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-  const catatan = document.getElementById('prismo-admin-catatan').value.trim() || 'Telah diverifikasi memenuhi kelayakan teknis dan dokumen.';
-
-  list[idx].status = 'menunggu_kepala';
-  list[idx].diverifikasi_tgl = nowStr;
-  list[idx].checklist_admin = chk;
-  list[idx].catatan_admin = catatan;
-  list[idx].riwayat.push({
-    tgl: `${nowStr} ${nowTime}`,
-    role: 'Admin DSPK2AN',
-    aksi: 'Verifikasi kelayakan selesai & meneruskan ke Pimpinan (Kepala LAN RI / Deputi)'
-  });
-
-  savePrismoProposals(list);
-  recordInternalAuditLog('ADMIN_FORWARD_TO_PIMPINAN', { id: list[idx].id, target: 'kepala_lan' });
-  closePrismoAdminModal();
-  alert(`Usulan ${list[idx].id} berhasil diverifikasi dan diteruskan ke Pimpinan!`);
-  renderDynamicRoleTab('inbox_pengajuan', getCurrentUser());
+  prismoAdminTeruskanKeDeputi();
 }
 
 function prismoAdminTeruskanKeDeputi() {
@@ -10139,6 +10294,10 @@ function openPrismoPimpinanModal(id) {
   if (!modal) return;
   const curr = getCurrentUser();
   const isKepala = curr && curr.role === 'kepala_lan';
+  if (item.status !== (isKepala ? 'menunggu_kepala' : 'menunggu_deputi')) {
+    alert('Usulan ini belum berada pada tahap persetujuan Anda.');
+    return;
+  }
 
   const roleBadge = document.getElementById('prismo-pimpinan-badge-role');
   if (roleBadge) {
@@ -10257,20 +10416,42 @@ function confirmAndExecutePrismoDecision() {
 
   const curr = getCurrentUser();
   const isKepala = curr && curr.role === 'kepala_lan';
+  const expectedStatus = isKepala ? 'menunggu_kepala' : 'menunggu_deputi';
+  if (list[idx].status !== expectedStatus) {
+    alert('Usulan ini sedang berada pada tahap pimpinan yang berbeda. Muat ulang daftar sebelum memproses.');
+    pendingDecisionPayload = null;
+    closePrismoConfirmDecisionModal();
+    closePrismoPimpinanModal();
+    return;
+  }
   const actorRole = isKepala ? 'Kepala LAN RI' : 'Deputi';
   const nowStr = new Date().toISOString().slice(0, 10);
   const nowTime = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
 
   if (keputusan === 'disetujui') {
-    list[idx].status = 'disetujui';
-    list[idx].disetujui_tgl = nowStr;
-    list[idx].keputusan_kepala = 'disetujui';
-    list[idx].catatan_kepala = catatan || 'Disetujui untuk pelaksanaan sesuai jadwal.';
-    list[idx].riwayat.push({
-      tgl: `${nowStr} ${nowTime}`,
-      role: actorRole,
-      aksi: `Menyetujui usulan kegiatan (ACC)${catatan ? ': ' + catatan : ''}`
-    });
+    if (!isKepala) {
+      list[idx].status = 'menunggu_kepala';
+      list[idx].keputusan_deputi = 'disetujui';
+      list[idx].catatan_deputi = catatan || 'Telaah Deputi selesai; diteruskan kepada Kepala LAN RI.';
+      list[idx].riwayat.push({
+        tgl: `${nowStr} ${nowTime}`,
+        role: actorRole,
+        aksi: `Menyetujui hasil telaah dan meneruskan usulan ke Kepala LAN RI${catatan ? ': ' + catatan : ''}`
+      });
+    } else {
+      list[idx].status = 'disetujui';
+      list[idx].disetujui_tgl = nowStr;
+      list[idx].keputusan_kepala = 'disetujui';
+      list[idx].catatan_kepala = catatan || (isPrismoPublicationProposal(list[idx]) ? 'Publikasi disetujui dan diteruskan ke antrean Humas.' : 'Disetujui untuk pelaksanaan oleh Unit sesuai jadwal.');
+      if (isPrismoPublicationProposal(list[idx])) list[idx].humas_status = 'antrian';
+      list[idx].riwayat.push({
+        tgl: `${nowStr} ${nowTime}`,
+        role: actorRole,
+        aksi: isPrismoPublicationProposal(list[idx])
+          ? `Menyetujui usulan publikasi dan meneruskan ke antrean Humas${catatan ? ': ' + catatan : ''}`
+          : `Menyetujui kegiatan untuk dilaksanakan Unit${catatan ? ': ' + catatan : ''}`
+      });
+    }
   } else if (keputusan === 'perlu_perbaikan') {
     list[idx].status = 'perlu_perbaikan';
     list[idx].keputusan_kepala = 'perlu_perbaikan';
@@ -10294,7 +10475,7 @@ function confirmAndExecutePrismoDecision() {
   }
 
   savePrismoProposals(list);
-  if (keputusan === 'disetujui') ensureApprovedProposalActivityRecords([list[idx]]);
+  if (keputusan === 'disetujui' && isKepala) ensureApprovedProposalActivityRecords([list[idx]]);
   recordInternalAuditLog('LEADERSHIP_DECISION', { id: list[idx].id, actorRole, keputusan });
   pendingDecisionPayload = null;
   closePrismoConfirmDecisionModal();
@@ -10318,12 +10499,15 @@ function openPrismoDetailModal(id) {
   document.getElementById('prismo-detail-modal-id').textContent = `${item.id} · ${item.jenis_persetujuan || 'Pengajuan Kegiatan'}`;
   document.getElementById('prismo-detail-modal-title').textContent = item.judul;
   document.getElementById('prismo-detail-view-unit').textContent = item.unit;
-  document.getElementById('prismo-detail-view-jenis').textContent = item.jenis || 'Survei';
-  document.getElementById('prismo-detail-view-cluster').textContent = resolveClusterName(item.cluster);
-  document.getElementById('prismo-detail-view-target').textContent = `${item.target_selesai || '-'} (Jadwal: ${item.jadwal || '-'})`;
+  const detailType = document.getElementById('prismo-detail-view-jenis');
+  if (detailType) detailType.textContent = item.jenis || 'Survei';
+  const detailCluster = document.getElementById('prismo-detail-view-cluster');
+  if (detailCluster) detailCluster.textContent = resolveClusterName(item.cluster);
+  const detailTarget = document.getElementById('prismo-detail-view-target');
+  if (detailTarget) detailTarget.textContent = `${item.target_selesai || '-'} (Jadwal: ${item.jadwal || '-'})`;
   document.getElementById('prismo-detail-view-pic').textContent = item.pic || '-';
 
-  const badge = getPrismoStatusBadge(item.status);
+  const badge = getPrismoStatusBadge(item.status, item);
   const decOverdue = isProposalDecisionOverdue(item);
   document.getElementById('prismo-detail-view-status').innerHTML = `
     <span class="badge" style="background:${badge.bg};color:${badge.color};border:1px solid ${badge.border};font-weight:700;"><i class="fa-solid ${badge.icon}"></i> ${badge.text}</span>
@@ -10331,19 +10515,20 @@ function openPrismoDetailModal(id) {
   `;
 
   document.getElementById('prismo-detail-view-latar').innerHTML = `
-    <div style="margin-bottom:6px;"><strong>Latar Belakang:</strong> ${escapeHtml(item.latar_belakang || '-')}</div>
-    <div><strong>Tujuan:</strong> ${escapeHtml(item.tujuan || '-')}</div>
+    <div style="font-size:11px;color:#64748b;margin-bottom:3px;">${escapeHtml(item.jenis_persetujuan || item.jenis || 'Usulan')}</div>
+    <div style="font-weight:700;color:#334155;">${escapeHtml(item.tujuan || item.latar_belakang || 'Belum ada ringkasan.')}</div>
   `;
 
   let notesHtml = '';
   if (item.catatan_revisi) notesHtml += `<div style="margin-bottom:6px;color:#c2410c;"><strong><i class="fa-solid fa-rotate-left"></i> Arahan / Perbaikan Revisi:</strong> ${escapeHtml(item.catatan_revisi)}</div>`;
   if (item.alasan_penolakan) notesHtml += `<div style="margin-bottom:6px;color:#dc2626;"><strong><i class="fa-solid fa-circle-xmark"></i> Alasan Penolakan:</strong> ${escapeHtml(item.alasan_penolakan)}</div>`;
-  if (item.catatan_admin) notesHtml += `<div style="margin-bottom:6px;"><strong><i class="fa-solid fa-user-check"></i> Catatan Verifikasi Admin:</strong> ${escapeHtml(item.catatan_admin)}</div>`;
-  if (item.catatan_kepala) notesHtml += `<div style="margin-bottom:6px;color:#1e40af;"><strong><i class="fa-solid fa-comment-dots"></i> Catatan / Komentar Pimpinan:</strong> ${escapeHtml(item.catatan_kepala)}</div>`;
+  if (item.catatan_admin) notesHtml += `<div style="margin-bottom:5px;"><strong>Admin:</strong> ${escapeHtml(item.catatan_admin)}</div>`;
+  if (item.catatan_deputi) notesHtml += `<div style="margin-bottom:5px;"><strong>Deputi:</strong> ${escapeHtml(item.catatan_deputi)}</div>`;
+  if (item.catatan_kepala) notesHtml += `<div style="margin-bottom:5px;"><strong>Pimpinan:</strong> ${escapeHtml(item.catatan_kepala)}</div>`;
   if (Array.isArray(item.riwayat) && item.riwayat.length > 0) {
-    notesHtml += `<div style="margin-top:8px;padding-top:8px;border-top:1px dashed #fde68a;font-size:11.5px;"><strong>Riwayat Keputusan Kegiatan:</strong><ul style="margin:4px 0 0 16px;padding:0;">` +
+    notesHtml += `<details style="margin-top:6px;color:#64748b;font-size:11.5px;"><summary style="cursor:pointer;font-weight:700;">Lihat riwayat</summary><ul style="margin:5px 0 0 16px;padding:0;">` +
       item.riwayat.map(r => `<li><strong>${escapeHtml(r.tgl)}</strong> — ${escapeHtml(r.role)}: ${escapeHtml(r.aksi)}</li>`).join('') +
-      `</ul></div>`;
+      `</ul></details>`;
   }
   document.getElementById('prismo-detail-view-notes').innerHTML = notesHtml || '<span style="color:#64748b;font-style:italic;">Tidak ada catatan khusus.</span>';
 
@@ -10353,16 +10538,8 @@ function openPrismoDetailModal(id) {
     if (item.dokumen_proposal) {
       docsHtml += `
         <div style="width:100%;background:#f8fafc;border:1px solid #bfdbfe;border-radius:8px;padding:10px 12px;margin-bottom:6px;">
-          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">
-            <span style="font-size:12.5px;font-weight:800;color:#1e293b;"><i class="fa-brands fa-google-drive" style="color:#2563eb;"></i> ${escapeHtml(item.tor_nama || 'Dokumen TOR / Proposal')}</span>
-            <div style="display:flex;gap:6px;">
-              <span class="badge badge-blue" style="font-size:10.5px;">${escapeHtml(item.tor_jenis || 'TOR dan Proposal')}</span>
-              <span class="badge badge-green" style="font-size:10.5px;"><i class="fa-solid fa-circle-check"></i> Status Akses: ${escapeHtml(item.tor_status_akses || 'Dapat diakses')}</span>
-            </div>
-          </div>
-          ${item.tor_keterangan ? `<div style="font-size:11.5px;color:#475569;margin-top:4px;">Keterangan: ${escapeHtml(item.tor_keterangan)}</div>` : ''}
-          <div style="font-size:11px;color:#64748b;margin-top:4px;word-break:break-all;">Link: ${escapeHtml(item.dokumen_proposal)}</div>
-          <div style="margin-top:8px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+            <span style="font-size:12px;font-weight:700;color:#1e293b;"><i class="fa-brands fa-google-drive" style="color:#2563eb;margin-right:5px;"></i>${escapeHtml(item.tor_nama || 'TOR / Proposal')}</span>
             <a href="${escapeHtml(item.dokumen_proposal)}" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:#1d4ed8;color:#fff;border-radius:6px;font-size:12px;font-weight:700;text-decoration:none;"><i class="fa-solid fa-arrow-up-right-from-square"></i> Buka Dokumen</a>
           </div>
         </div>
@@ -10374,43 +10551,26 @@ function openPrismoDetailModal(id) {
     docsEl.innerHTML = docsHtml || '<span style="color:#94a3b8;font-size:12px;">Tidak ada dokumen terlampir</span>';
   }
 
-  // Render Visual Stepper
-  const isPengajuanDone = true;
-  const isVerifikasiDone = item.diverifikasi_tgl || item.status === 'menunggu_kepala' || item.status === 'menunggu_deputi' || item.status === 'disetujui';
-  const isAccDone = item.status === 'disetujui' || item.status === 'disetujui_catatan';
-  const isPelaksanaan = isAccDone;
-
+  // Ringkasan tahap saat ini, tanpa timeline panjang.
   const stepperEl = document.getElementById('prismo-detail-stepper');
   if (stepperEl) {
+    const nextStep = item.status === 'diajukan' ? 'Menunggu pemeriksaan Admin'
+      : item.status === 'menunggu_deputi' ? 'Dalam telaah Deputi'
+      : item.status === 'menunggu_kepala' ? 'Dalam telaah Kepala'
+      : ['disetujui', 'disetujui_catatan'].includes(item.status) && isPrismoPublicationProposal(item) ? 'Publikasi diteruskan ke Humas'
+      : ['disetujui', 'disetujui_catatan'].includes(item.status) ? 'Unit dapat melanjutkan ke progress kegiatan'
+      : item.status === 'perlu_perbaikan' ? 'Menunggu perbaikan dari Unit'
+      : item.status === 'ditolak' ? 'Pengajuan ditolak'
+      : 'Status pengajuan';
     stepperEl.innerHTML = `
-      <div style="font-size:10.5px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;">
-        ALUR STATUS KEGIATAN PRISMO
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;background:#f8fafc;border:1px solid #e2e8f0;border-radius:9px;padding:10px 12px;font-size:12px;">
+        <span style="color:#64748b;font-weight:600;">Tahap saat ini</span>
+        <strong style="color:#1e293b;"><i class="fa-solid fa-circle-info" style="color:#2563eb;margin-right:5px;"></i>${nextStep}</strong>
       </div>
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;font-size:11.5px;">
-        <span style="font-weight:700;color:${isPengajuanDone ? '#16a34a' : '#94a3b8'};">
-          <i class="fa-solid fa-circle-check"></i> ① Pengajuan
-        </span>
-        <span style="color:#cbd5e1;">&rarr;</span>
-        <span style="font-weight:700;color:${isVerifikasiDone ? '#16a34a' : (item.status === 'diajukan' ? '#2563eb' : '#94a3b8')};">
-          <i class="fa-solid ${isVerifikasiDone ? 'fa-circle-check' : 'fa-circle-dot'}"></i> ② Verifikasi Admin
-        </span>
-        <span style="color:#cbd5e1;">&rarr;</span>
-        <span style="font-weight:700;color:${isAccDone ? '#16a34a' : (item.status.startsWith('menunggu') ? '#ca8a04' : '#94a3b8')};">
-          <i class="fa-solid ${isAccDone ? 'fa-circle-check' : 'fa-circle-dot'}"></i> ③ ACC Pimpinan
-        </span>
-        <span style="color:#cbd5e1;">&rarr;</span>
-        <span style="font-weight:700;color:${isPelaksanaan ? '#2563eb' : '#94a3b8'};">
-          <i class="fa-solid fa-circle-dot"></i> ④ Pelaksanaan
-        </span>
-        <span style="color:#cbd5e1;">&rarr;</span>
-        <span style="font-weight:700;color:#94a3b8;">
-          <i class="fa-regular fa-circle"></i> ⑤ Publikasi
-        </span>
-      </div>
-      ${isAccDone && isUnitUser(getCurrentUser()) ? `
-        <div style="margin-top:12px;text-align:right;">
+      ${['disetujui', 'disetujui_catatan'].includes(item.status) && !isPrismoPublicationProposal(item) && isUnitUser(getCurrentUser()) ? `
+        <div style="margin-top:10px;text-align:right;">
           <button type="button" onclick="closePrismoDetailModal();openApprovedProposalProgress('${escapeHtml(item.id)}')" style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;background:#2563eb;color:#fff;border:none;border-radius:7px;font-size:11.5px;font-weight:700;cursor:pointer;">
-            Lanjut ke Progress <i class="fa-solid fa-arrow-right"></i>
+            Lanjut ke Progress Kegiatan <i class="fa-solid fa-arrow-right"></i>
           </button>
         </div>
       ` : ''}
@@ -10677,9 +10837,9 @@ function renderPrismoReportReviewQueue(user) {
   const canReview = user && ['admin_dspk2an', 'kepala_lan', 'deputi', 'superadmin'].includes(user.role);
   if (!canReview) return '';
   const list = getPrismoProposals().filter(proposal => proposal.laporan_status === 'menunggu_acc');
+  if (!list.length) return '';
   return `
     <section style="margin-top:22px;background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:18px;">
-      <div style="margin-bottom:12px;"><h3 style="font-size:16px;font-weight:800;color:#1e293b;margin-bottom:4px;"><i class="fa-solid fa-file-circle-check" style="color:#2563eb;margin-right:7px;"></i> Laporan &amp; Bukti Menunggu ACC</h3><p style="font-size:12px;color:#64748b;">ACC laporan akan membuka akses kegiatan ke menu Publikasi Awal.</p></div>
       ${list.length ? `<div style="display:grid;gap:10px;">${list.map(proposal => `
         <article style="padding:12px;border:1px solid #e2e8f0;border-radius:9px;background:#fcfdff;">
           <div style="font-size:10.5px;font-weight:800;color:#64748b;">${escapeHtml(proposal.id)} · ${escapeHtml(proposal.unit || '')} · PIC ${escapeHtml(proposal.pic || '-')}</div>
@@ -10694,7 +10854,7 @@ function renderPrismoReportReviewQueue(user) {
             <button type="button" onclick="decidePrismoReport('${escapeHtml(proposal.id)}','disetujui')" style="padding:6px 12px;border:0;border-radius:6px;background:#16a34a;color:#fff;font-size:11.5px;font-weight:700;cursor:pointer;">ACC Laporan</button>
           </div>
         </article>
-      `).join('')}</div>` : `<div style="padding:20px;text-align:center;color:#64748b;background:#f8fafc;border-radius:8px;font-size:12px;">Belum ada laporan yang menunggu ACC.</div>`}
+      `).join('')}</div>`}
     </section>
   `;
 }
@@ -10974,8 +11134,8 @@ function renderPrismoPersetujuanPimpinanAdmin() {
             <th style="padding:10px 12px;font-size:11px;font-weight:700;color:#64748b;width:40px;">No</th>
             <th style="padding:10px 12px;font-size:11px;font-weight:700;color:#64748b;">Kegiatan Usulan</th>
             <th style="padding:10px 12px;font-size:11px;font-weight:700;color:#64748b;width:90px;">Unit</th>
-            <th style="padding:10px 12px;font-size:11px;font-weight:700;color:#64748b;width:150px;">Status Kepala LAN</th>
-            <th style="padding:10px 12px;font-size:11px;font-weight:700;color:#64748b;width:150px;">Status Deputi</th>
+            <th style="padding:10px 12px;font-size:11px;font-weight:700;color:#64748b;width:150px;">Deputi</th>
+            <th style="padding:10px 12px;font-size:11px;font-weight:700;color:#64748b;width:150px;">Kepala</th>
             <th style="padding:10px 12px;font-size:11px;font-weight:700;color:#64748b;text-align:right;width:100px;">Aksi</th>
           </tr>
         </thead>
@@ -10984,6 +11144,7 @@ function renderPrismoPersetujuanPimpinanAdmin() {
             const isKepalaAcc = item.status === 'disetujui' || item.status === 'disetujui_catatan';
             const isKepalaWaiting = item.status === 'menunggu_kepala';
             const isDeputiWaiting = item.status === 'menunggu_deputi';
+            const deputiDone = isKepalaWaiting || isKepalaAcc;
             return `
               <tr style="border-bottom:1px solid #f1f5f9;">
                 <td style="padding:11px 12px;font-size:12px;color:#94a3b8;font-weight:700;">${idx + 1}</td>
@@ -10993,14 +11154,14 @@ function renderPrismoPersetujuanPimpinanAdmin() {
                 </td>
                 <td style="padding:11px 12px;"><span class="badge" style="background:#eff6ff;color:#1e40af;font-weight:700;">${item.unit}</span></td>
                 <td style="padding:11px 12px;">
-                  ${isKepalaAcc ? '<span class="badge" style="background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;font-weight:700;">Disetujui</span>' : (isKepalaWaiting ? '<span class="badge" style="background:#fefce8;color:#ca8a04;border:1px solid #fef08a;font-weight:700;">Menunggu</span>' : '<span style="color:#94a3b8;font-size:12px;">-</span>')}
+                  ${isDeputiWaiting ? '<span class="badge" style="background:#fefce8;color:#ca8a04;border:1px solid #fef08a;font-weight:700;">Dalam Telaah</span>' : (deputiDone ? '<span class="badge" style="background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;font-weight:700;">Disetujui</span>' : '<span style="color:#94a3b8;font-size:12px;">Belum Dimulai</span>')}
                 </td>
                 <td style="padding:11px 12px;">
-                  ${isDeputiWaiting ? '<span class="badge" style="background:#fefce8;color:#ca8a04;border:1px solid #fef08a;font-weight:700;">Menunggu</span>' : (isKepalaAcc ? '<span class="badge" style="background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;font-weight:700;">Selesai</span>' : '<span style="color:#94a3b8;font-size:12px;">-</span>')}
+                  ${isKepalaAcc ? '<span class="badge" style="background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;font-weight:700;">Disetujui</span>' : (isKepalaWaiting ? '<span class="badge" style="background:#fefce8;color:#ca8a04;border:1px solid #fef08a;font-weight:700;">Dalam Telaah</span>' : '<span style="color:#94a3b8;font-size:12px;">Belum Dimulai</span>')}
                 </td>
                 <td style="padding:11px 12px;text-align:right;">
                   <button onclick="openPrismoDetailModal('${item.id}')" style="padding:5px 12px;background:#f8fafc;border:1px solid #cbd5e1;border-radius:6px;font-size:11.5px;font-weight:600;cursor:pointer;">
-                    Detail
+                    <i class="fa-solid fa-eye" aria-hidden="true"></i> Lihat Detail
                   </button>
                 </td>
               </tr>
@@ -11025,7 +11186,10 @@ function renderPrismoKeputusanPimpinan(user, pimpinanRole) {
     p.status === 'ditolak'
   );
 
-  const pendingList = list.filter(p => p.status === 'menunggu_kepala' || p.status === 'menunggu_deputi');
+  const canReview = item => user && user.role === 'kepala_lan'
+    ? item.status === 'menunggu_kepala'
+    : item.status === 'menunggu_deputi';
+  const pendingList = list.filter(canReview);
   const overdueDecisionList = pendingList.filter(p => isProposalDecisionOverdue(p));
 
   return `
@@ -11066,7 +11230,7 @@ function renderPrismoKeputusanPimpinan(user, pimpinanRole) {
               </div>
               <div style="display:flex;gap:6px;">
                 <button onclick="openPrismoDetailModal('${odItem.id}')" style="padding:5px 10px;border-radius:6px;border:1px solid #cbd5e1;background:#f8fafc;font-size:11px;font-weight:700;cursor:pointer;">Detail</button>
-                <button onclick="openPrismoPimpinanModal('${odItem.id}')" style="padding:5px 12px;border-radius:6px;border:none;background:#dc2626;color:#fff;font-size:11px;font-weight:700;cursor:pointer;"><i class="fa-solid fa-stamp"></i> Review / ACC</button>
+                 ${canReview(odItem) ? `<button onclick="openPrismoPimpinanModal('${odItem.id}')" style="padding:5px 12px;border-radius:6px;border:none;background:#dc2626;color:#fff;font-size:11px;font-weight:700;cursor:pointer;"><i class="fa-solid fa-stamp"></i> Review / ACC</button>` : ''}
               </div>
             </div>
           `).join('')}
@@ -11105,8 +11269,8 @@ function renderPrismoKeputusanPimpinan(user, pimpinanRole) {
         </thead>
         <tbody>
           ${list.map((item) => {
-            const badge = getPrismoStatusBadge(item.status);
-            const isPending = (item.status === 'menunggu_kepala' || item.status === 'menunggu_deputi');
+            const badge = getPrismoStatusBadge(item.status, item);
+            const isPending = canReview(item);
             const isDecOverdue = isProposalDecisionOverdue(item);
             const jenisPersetujuan = item.jenis_persetujuan || 'Pengajuan Kegiatan';
             return `
@@ -11157,7 +11321,7 @@ function filterPrismoPimpinanTable() {
   rows.forEach(tr => {
     const text = tr.innerText.toLowerCase();
     const matchJ = !j || text.includes(j);
-    const matchS = !s || text.includes(s);
+    const matchS = !s || (s === 'menunggu' ? /tahap [23]/i.test(text) : text.includes(s));
     tr.style.display = (matchJ && matchS) ? '' : 'none';
   });
 }
@@ -11299,6 +11463,16 @@ function renderDynamicRoleTab(tabName, user) {
     case 'pengajuan_kegiatan':
       container.innerHTML = renderPrismoPengajuanUnit(user);
       if (typeof updatePortalBadges === 'function') updatePortalBadges();
+      return;
+
+    case 'agenda_tahunan':
+      container.innerHTML = renderPlanningUnitPage('agenda', user);
+      renderPlanningPages();
+      return;
+
+    case 'inisiatif_ak_dosen':
+      container.innerHTML = renderPlanningUnitPage('inisiatif', user);
+      renderPlanningPages();
       return;
 
     case 'perbaikan_catatan':
@@ -11510,7 +11684,6 @@ function renderDynamicRoleTab(tabName, user) {
       break;
 
     case 'manajemen_kanal':
-    case 'antrian_publikasi':
       headerHtml = `
         <div style="margin-bottom:20px;">
           <h3 style="font-size:18px;font-weight:800;color:#1e293b;margin-bottom:4px;">
@@ -11521,6 +11694,14 @@ function renderDynamicRoleTab(tabName, user) {
       `;
       bodyHtml = renderWorkflowTable(RAW, 'kanal');
       break;
+
+    case 'antrian_publikasi':
+      container.innerHTML = renderHumasPublicationQueue() + `
+        <div style="margin-top:22px;">
+          <h4 style="font-size:15px;font-weight:800;color:#1e293b;margin-bottom:10px;"><i class="fa-solid fa-share-nodes" style="color:#ec4899;margin-right:7px;"></i>Manajemen Kanal Publikasi</h4>
+          ${renderWorkflowTable(RAW, 'kanal')}
+        </div>`;
+      return;
 
     case 'log_aktivitas':
       // Revisi #7: Log aktivitas disembunyikan dari Admin operasional, hanya Superadmin jika ada
@@ -11557,6 +11738,32 @@ function renderDynamicRoleTab(tabName, user) {
   }
 
   container.innerHTML = headerHtml + bodyHtml;
+}
+
+function renderHumasPublicationQueue() {
+  const queue = getPrismoProposals().filter(item =>
+    isPrismoPublicationProposal(item) && item.status === 'disetujui' && (!item.humas_status || item.humas_status === 'antrian')
+  );
+  return `
+    <div style="margin-bottom:20px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
+        <div>
+          <h3 style="font-size:18px;font-weight:800;color:#1e293b;margin-bottom:4px;"><i class="fa-solid fa-inbox" style="color:#db2777;margin-right:8px;"></i>Publikasi Disetujui · Antrean Humas</h3>
+          <p style="font-size:12.5px;color:#64748b;">Publikasi yang telah mendapat persetujuan akhir Kepala LAN RI dan siap ditindaklanjuti Humas.</p>
+        </div>
+        <span class="badge" style="background:#fdf2f8;color:#be185d;border:1px solid #fbcfe8;font-weight:800;">${queue.length} dalam antrean</span>
+      </div>
+      ${queue.length ? `<div style="overflow-x:auto;border:1px solid #fbcfe8;border-radius:10px;background:#fff;"><table style="width:100%;border-collapse:collapse;text-align:left;font-family:inherit;">
+        <thead style="background:#fdf2f8;border-bottom:1px solid #fbcfe8;"><tr>
+          <th style="padding:10px 12px;font-size:11px;color:#9d174d;">Jenis</th><th style="padding:10px 12px;font-size:11px;color:#9d174d;">Judul Publikasi</th><th style="padding:10px 12px;font-size:11px;color:#9d174d;">Unit Kerja</th><th style="padding:10px 12px;font-size:11px;color:#9d174d;">Disetujui</th><th style="padding:10px 12px;font-size:11px;color:#9d174d;text-align:right;">Aksi</th>
+        </tr></thead><tbody>${queue.map(item => `<tr style="border-bottom:1px solid #fce7f3;">
+          <td style="padding:11px 12px;"><span class="badge badge-blue">${escapeHtml(item.jenis_persetujuan)}</span></td>
+          <td style="padding:11px 12px;"><strong style="font-size:13px;color:#1e293b;">${escapeHtml(item.judul)}</strong><div style="font-size:11px;color:#64748b;">${escapeHtml(item.id)} · PIC: ${escapeHtml(item.pic || '-')}</div></td>
+          <td style="padding:11px 12px;font-size:12px;">${escapeHtml(item.unit || '-')}</td>
+          <td style="padding:11px 12px;font-size:12px;">${escapeHtml(item.disetujui_tgl || '-')}</td>
+          <td style="padding:11px 12px;text-align:right;"><button onclick="openPrismoDetailModal('${item.id}')" aria-label="Lihat detail publikasi ${escapeHtml(item.judul)}" style="padding:6px 10px;background:#fff;border:1px solid #f9a8d4;border-radius:6px;color:#9d174d;cursor:pointer;"><i class="fa-solid fa-eye"></i> Lihat Detail</button></td>
+        </tr>`).join('')}</tbody></table></div>` : `<div style="padding:24px;text-align:center;background:#fff;border:1px dashed #f9a8d4;border-radius:10px;color:#64748b;font-size:12.5px;"><i class="fa-regular fa-folder-open" style="font-size:22px;color:#db2777;display:block;margin-bottom:8px;"></i>Belum ada publikasi yang menunggu tindak lanjut Humas.</div>`}
+    </div>`;
 }
 
 function openWorkflowStep(tabName, searchText) {
