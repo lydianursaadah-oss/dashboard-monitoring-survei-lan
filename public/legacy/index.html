@@ -175,6 +175,7 @@ function handleUsernameInput(val) {
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/legacy/inisiatif_data.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
   <!-- Tailwind CSS Utilities (Preflight disabled agar tidak merusak styling CSS kustom) -->
@@ -7028,103 +7029,380 @@ function renderPlanningPages() {
 }
 
 let inisiatifAkDosenRows = [];
+let inisiatifFilteredRows = [];
+let inisiatifCurrentPage = 1;
+const INISIATIF_PER_PAGE = 25;
+
+function getStoredInisiatifLocal() {
+  try {
+    const raw = localStorage.getItem('prismo_inisiatif_ak_dosen_v2');
+    if (raw) return JSON.parse(raw);
+  } catch(e) { console.warn(e); }
+  return null;
+}
+
+function saveStoredInisiatifLocal(items) {
+  try {
+    localStorage.setItem('prismo_inisiatif_ak_dosen_v2', JSON.stringify(items));
+  } catch(e) { console.warn(e); }
+}
+
 function initiativeLinksHtml(item) {
   const fields = [
-    ['Jurnal', item.jurnal], ['Media Online', item.mediaOnline], ['Website LAN', item.websiteLan],
-    ['Website Unit', item.websiteUnit], ['Instagram LAN', item.instagramLan], ['Instagram Unit', item.instagramUnit],
-    ['Youtube LAN', item.youtubeLan], ['Youtube Unit', item.youtubeUnit], ['Media Televisi', item.mediaTelevisi]
+    ['jurnal', 'Jurnal', item.jurnal, '#d97706'],
+    ['mediaOnline', 'Media', item.mediaOnline || item.media_online, '#2563eb'],
+    ['websiteLan', 'Web LAN', item.websiteLan || item.website_lan, '#059669'],
+    ['websiteUnit', 'Web Unit', item.websiteUnit || item.website_unit, '#ea580c'],
+    ['instagramLan', 'IG LAN', item.instagramLan || item.instagram_lan, '#7c3aed'],
+    ['instagramUnit', 'IG Unit', item.instagramUnit || item.instagram_unit, '#db2777'],
+    ['youtubeLan', 'YT LAN', item.youtubeLan || item.youtube_lan, '#dc2626'],
+    ['youtubeUnit', 'YT Unit', item.youtubeUnit || item.youtube_unit, '#0891b2']
   ];
-  return `<div class="initiative-links">${fields.map(([label, raw]) => {
-    const values = String(raw || '').split(/\n+/).map(value => value.trim()).filter(Boolean);
-    if (!values.length) return '';
-    return values.map(value => {
-      const urls = value.match(/https?:\/\/[^\s,]+/ig) || [];
-      if (urls.length) return urls.map((url, index) => `<a href="${planningEscape(url)}" target="_blank" rel="noopener noreferrer">${planningEscape(label)}${urls.length > 1 ? ` ${index + 1}` : ''}</a>`).join('');
-      return `<span>${planningEscape(label)}: ${planningEscape(value)}</span>`;
-    }).join('');
-  }).join('') || '—'}</div>`;
+  const rendered = fields.map(([field, label, raw, col]) => {
+    if (!raw || !String(raw).trim() || String(raw).trim() === '-') return '';
+    const val = String(raw).trim();
+    const url = (typeof resolveChannelUrl === 'function')
+      ? resolveChannelUrl(field, val, item)
+      : (val.startsWith('http') ? val : '#');
+    return `<a href="${planningEscape(url)}" target="_blank" rel="noopener noreferrer" class="badge" style="background:#fff;color:${col};border:1px solid #cbd5e1;font-size:10px;text-decoration:none;display:inline-flex;align-items:center;gap:3px;margin:2px;" title="${planningEscape(label)}: ${planningEscape(val)}"><i class="fa-solid fa-arrow-up-right-from-square" style="font-size:9px"></i> ${planningEscape(label)}</a>`;
+  }).filter(Boolean);
+  return rendered.length ? `<div style="display:flex;flex-wrap:wrap;gap:2px;">${rendered.join('')}</div>` : '<span style="color:#94a3b8">—</span>';
 }
+
 async function renderInisiatifAkDosenRows() {
   const tbody = document.getElementById('inisiatif-rows');
   if (!tbody) return;
   const currentUser = getCurrentUser();
   const count = document.getElementById('inisiatif-count');
   const empty = document.getElementById('inisiatif-empty');
-  tbody.innerHTML = '<tr><td colspan="9">Memuat data…</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:24px;color:#64748b;"><i class="fa-solid fa-spinner fa-spin" style="margin-right:6px"></i> Memuat data Inisiatif AK/Dosen…</td></tr>';
+
+  // 1. Ambil unit target
+  const unitFilterEl = document.getElementById('inisiatif-unit-filter');
+  const selectedUnit = unitFilterEl ? unitFilterEl.value : (isUnitUser(currentUser) ? (currentUser.unit || '') : '');
+
+  // 2. Muat data dari API atau fallback ke INITIAL_INISIATIF_AK_DOSEN
+  let fetchedItems = null;
   try {
-    const response = await fetch(`/api/inisiatif-ak-dosen?unit=${encodeURIComponent(currentUser?.unit || '')}`);
-    if (!response.ok) throw new Error((await response.json().catch(() => ({}))).statusMessage || 'Gagal mengambil data.');
-    inisiatifAkDosenRows = await response.json();
-    tbody.innerHTML = inisiatifAkDosenRows.map(item => `<tr>
-      <td>${planningEscape(item.no ?? '—')}</td><td>${planningEscape(item.judul)}</td><td>${planningEscape(item.jenis || '—')}</td>
-      <td>${planningEscape(item.tahun ?? '—')}</td><td>${planningEscape(item.cluster1 || '—')}</td><td>${planningEscape(item.cluster2 || '—')}</td>
-      <td>${initiativeLinksHtml(item)}</td><td>${planningEscape(item.catatan || '—')}</td>
-      <td><button class="planning-button" type="button" onclick="openInisiatifEditor(${Number(item.id)})"><i class="fa-solid fa-pen"></i> Edit</button></td>
-    </tr>`).join('');
-    if (!inisiatifAkDosenRows.length) tbody.innerHTML = '<tr><td colspan="9">Belum ada data untuk unit ini.</td></tr>';
-    if (count) count.textContent = `${inisiatifAkDosenRows.length} data`;
-    if (empty) empty.hidden = true;
+    const qUnit = selectedUnit ? `?unit=${encodeURIComponent(selectedUnit)}` : '';
+    const response = await fetch(`/api/inisiatif-ak-dosen${qUnit}`);
+    if (response.ok) {
+      const data = await response.json();
+      if (Array.isArray(data) && data.length > 0) fetchedItems = data;
+    }
   } catch (error) {
-    console.error('[PRISMO API] Gagal memuat Inisiatif AK/Dosen:', error);
-    tbody.innerHTML = '<tr><td colspan="9">Data belum dapat dimuat. Silakan muat ulang halaman.</td></tr>';
-    if (count) count.textContent = 'Gagal memuat';
+    console.warn('[PRISMO API] Menggunakan fallback data inisiatif lokal:', error);
   }
+
+  // Jika API kosong/offline, gunakan data awal dari Google Sheet (700 data)
+  if (!fetchedItems) {
+    const local = getStoredInisiatifLocal();
+    let all = local || (typeof window.INITIAL_INISIATIF_AK_DOSEN !== 'undefined' ? window.INITIAL_INISIATIF_AK_DOSEN : []);
+    if (selectedUnit) {
+      fetchedItems = all.filter(item => String(item.unit || item.sourceSheet).toUpperCase().includes(selectedUnit.toUpperCase()));
+    } else {
+      fetchedItems = all;
+    }
+  }
+
+  inisiatifAkDosenRows = fetchedItems || [];
+  inisiatifCurrentPage = 1;
+  filterInisiatifTable();
 }
+
+function filterInisiatifTable(page = 1) {
+  const tbody = document.getElementById('inisiatif-rows');
+  if (!tbody) return;
+  const count = document.getElementById('inisiatif-count');
+  const empty = document.getElementById('inisiatif-empty');
+  const currentUser = getCurrentUser();
+  const isUnit = isUnitUser(currentUser);
+
+  const searchVal = (document.getElementById('inisiatif-search-input')?.value || '').toLowerCase().trim();
+  const yearVal = (document.getElementById('inisiatif-year-filter')?.value || '').trim();
+  const unitFilterEl = document.getElementById('inisiatif-unit-filter');
+  const selectedUnit = unitFilterEl ? unitFilterEl.value : (isUnit ? (currentUser.unit || '') : '');
+
+  inisiatifFilteredRows = inisiatifAkDosenRows.filter(item => {
+    if (selectedUnit && !String(item.unit || item.sourceSheet || '').toUpperCase().includes(selectedUnit.toUpperCase())) return false;
+    if (yearVal && String(item.tahun || '') !== yearVal) return false;
+    if (searchVal) {
+      const text = `${item.judul || ''} ${item.jenis || ''} ${item.cluster1 || ''} ${item.cluster2 || ''} ${item.catatan || ''} ${item.unit || ''}`.toLowerCase();
+      if (!text.includes(searchVal)) return false;
+    }
+    return true;
+  });
+
+  if (count) count.textContent = `${inisiatifFilteredRows.length} publikasi terdaftar`;
+
+  if (!inisiatifFilteredRows.length) {
+    tbody.innerHTML = '';
+    if (empty) empty.hidden = false;
+    renderInisiatifPagination(0, 1);
+    return;
+  }
+  if (empty) empty.hidden = true;
+
+  // Pagination slice
+  inisiatifCurrentPage = page;
+  const totalPages = Math.ceil(inisiatifFilteredRows.length / INISIATIF_PER_PAGE) || 1;
+  const startIdx = (inisiatifCurrentPage - 1) * INISIATIF_PER_PAGE;
+  const pageRows = inisiatifFilteredRows.slice(startIdx, startIdx + INISIATIF_PER_PAGE);
+
+  tbody.innerHTML = pageRows.map((item, idx) => {
+    const rowNo = startIdx + idx + 1;
+    const canEdit = !isUnit || (item.unit && currentUser.unit && String(item.unit).toUpperCase().includes(String(currentUser.unit).toUpperCase()));
+    const unitBadge = `<span class="badge" style="background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe;font-weight:700;">${planningEscape(item.unit || item.sourceSheet || '—')}</span>`;
+    const jenisBadge = item.jenis ? `<span class="badge" style="background:#f8fafc;border:1px solid #e2e8f0;color:#334155;">${planningEscape(item.jenis)}</span>` : '—';
+    const clusterText = [item.cluster1, item.cluster2].filter(Boolean).map(planningEscape).join(' · ') || '—';
+
+    return `<tr>
+      <td style="font-weight:700;color:#64748b;text-align:center;">${rowNo}</td>
+      ${!isUnit ? `<td>${unitBadge}</td>` : ''}
+      <td style="max-width:320px;">
+        <div style="font-weight:700;color:#1e293b;line-height:1.4;">${planningEscape(item.judul)}</div>
+      </td>
+      <td>${jenisBadge}</td>
+      <td style="font-weight:700;color:#475569;text-align:center;">${planningEscape(item.tahun ?? '—')}</td>
+      <td style="font-size:11.5px;color:#475569;">${clusterText}</td>
+      <td>${initiativeLinksHtml(item)}</td>
+      <td style="font-size:11px;color:#64748b;max-width:180px;">${planningEscape(item.catatan || '—')}</td>
+      <td style="white-space:nowrap;">
+        ${canEdit ? `
+          <button class="planning-button" type="button" onclick="openInisiatifEditor(${Number(item.id)})" style="padding:4px 9px;font-size:11px;" title="Edit data ini">
+            <i class="fa-solid fa-pen"></i> Edit
+          </button>
+          <button class="planning-delete" type="button" onclick="deleteInisiatifRow(${Number(item.id)})" style="padding:4px 7px;font-size:11px;margin-left:4px;" title="Hapus data ini">
+            <i class="fa-solid fa-trash"></i>
+          </button>
+        ` : '<span style="color:#94a3b8;font-size:11px;">Hanya baca</span>'}
+      </td>
+    </tr>`;
+  }).join('');
+
+  renderInisiatifPagination(totalPages, inisiatifCurrentPage);
+}
+
+function renderInisiatifPagination(totalPages, currentPage) {
+  const container = document.getElementById('inisiatif-pagination');
+  if (!container) return;
+  if (totalPages <= 1) { container.innerHTML = ''; return; }
+
+  container.innerHTML = `
+    <div>Menampilkan halaman <strong>${currentPage}</strong> dari <strong>${totalPages}</strong> (${inisiatifFilteredRows.length} total)</div>
+    <div style="display:flex;gap:6px;">
+      <button type="button" class="planning-button" ${currentPage <= 1 ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''} onclick="filterInisiatifTable(${currentPage - 1})">
+        &larr; Sebelumnya
+      </button>
+      <button type="button" class="planning-button" ${currentPage >= totalPages ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''} onclick="filterInisiatifTable(${currentPage + 1})">
+        Selanjutnya &rarr;
+      </button>
+    </div>
+  `;
+}
+
 function openInisiatifEditor(id) {
-  if (!isUnitUser(getCurrentUser())) return;
+  const user = getCurrentUser();
   const editor = document.getElementById('inisiatif-editor');
   if (!editor) return;
-  const item = inisiatifAkDosenRows.find(row => Number(row.id) === Number(id));
-  const fields = [
-    ['judul','Judul',item?.judul,'text'], ['jenis','Jenis',item?.jenis,'text'], ['tahun','Tahun',item?.tahun,'number'],
-    ['cluster1','Cluster 1',item?.cluster1,'text'], ['cluster2','Cluster 2',item?.cluster2,'text'],
-    ['jurnal','Jurnal',item?.jurnal,'textarea'], ['mediaOnline','Media Online',item?.mediaOnline,'textarea'],
-    ['websiteLan','Website LAN',item?.websiteLan,'textarea'], ['websiteUnit','Website Unit',item?.websiteUnit,'textarea'],
-    ['instagramLan','Instagram LAN',item?.instagramLan,'textarea'], ['instagramUnit','Instagram Unit',item?.instagramUnit,'textarea'],
-    ['youtubeLan','Youtube LAN',item?.youtubeLan,'textarea'], ['youtubeUnit','Youtube Unit',item?.youtubeUnit,'textarea'],
-    ['catatan','Catatan',item?.catatan,'textarea']
-  ];
-  editor.innerHTML = `<div class="card" style="margin-bottom:16px"><div class="card-header"><span class="card-title">${item ? 'Edit' : 'Tambah'} Data Inisiatif AK/Dosen</span></div><div class="card-body">
-    <form id="inisiatif-db-form" data-id="${item ? Number(item.id) : ''}"><div class="initiative-edit-grid">
-      ${fields.map(([name,label,value,type]) => `<label>${label}${type === 'textarea'
-        ? `<textarea name="${name}" ${name === 'judul' ? 'required' : ''} maxlength="2000">${planningEscape(value ?? '')}</textarea>`
-        : `<input name="${name}" type="${type}" value="${planningEscape(value ?? '')}" ${name === 'judul' ? 'required maxlength="300"' : name === 'tahun' ? 'min="1900" max="2200"' : 'maxlength="2000"'}>`}</label>`).join('')}
-    </div><div style="display:flex;gap:8px;margin-top:14px"><button class="planning-button" type="submit"><i class="fa-solid fa-floppy-disk"></i> Simpan</button><button class="filter-reset" type="button" onclick="closeInisiatifEditor()">Batal</button></div></form>
-  </div></div>`;
+  const isEdit = id != null;
+  const item = isEdit ? inisiatifAkDosenRows.find(row => Number(row.id) === Number(id)) : null;
+
+  const unitList = ['SKMK', 'SKTAN', 'SKPP', 'SKMP', 'STIA BDG', 'STIA JKT', 'STIA MKS', 'DSPK2AN', 'DAPKK'];
+  const defaultUnit = item?.unit || (isUnitUser(user) ? user.unit : 'SKMK');
+
+  editor.innerHTML = `
+    <div class="card" style="margin-bottom:16px;border-left:4px solid #eab308;box-shadow:0 4px 6px -1px rgba(0,0,0,0.08);">
+      <div class="card-header" style="display:flex;align-items:center;justify-content:space-between;">
+        <span class="card-title"><i class="fa-solid fa-pen-to-square"></i> ${isEdit ? 'Edit Data Inisiatif AK / Dosen' : 'Tambah Data Inisiatif Baru'}</span>
+        <button type="button" onclick="closeInisiatifEditor()" style="background:none;border:none;color:#64748b;font-size:16px;cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="card-body">
+        <form id="inisiatif-db-form" data-id="${item ? Number(item.id) : ''}">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+            <div>
+              <label style="font-size:11px;font-weight:700;color:#334155;display:block;margin-bottom:4px;">Unit Kerja *</label>
+              ${isUnitUser(user) ? `
+                <input type="text" name="unit" value="${planningEscape(defaultUnit)}" readonly style="width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:6px;background:#f8fafc;font-weight:700;color:#1e40af;">
+              ` : `
+                <select name="unit" required style="width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:6px;background:#fff;font-size:12px;">
+                  ${unitList.map(u => `<option value="${u}" ${u === defaultUnit ? 'selected' : ''}>${u}</option>`).join('')}
+                </select>
+              `}
+            </div>
+            <div>
+              <label style="font-size:11px;font-weight:700;color:#334155;display:block;margin-bottom:4px;">Tahun *</label>
+              <input type="number" name="tahun" value="${planningEscape(item?.tahun || new Date().getFullYear())}" min="1900" max="2200" required style="width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;">
+            </div>
+          </div>
+
+          <div style="margin-bottom:12px;">
+            <label style="font-size:11px;font-weight:700;color:#334155;display:block;margin-bottom:4px;">Judul Kegiatan / Publikasi *</label>
+            <textarea name="judul" required rows="2" placeholder="Masukkan judul penelitian, policy paper, artikel, atau buku" style="width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:6px;font-size:12.5px;font-family:inherit;">${planningEscape(item?.judul || '')}</textarea>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px;">
+            <div>
+              <label style="font-size:11px;font-weight:700;color:#334155;display:block;margin-bottom:4px;">Jenis Publikasi</label>
+              <input type="text" name="jenis" list="jenis-inisiatif-list" value="${planningEscape(item?.jenis || '')}" placeholder="Contoh: Policy Paper, Jurnal" style="width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;">
+              <datalist id="jenis-inisiatif-list">
+                <option value="Policy Paper">
+                <option value="Policy Brief">
+                <option value="Jurnal/Penelitian Dosen">
+                <option value="Jurnal/Penelitian Kolaborasi">
+                <option value="Buku">
+                <option value="Artikel">
+                <option value="Laporan">
+                <option value="Survei">
+              </datalist>
+            </div>
+            <div>
+              <label style="font-size:11px;font-weight:700;color:#334155;display:block;margin-bottom:4px;">Cluster 1</label>
+              <input type="text" name="cluster1" list="cluster1-list" value="${planningEscape(item?.cluster1 || item?.cluster_1 || '')}" placeholder="Pilih atau ketik Cluster 1" style="width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;">
+              <datalist id="cluster1-list">
+                ${getActiveClusterNames().map(c => `<option value="${planningEscape(c)}">`).join('')}
+              </datalist>
+            </div>
+            <div>
+              <label style="font-size:11px;font-weight:700;color:#334155;display:block;margin-bottom:4px;">Cluster 2</label>
+              <input type="text" name="cluster2" list="cluster2-list" value="${planningEscape(item?.cluster2 || item?.cluster_2 || '')}" placeholder="Cluster 2 (opsional)" style="width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;">
+              <datalist id="cluster2-list">
+                ${getActiveClusterNames().map(c => `<option value="${planningEscape(c)}">`).join('')}
+              </datalist>
+            </div>
+          </div>
+
+          <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px;margin-bottom:12px;">
+            <div style="font-size:11.5px;font-weight:800;color:#1e40af;margin-bottom:8px;"><i class="fa-solid fa-share-nodes"></i> Tautan Publikasi &amp; Kanal Diseminasi (URL / Teks)</div>
+            <div class="initiative-edit-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;">
+              <div>
+                <label style="font-size:10.5px;font-weight:700;color:#475569;display:block;margin-bottom:3px;"><i class="fa-solid fa-book" style="color:#d97706"></i> Jurnal</label>
+                <input type="text" name="jurnal" value="${planningEscape(item?.jurnal || '')}" placeholder="Link / Nama Jurnal" style="width:100%;padding:6px 8px;border:1px solid #cbd5e1;border-radius:6px;font-size:11.5px;">
+              </div>
+              <div>
+                <label style="font-size:10.5px;font-weight:700;color:#475569;display:block;margin-bottom:3px;"><i class="fa-solid fa-newspaper" style="color:#2563eb"></i> Media Online</label>
+                <input type="text" name="mediaOnline" value="${planningEscape(item?.mediaOnline || item?.media_online || '')}" placeholder="Link Berita Online" style="width:100%;padding:6px 8px;border:1px solid #cbd5e1;border-radius:6px;font-size:11.5px;">
+              </div>
+              <div>
+                <label style="font-size:10.5px;font-weight:700;color:#475569;display:block;margin-bottom:3px;"><i class="fa-solid fa-globe" style="color:#059669"></i> Website LAN</label>
+                <input type="text" name="websiteLan" value="${planningEscape(item?.websiteLan || item?.website_lan || '')}" placeholder="Link lan.go.id" style="width:100%;padding:6px 8px;border:1px solid #cbd5e1;border-radius:6px;font-size:11.5px;">
+              </div>
+              <div>
+                <label style="font-size:10.5px;font-weight:700;color:#475569;display:block;margin-bottom:3px;"><i class="fa-solid fa-building" style="color:#ea580c"></i> Website Unit</label>
+                <input type="text" name="websiteUnit" value="${planningEscape(item?.websiteUnit || item?.website_unit || '')}" placeholder="Link web unit" style="width:100%;padding:6px 8px;border:1px solid #cbd5e1;border-radius:6px;font-size:11.5px;">
+              </div>
+              <div>
+                <label style="font-size:10.5px;font-weight:700;color:#475569;display:block;margin-bottom:3px;"><i class="fa-brands fa-instagram" style="color:#7c3aed"></i> Instagram LAN</label>
+                <input type="text" name="instagramLan" value="${planningEscape(item?.instagramLan || item?.instagram_lan || '')}" placeholder="Link IG LAN" style="width:100%;padding:6px 8px;border:1px solid #cbd5e1;border-radius:6px;font-size:11.5px;">
+              </div>
+              <div>
+                <label style="font-size:10.5px;font-weight:700;color:#475569;display:block;margin-bottom:3px;"><i class="fa-brands fa-instagram" style="color:#db2777"></i> Instagram Unit</label>
+                <input type="text" name="instagramUnit" value="${planningEscape(item?.instagramUnit || item?.instagram_unit || '')}" placeholder="Link IG Unit" style="width:100%;padding:6px 8px;border:1px solid #cbd5e1;border-radius:6px;font-size:11.5px;">
+              </div>
+              <div>
+                <label style="font-size:10.5px;font-weight:700;color:#475569;display:block;margin-bottom:3px;"><i class="fa-brands fa-youtube" style="color:#dc2626"></i> Youtube LAN</label>
+                <input type="text" name="youtubeLan" value="${planningEscape(item?.youtubeLan || item?.youtube_lan || '')}" placeholder="Link YT LAN" style="width:100%;padding:6px 8px;border:1px solid #cbd5e1;border-radius:6px;font-size:11.5px;">
+              </div>
+              <div>
+                <label style="font-size:10.5px;font-weight:700;color:#475569;display:block;margin-bottom:3px;"><i class="fa-brands fa-youtube" style="color:#0891b2"></i> Youtube Unit</label>
+                <input type="text" name="youtubeUnit" value="${planningEscape(item?.youtubeUnit || item?.youtube_unit || '')}" placeholder="Link YT Unit" style="width:100%;padding:6px 8px;border:1px solid #cbd5e1;border-radius:6px;font-size:11.5px;">
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-bottom:14px;">
+            <label style="font-size:11px;font-weight:700;color:#334155;display:block;margin-bottom:4px;">Catatan / Keterangan</label>
+            <textarea name="catatan" rows="2" placeholder="Catatan tambahan, progres, atau keterangan khusus" style="width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;font-family:inherit;">${planningEscape(item?.catatan || '')}</textarea>
+          </div>
+
+          <div style="display:flex;align-items:center;gap:8px;">
+            <button class="planning-button" type="submit"><i class="fa-solid fa-floppy-disk"></i> Simpan Data</button>
+            <button class="filter-reset" type="button" onclick="closeInisiatifEditor()">Batal</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  `;
   editor.hidden = false;
   editor.scrollIntoView({ behavior:'smooth', block:'start' });
 }
+
 function closeInisiatifEditor() {
   const editor = document.getElementById('inisiatif-editor');
   if (editor) { editor.hidden = true; editor.innerHTML = ''; }
 }
+
+async function deleteInisiatifRow(id) {
+  if (!confirm('Apakah Anda yakin ingin menghapus data inisiatif ini?')) return;
+  const numId = Number(id);
+  // Hapus dari memori & local
+  inisiatifAkDosenRows = inisiatifAkDosenRows.filter(r => Number(r.id) !== numId);
+  saveStoredInisiatifLocal(inisiatifAkDosenRows);
+  filterInisiatifTable(inisiatifCurrentPage);
+
+  // Hapus dari API server jika tersedia
+  try {
+    await fetch(`/api/inisiatif-ak-dosen/${encodeURIComponent(numId)}`, { method: 'DELETE' });
+  } catch(e) { console.warn(e); }
+  alert('Data inisiatif berhasil dihapus.');
+}
+
 window.openInisiatifEditor = openInisiatifEditor;
 window.closeInisiatifEditor = closeInisiatifEditor;
+window.deleteInisiatifRow = deleteInisiatifRow;
+window.filterInisiatifTable = filterInisiatifTable;
+window.renderInisiatifAkDosenRows = renderInisiatifAkDosenRows;
+
 document.addEventListener('submit', async event => {
   if (event.target.id !== 'inisiatif-db-form') return;
   event.preventDefault();
   const user = getCurrentUser();
-  if (!isUnitUser(user)) return;
   const form = event.target;
-  const data = Object.fromEntries(new FormData(form).entries());
+  const formData = new FormData(form);
+  const data = Object.fromEntries(formData.entries());
   const id = form.dataset.id;
-  const payload = { ...data, tahun: data.tahun ? Number(data.tahun) : null };
-  const url = id ? `/api/inisiatif-ak-dosen/${encodeURIComponent(id)}` : '/api/inisiatif-ak-dosen';
-  if (!id) {
-    payload.unit = user.unit;
-    payload.sourceSheet = user.unit;
-    payload.no = Math.max(0, ...inisiatifAkDosenRows.map(item => Number(item.no) || 0)) + 1;
+  const numId = id ? Number(id) : Date.now();
+
+  const payload = {
+    ...data,
+    id: numId,
+    no: data.no ? Number(data.no) : (inisiatifAkDosenRows.length + 1),
+    tahun: data.tahun ? Number(data.tahun) : new Date().getFullYear(),
+    sourceSheet: data.unit || user.unit || 'SKMK'
+  };
+
+  // Simpan langsung di memori lokal agar responsif
+  const existingIdx = inisiatifAkDosenRows.findIndex(r => Number(r.id) === numId);
+  if (existingIdx >= 0) {
+    inisiatifAkDosenRows[existingIdx] = { ...inisiatifAkDosenRows[existingIdx], ...payload };
+  } else {
+    inisiatifAkDosenRows.unshift(payload);
   }
+  saveStoredInisiatifLocal(inisiatifAkDosenRows);
+
+  closeInisiatifEditor();
+  filterInisiatifTable(1);
+
+  // Sync ke database API
   try {
-    const response = await fetch(url, { method:id ? 'PATCH' : 'POST', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify(payload) });
-    if (!response.ok) throw new Error((await response.json().catch(() => ({}))).statusMessage || 'Data tidak berhasil disimpan.');
-    closeInisiatifEditor();
-    await renderInisiatifAkDosenRows();
-    alert('Data Inisiatif AK/Dosen berhasil disimpan.');
+    const url = id ? `/api/inisiatif-ak-dosen/${encodeURIComponent(id)}` : '/api/inisiatif-ak-dosen';
+    const response = await fetch(url, {
+      method: id ? 'PATCH' : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (response.ok) {
+      const resJson = await response.json();
+      if (resJson && resJson.item && resJson.item.id) {
+        payload.id = resJson.item.id;
+        saveStoredInisiatifLocal(inisiatifAkDosenRows);
+      }
+    }
   } catch (error) {
-    console.error('[PRISMO API] Gagal menyimpan Inisiatif AK/Dosen:', error);
-    alert(error.message || 'Data tidak berhasil disimpan. Periksa koneksi lalu coba lagi.');
+    console.warn('[PRISMO API] Sync DB background:', error);
   }
+
+  alert('✅ Data Inisiatif AK/Dosen berhasil disimpan!');
 });
 const agendaYearFilter = document.getElementById('agenda-year-filter');
 if (agendaYearFilter) {
@@ -7217,16 +7495,98 @@ async function submitPlanningToWorkflow(kind, draftId) {
   alert(`Pengajuan ${proposalId} sudah masuk ke Inbox Admin DSPK2AN.`);
 }
 function renderPlanningUnitPage(kind, user) {
-  if (!isUnitUser(user) || !user.unit) return '<div class="card"><div class="card-body">Menu ini hanya tersedia untuk akun unit kerja.</div></div>';
+  const isUnit = isUnitUser(user) && !!user.unit;
   const agenda = kind === 'agenda';
-  const unitLabel = planningEscape(user.unit);
+
+  if (agenda && !isUnit) {
+    return '<div class="card"><div class="card-body">Menu Agenda Analisis/Survei hanya tersedia untuk akun unit kerja pelaksana.</div></div>';
+  }
+
+  const unitLabel = isUnit ? planningEscape(user.unit) : (user?.name || user?.role || 'Seluruh Unit');
   const currentYear = new Date().getFullYear();
   const clusterOptions = getActiveClusterNames().map(name => `<option value="${planningEscape(name)}">${planningEscape(name)}</option>`).join('');
   const sharedFields = `<input name="judul" required maxlength="140" placeholder="Nama kegiatan / inisiatif" aria-label="Nama kegiatan atau inisiatif"><select name="jenis"><option>Survei</option><option>Analisis</option><option>Kajian</option></select><select name="cluster" required><option value="">Pilih cluster kebijakan</option>${clusterOptions}</select>`;
+
   if (agenda) {
     return `<div class="card" style="margin-bottom:16px"><div class="card-header"><span class="card-title"><i class="fa-solid fa-calendar-days"></i> Agenda Analisis/Survei Tahunan</span><select id="agenda-year-filter" class="filter-year-highlight" onchange="renderPlanningPages()" aria-label="Filter tahun agenda">${Array.from({length:7},(_,i)=>currentYear-2+i).map(year=>`<option value="${year}" ${year===currentYear?'selected':''}>Tahun ${year}</option>`).join('')}</select></div><div class="card-body"><p style="margin:0 0 12px;color:#64748b;font-size:12px">Simpan rencana sebagai draft, lalu ajukan ke Admin agar masuk ke alur persetujuan PRISMO.</p><div class="planning-unit-note">Unit penanggung jawab: <strong>${unitLabel}</strong></div><form id="agenda-form" class="planning-form">${sharedFields}<input name="pic" maxlength="100" placeholder="PIC" aria-label="PIC"><input name="responden" maxlength="100" placeholder="Target responden" aria-label="Target responden"><input name="tanggal" type="date" required aria-label="Target jadwal"><textarea name="tujuan" required maxlength="600" rows="2" placeholder="Tujuan dan ringkasan kegiatan" aria-label="Tujuan dan ringkasan kegiatan"></textarea><button class="planning-button" type="submit"><i class="fa-solid fa-floppy-disk"></i> Simpan Draft</button></form></div></div><div class="card"><div class="card-header"><span class="card-title">Agenda ${unitLabel}</span><span id="agenda-count" class="planning-count"></span></div><div class="card-body"><p style="margin:0 0 12px;color:#64748b;font-size:11px">Agenda berstatus draft dapat diajukan. Setelah dikirim, statusnya mengikuti proses Admin, Pimpinan, dan Humas.</p><div class="planning-table-wrap"><table class="planning-table"><thead><tr><th>Jadwal</th><th>Agenda</th><th>Jenis</th><th>Unit / PIC</th><th>Target responden</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="agenda-rows"></tbody></table></div><div id="agenda-empty" class="planning-empty" hidden>Belum ada agenda unit ini pada tahun terpilih.</div></div></div>`;
   }
-  return `<div class="card" style="margin-bottom:16px"><div class="card-header"><span class="card-title"><i class="fa-solid fa-lightbulb"></i> Inisiatif AK/Dosen</span></div><div class="card-body"><p style="margin:0 0 12px;color:#64748b;font-size:12px">Data awal berasal dari sheet unit. Unit kerja dapat mengelola judul, jenis, tahun, cluster, tautan publikasi, dan catatan.</p><div class="planning-unit-note">Unit kerja: <strong>${unitLabel}</strong></div></div></div><div id="inisiatif-editor" hidden></div><div class="card"><div class="card-header"><span class="card-title">Data Inisiatif ${unitLabel}</span><span id="inisiatif-count" class="planning-count"></span><button class="planning-button" type="button" onclick="openInisiatifEditor()"><i class="fa-solid fa-plus"></i> Tambah Data</button></div><div class="card-body"><p style="margin:0 0 12px;color:#64748b;font-size:11px">Data hanya ditampilkan untuk unit kerja yang sedang login. Link publikasi dapat berisi lebih dari satu tautan.</p><div class="planning-table-wrap"><table class="planning-table"><thead><tr><th>No</th><th>Judul</th><th>Jenis</th><th>Tahun</th><th>Cluster 1</th><th>Cluster 2</th><th>Link Publikasi</th><th>Catatan</th><th>Aksi</th></tr></thead><tbody id="inisiatif-rows"></tbody></table></div><div id="inisiatif-empty" class="planning-empty" hidden>Tidak ada data inisiatif untuk unit ini.</div></div></div>`;
+
+  const allUnitList = ['SKMK', 'SKTAN', 'SKPP', 'SKMP', 'STIA BDG', 'STIA JKT', 'STIA MKS', 'DSPK2AN', 'DAPKK'];
+
+  return `
+    <div class="card" style="margin-bottom:16px;">
+      <div class="card-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+        <span class="card-title"><i class="fa-solid fa-lightbulb" style="color:#eab308;margin-right:6px;"></i> Inisiatif AK / Dosen</span>
+        <button class="planning-button" type="button" onclick="openInisiatifEditor()" style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:#1e40af;color:#fff;border-radius:6px;border:none;font-weight:700;font-size:12px;cursor:pointer;">
+          <i class="fa-solid fa-plus"></i> Tambah Inisiatif Baru
+        </button>
+      </div>
+      <div class="card-body">
+        <p style="margin:0 0 12px;color:#64748b;font-size:12px;">
+          Data publikasi dan riset inisiatif Analis Kebijakan (AK) dan Dosen se-LAN RI (total 700 publikasi dari 9 sheet unit kerja). Setiap unit dapat mengelola <strong>Judul, Jenis, Tahun, Cluster 1 &amp; 2, Tautan Publikasi</strong> (Jurnal, Media Online, Website LAN/Unit, Instagram, YouTube), serta <strong>Catatan</strong>.
+        </p>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#f8fafc;padding:10px 14px;border-radius:8px;border:1px solid #e2e8f0;">
+          ${isUnit ? `
+            <span class="badge" style="background:#eff6ff;color:#1e40af;padding:7px 12px;border:1px solid #bfdbfe;font-weight:700;font-size:12px;">
+              <i class="fa-solid fa-building" style="margin-right:4px;"></i> Unit: ${unitLabel}
+            </span>
+            <input type="hidden" id="inisiatif-unit-filter" value="${planningEscape(user.unit)}">
+          ` : `
+            <div style="display:flex;align-items:center;gap:6px;">
+              <label for="inisiatif-unit-filter" style="font-size:12px;font-weight:700;color:#334155;"><i class="fa-solid fa-building"></i> Filter Unit:</label>
+              <select id="inisiatif-unit-filter" onchange="renderInisiatifAkDosenRows()" style="padding:7px 10px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;background:#fff;font-weight:700;color:#1e40af;">
+                <option value="">Semua Unit Kerja (700 Publikasi)</option>
+                ${allUnitList.map(u => `<option value="${u}">${u}</option>`).join('')}
+              </select>
+            </div>
+          `}
+
+          <div style="display:flex;align-items:center;gap:6px;">
+            <label for="inisiatif-year-filter" style="font-size:12px;font-weight:700;color:#334155;"><i class="fa-solid fa-calendar"></i> Tahun:</label>
+            <select id="inisiatif-year-filter" onchange="filterInisiatifTable(1)" style="padding:7px 10px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;background:#fff;">
+              <option value="">Semua Tahun</option>
+              ${[2026, 2025, 2024, 2023, 2022, 2021, 2020].map(y => `<option value="${y}">${y}</option>`).join('')}
+            </select>
+          </div>
+
+          <div style="flex:1;min-width:220px;">
+            <input type="text" id="inisiatif-search-input" placeholder="🔍 Cari judul, jenis, cluster, atau catatan..." oninput="filterInisiatifTable(1)" style="width:100%;padding:7px 12px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="inisiatif-editor" hidden></div>
+
+    <div class="card">
+      <div class="card-header" style="display:flex;align-items:center;justify-content:space-between;">
+        <span class="card-title">Daftar Publikasi Inisiatif AK/Dosen ${isUnit ? unitLabel : ''}</span>
+        <span id="inisiatif-count" class="planning-count">Memuat…</span>
+      </div>
+      <div class="card-body">
+        <div class="planning-table-wrap">
+          <table class="planning-table">
+            <thead>
+              <tr>
+                <th style="width:45px;text-align:center;">No</th>
+                ${!isUnit ? '<th style="width:90px;">Unit</th>' : ''}
+                <th>Judul Kegiatan / Publikasi</th>
+                <th style="width:110px;">Jenis</th>
+                <th style="width:65px;text-align:center;">Tahun</th>
+                <th style="width:130px;">Cluster</th>
+                <th style="width:200px;">Link Publikasi</th>
+                <th style="width:140px;">Catatan</th>
+                <th style="width:110px;text-align:center;">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="inisiatif-rows"></tbody>
+          </table>
+        </div>
+        <div id="inisiatif-empty" class="planning-empty" hidden>Tidak ada data inisiatif yang sesuai kriteria pencarian/filter.</div>
+        <div id="inisiatif-pagination" style="display:flex;align-items:center;justify-content:space-between;margin-top:16px;padding-top:12px;border-top:1px solid #e2e8f0;font-size:12px;color:#64748b;"></div>
+      </div>
+    </div>
+  `;
 }
 
 document.querySelectorAll('.nav-tab').forEach(tab=>{
@@ -7711,6 +8071,7 @@ const LEADERSHIP_MENUS = [
   { id: "dashboard", icon: "fa-chart-pie", label: "Dashboard Pimpinan", action: "openTab('dashboard')" },
   { id: "perlu_persetujuan", icon: "fa-clipboard-check", label: "Perlu Persetujuan", badge: true, action: "openTab('perlu_persetujuan')" },
   { id: "monitoring_kegiatan", icon: "fa-chart-line", label: "Monitoring Kegiatan", action: "openTab('monitoring_kegiatan')" },
+  { id: "inisiatif_ak_dosen", icon: "fa-lightbulb", label: "Inisiatif AK/Dosen", action: "openTab('inisiatif_ak_dosen')" },
   { id: "kegiatan_terlambat", icon: "fa-triangle-exclamation", label: "Kegiatan Terlambat", action: "openTab('kegiatan_terlambat')" },
   { id: "pengumuman", icon: "fa-bullhorn", label: "Pengumuman", action: "openTab('pengumuman')" },
   { id: "profil_akun", icon: "fa-user-shield", label: "Profil/Akun", action: "openTab('profil_akun')" },
@@ -7757,6 +8118,7 @@ const ROLE_CONFIGS = {
       { id: "review_publikasi_awal", icon: "fa-magnifying-glass-chart", label: "Review Publikasi Awal", action: "openTab('review_publikasi_awal')" },
       { id: "review_publikasi_akhir", icon: "fa-file-circle-check", label: "Review Publikasi Akhir", action: "openTab('review_publikasi_akhir')" },
       { id: "kalender_publikasi", icon: "fa-calendar-days", label: "Kalender Publikasi", action: "openTab('kalender_publikasi')" },
+      { id: "inisiatif_ak_dosen", icon: "fa-lightbulb", label: "Inisiatif AK/Dosen", action: "openTab('inisiatif_ak_dosen')" },
       { section: "SISTEM" },
       { id: "laporan_rekapitulasi", icon: "fa-chart-simple", label: "Laporan & Rekapitulasi", action: "openTab('laporan_rekapitulasi')" },
       { id: "master_data", icon: "fa-database", label: "Master Data & Cluster", action: "openTab('master_data')" }
