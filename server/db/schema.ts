@@ -94,4 +94,4 @@ export const inisiatifAkDosen = pgTable('inisiatif_ak_dosen', {
   catatan: text('catatan').default(''),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
-}, table => [uniqueIndex('inisiatif_ak_dosen_source_sheet_no_key').on(table.sourceSheet, table.no)])
+})

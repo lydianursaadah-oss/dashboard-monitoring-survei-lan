@@ -50,6 +50,13 @@ CREATE POLICY "Inisiatif Public Insert" ON public.inisiatif_ak_dosen FOR INSERT 
 CREATE POLICY "Inisiatif Public Update" ON public.inisiatif_ak_dosen FOR UPDATE USING (true);
 CREATE POLICY "Inisiatif Public Delete" ON public.inisiatif_ak_dosen FOR DELETE USING (true);
 
+-- Hapus unique constraint lama jika ada agar tidak bentrok
+ALTER TABLE IF EXISTS public.inisiatif_ak_dosen DROP CONSTRAINT IF EXISTS inisiatif_ak_dosen_source_sheet_no_key;
+DROP INDEX IF EXISTS public.inisiatif_ak_dosen_source_sheet_no_key;
+
+-- Bersihkan data lama terlebih dahulu agar aman dijalankan berulang kali (Idempotent)
+TRUNCATE TABLE public.inisiatif_ak_dosen RESTART IDENTITY;
+
 -- Insert Data Awal (700 Records)
 INSERT INTO public.inisiatif_ak_dosen (no, unit, source_sheet, judul, jenis, jadwal_publikasi, tahun, cluster_1, cluster_2, jurnal, media_online, website_lan, website_unit, instagram_lan, instagram_unit, youtube_lan, youtube_unit, media_televisi, catatan) VALUES
 (1, 'SKMK', 'SKMK', 'Implementasi dan Strategi Pemenuhan Ruang Terbuka Hijau demi Pencapaian Tujuan Pembangunan Berkelanjutan', 'Policy Paper', '', 2024, 'Prioritas Presiden', '', '', '', '', 'Link 1', '', '', '', '', '', ''),
