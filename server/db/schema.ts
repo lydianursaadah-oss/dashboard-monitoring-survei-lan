@@ -7,6 +7,7 @@ import {
   pgTable,
   text,
   timestamp,
+  uniqueIndex,
 } from 'drizzle-orm/pg-core'
 
 export const publikasi = pgTable('publikasi', {
@@ -69,3 +70,28 @@ export const prismoProposals = pgTable('prismo_proposals', {
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 })
+
+export const inisiatifAkDosen = pgTable('inisiatif_ak_dosen', {
+  id: bigserial('id', { mode: 'number' }).primaryKey(),
+  no: integer('no'),
+  unit: text('unit').notNull(),
+  sourceSheet: text('source_sheet').notNull(),
+  judul: text('judul').notNull(),
+  jenis: text('jenis').default(''),
+  jadwalPublikasi: text('jadwal_publikasi').default(''),
+  tahun: integer('tahun'),
+  cluster1: text('cluster_1').default(''),
+  cluster2: text('cluster_2').default(''),
+  jurnal: text('jurnal').default(''),
+  mediaOnline: text('media_online').default(''),
+  websiteLan: text('website_lan').default(''),
+  websiteUnit: text('website_unit').default(''),
+  instagramLan: text('instagram_lan').default(''),
+  instagramUnit: text('instagram_unit').default(''),
+  youtubeLan: text('youtube_lan').default(''),
+  youtubeUnit: text('youtube_unit').default(''),
+  mediaTelevisi: text('media_televisi').default(''),
+  catatan: text('catatan').default(''),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, table => [uniqueIndex('inisiatif_ak_dosen_source_sheet_no_key').on(table.sourceSheet, table.no)])

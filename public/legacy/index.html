@@ -1504,6 +1504,13 @@ function handleUsernameInput(val) {
     .planning-delete { border:0; background:transparent; color:#dc2626; cursor:pointer; padding:5px 8px; }
     .planning-status { display:inline-block; padding:4px 8px; border-radius:99px; background:#eff6ff; color:#1d4ed8; white-space:nowrap; font-size:11px; font-weight:700; }
     .planning-unit-note { margin:0 0 12px; padding:9px 11px; border-radius:8px; background:#eff6ff; color:#1e40af; font-size:12px; }
+    .initiative-edit-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+    .initiative-edit-grid label { display:block; min-width:0; color:#475569; font-size:11px; font-weight:700; }
+    .initiative-edit-grid input,.initiative-edit-grid textarea { display:block; width:100%; box-sizing:border-box; margin-top:5px; padding:9px 10px; border:1px solid #cbd5e1; border-radius:8px; color:#1e293b; background:#fff; font-size:12px; font-family:inherit; }
+    .initiative-edit-grid textarea { min-height:70px; resize:vertical; }
+    .initiative-links { display:grid; gap:4px; min-width:180px; }
+    .initiative-links a { color:#2563eb; text-decoration:none; overflow-wrap:anywhere; }
+    .initiative-links a:hover { text-decoration:underline; }
 
     @media (max-width: 860px) {
       .prism-login-card { grid-template-columns: 1fr; max-width: 440px; }
@@ -7017,17 +7024,108 @@ function renderPlanningPages() {
   const agendaEmpty = document.getElementById('agenda-empty'); if (agendaEmpty) agendaEmpty.hidden = agendaItems.length > 0;
   const agendaCount = document.getElementById('agenda-count'); if (agendaCount) agendaCount.textContent = `${agendaItems.length} agenda`;
 
-  const initiativeDrafts = readPlanningItems('inisiatif').sort((a,b) => (a.target || '').localeCompare(b.target || ''));
-  const initiativeProposals = getPrismoProposals().filter(item => item.planning_source_kind === 'inisiatif' && isThisUnit(item));
-  const initiativeItems = [...initiativeDrafts, ...initiativeProposals];
-  const initiativeRows = document.getElementById('inisiatif-rows');
-  if (initiativeRows) initiativeRows.innerHTML = [
-    ...initiativeDrafts.map(item => `<tr><td>${planningEscape(item.judul)}</td><td>${planningEscape(item.pengusul)}</td><td>${planningEscape(item.tujuan || '—')}</td><td>${planningEscape(item.pic || '—')}</td><td>${planningEscape(formatPlanningDate(item.target))}</td><td><span class="planning-status">Draft</span></td><td><button class="planning-button planning-submit" type="button" data-submit-planning="inisiatif" data-planning-id="${planningEscape(item.id)}">Ajukan</button><button class="planning-delete" type="button" data-planning-kind="inisiatif" data-planning-id="${planningEscape(item.id)}" aria-label="Hapus draft"><i class="fa-solid fa-trash"></i></button></td></tr>`),
-    ...initiativeProposals.map(item => `<tr><td>${planningEscape(item.judul)}<br><small>${planningEscape(item.id)}</small></td><td>${planningEscape(item.pengusul || '—')}</td><td>${planningEscape(item.tujuan || '—')}</td><td>${planningEscape(item.pic || '—')}</td><td>${planningEscape(formatPlanningDate(item.target_selesai))}</td><td><span class="planning-status">${planningEscape(getPrismoStatusBadge(item.status).text)}</span></td><td><button class="planning-delete" type="button" onclick="openPrismoDetailModal('${planningEscape(item.id)}')" aria-label="Lihat status"><i class="fa-solid fa-eye"></i></button></td></tr>`)
-  ].join('');
-  const initiativeEmpty = document.getElementById('inisiatif-empty'); if (initiativeEmpty) initiativeEmpty.hidden = initiativeItems.length > 0;
-  const initiativeCount = document.getElementById('inisiatif-count'); if (initiativeCount) initiativeCount.textContent = `${initiativeItems.length} inisiatif`;
+  void renderInisiatifAkDosenRows();
 }
+
+let inisiatifAkDosenRows = [];
+function initiativeLinksHtml(item) {
+  const fields = [
+    ['Jurnal', item.jurnal], ['Media Online', item.mediaOnline], ['Website LAN', item.websiteLan],
+    ['Website Unit', item.websiteUnit], ['Instagram LAN', item.instagramLan], ['Instagram Unit', item.instagramUnit],
+    ['Youtube LAN', item.youtubeLan], ['Youtube Unit', item.youtubeUnit], ['Media Televisi', item.mediaTelevisi]
+  ];
+  return `<div class="initiative-links">${fields.map(([label, raw]) => {
+    const values = String(raw || '').split(/\n+/).map(value => value.trim()).filter(Boolean);
+    if (!values.length) return '';
+    return values.map(value => {
+      const urls = value.match(/https?:\/\/[^\s,]+/ig) || [];
+      if (urls.length) return urls.map((url, index) => `<a href="${planningEscape(url)}" target="_blank" rel="noopener noreferrer">${planningEscape(label)}${urls.length > 1 ? ` ${index + 1}` : ''}</a>`).join('');
+      return `<span>${planningEscape(label)}: ${planningEscape(value)}</span>`;
+    }).join('');
+  }).join('') || '—'}</div>`;
+}
+async function renderInisiatifAkDosenRows() {
+  const tbody = document.getElementById('inisiatif-rows');
+  if (!tbody) return;
+  const currentUser = getCurrentUser();
+  const count = document.getElementById('inisiatif-count');
+  const empty = document.getElementById('inisiatif-empty');
+  tbody.innerHTML = '<tr><td colspan="9">Memuat data…</td></tr>';
+  try {
+    const response = await fetch(`/api/inisiatif-ak-dosen?unit=${encodeURIComponent(currentUser?.unit || '')}`);
+    if (!response.ok) throw new Error((await response.json().catch(() => ({}))).statusMessage || 'Gagal mengambil data.');
+    inisiatifAkDosenRows = await response.json();
+    tbody.innerHTML = inisiatifAkDosenRows.map(item => `<tr>
+      <td>${planningEscape(item.no ?? '—')}</td><td>${planningEscape(item.judul)}</td><td>${planningEscape(item.jenis || '—')}</td>
+      <td>${planningEscape(item.tahun ?? '—')}</td><td>${planningEscape(item.cluster1 || '—')}</td><td>${planningEscape(item.cluster2 || '—')}</td>
+      <td>${initiativeLinksHtml(item)}</td><td>${planningEscape(item.catatan || '—')}</td>
+      <td><button class="planning-button" type="button" onclick="openInisiatifEditor(${Number(item.id)})"><i class="fa-solid fa-pen"></i> Edit</button></td>
+    </tr>`).join('');
+    if (!inisiatifAkDosenRows.length) tbody.innerHTML = '<tr><td colspan="9">Belum ada data untuk unit ini.</td></tr>';
+    if (count) count.textContent = `${inisiatifAkDosenRows.length} data`;
+    if (empty) empty.hidden = true;
+  } catch (error) {
+    console.error('[PRISMO API] Gagal memuat Inisiatif AK/Dosen:', error);
+    tbody.innerHTML = '<tr><td colspan="9">Data belum dapat dimuat. Silakan muat ulang halaman.</td></tr>';
+    if (count) count.textContent = 'Gagal memuat';
+  }
+}
+function openInisiatifEditor(id) {
+  if (!isUnitUser(getCurrentUser())) return;
+  const editor = document.getElementById('inisiatif-editor');
+  if (!editor) return;
+  const item = inisiatifAkDosenRows.find(row => Number(row.id) === Number(id));
+  const fields = [
+    ['judul','Judul',item?.judul,'text'], ['jenis','Jenis',item?.jenis,'text'], ['tahun','Tahun',item?.tahun,'number'],
+    ['cluster1','Cluster 1',item?.cluster1,'text'], ['cluster2','Cluster 2',item?.cluster2,'text'],
+    ['jurnal','Jurnal',item?.jurnal,'textarea'], ['mediaOnline','Media Online',item?.mediaOnline,'textarea'],
+    ['websiteLan','Website LAN',item?.websiteLan,'textarea'], ['websiteUnit','Website Unit',item?.websiteUnit,'textarea'],
+    ['instagramLan','Instagram LAN',item?.instagramLan,'textarea'], ['instagramUnit','Instagram Unit',item?.instagramUnit,'textarea'],
+    ['youtubeLan','Youtube LAN',item?.youtubeLan,'textarea'], ['youtubeUnit','Youtube Unit',item?.youtubeUnit,'textarea'],
+    ['catatan','Catatan',item?.catatan,'textarea']
+  ];
+  editor.innerHTML = `<div class="card" style="margin-bottom:16px"><div class="card-header"><span class="card-title">${item ? 'Edit' : 'Tambah'} Data Inisiatif AK/Dosen</span></div><div class="card-body">
+    <form id="inisiatif-db-form" data-id="${item ? Number(item.id) : ''}"><div class="initiative-edit-grid">
+      ${fields.map(([name,label,value,type]) => `<label>${label}${type === 'textarea'
+        ? `<textarea name="${name}" ${name === 'judul' ? 'required' : ''} maxlength="2000">${planningEscape(value ?? '')}</textarea>`
+        : `<input name="${name}" type="${type}" value="${planningEscape(value ?? '')}" ${name === 'judul' ? 'required maxlength="300"' : name === 'tahun' ? 'min="1900" max="2200"' : 'maxlength="2000"'}>`}</label>`).join('')}
+    </div><div style="display:flex;gap:8px;margin-top:14px"><button class="planning-button" type="submit"><i class="fa-solid fa-floppy-disk"></i> Simpan</button><button class="filter-reset" type="button" onclick="closeInisiatifEditor()">Batal</button></div></form>
+  </div></div>`;
+  editor.hidden = false;
+  editor.scrollIntoView({ behavior:'smooth', block:'start' });
+}
+function closeInisiatifEditor() {
+  const editor = document.getElementById('inisiatif-editor');
+  if (editor) { editor.hidden = true; editor.innerHTML = ''; }
+}
+window.openInisiatifEditor = openInisiatifEditor;
+window.closeInisiatifEditor = closeInisiatifEditor;
+document.addEventListener('submit', async event => {
+  if (event.target.id !== 'inisiatif-db-form') return;
+  event.preventDefault();
+  const user = getCurrentUser();
+  if (!isUnitUser(user)) return;
+  const form = event.target;
+  const data = Object.fromEntries(new FormData(form).entries());
+  const id = form.dataset.id;
+  const payload = { ...data, tahun: data.tahun ? Number(data.tahun) : null };
+  const url = id ? `/api/inisiatif-ak-dosen/${encodeURIComponent(id)}` : '/api/inisiatif-ak-dosen';
+  if (!id) {
+    payload.unit = user.unit;
+    payload.sourceSheet = user.unit;
+    payload.no = Math.max(0, ...inisiatifAkDosenRows.map(item => Number(item.no) || 0)) + 1;
+  }
+  try {
+    const response = await fetch(url, { method:id ? 'PATCH' : 'POST', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify(payload) });
+    if (!response.ok) throw new Error((await response.json().catch(() => ({}))).statusMessage || 'Data tidak berhasil disimpan.');
+    closeInisiatifEditor();
+    await renderInisiatifAkDosenRows();
+    alert('Data Inisiatif AK/Dosen berhasil disimpan.');
+  } catch (error) {
+    console.error('[PRISMO API] Gagal menyimpan Inisiatif AK/Dosen:', error);
+    alert(error.message || 'Data tidak berhasil disimpan. Periksa koneksi lalu coba lagi.');
+  }
+});
 const agendaYearFilter = document.getElementById('agenda-year-filter');
 if (agendaYearFilter) {
   const currentYear = new Date().getFullYear();
@@ -7128,7 +7226,7 @@ function renderPlanningUnitPage(kind, user) {
   if (agenda) {
     return `<div class="card" style="margin-bottom:16px"><div class="card-header"><span class="card-title"><i class="fa-solid fa-calendar-days"></i> Agenda Analisis/Survei Tahunan</span><select id="agenda-year-filter" class="filter-year-highlight" onchange="renderPlanningPages()" aria-label="Filter tahun agenda">${Array.from({length:7},(_,i)=>currentYear-2+i).map(year=>`<option value="${year}" ${year===currentYear?'selected':''}>Tahun ${year}</option>`).join('')}</select></div><div class="card-body"><p style="margin:0 0 12px;color:#64748b;font-size:12px">Simpan rencana sebagai draft, lalu ajukan ke Admin agar masuk ke alur persetujuan PRISMO.</p><div class="planning-unit-note">Unit penanggung jawab: <strong>${unitLabel}</strong></div><form id="agenda-form" class="planning-form">${sharedFields}<input name="pic" maxlength="100" placeholder="PIC" aria-label="PIC"><input name="responden" maxlength="100" placeholder="Target responden" aria-label="Target responden"><input name="tanggal" type="date" required aria-label="Target jadwal"><textarea name="tujuan" required maxlength="600" rows="2" placeholder="Tujuan dan ringkasan kegiatan" aria-label="Tujuan dan ringkasan kegiatan"></textarea><button class="planning-button" type="submit"><i class="fa-solid fa-floppy-disk"></i> Simpan Draft</button></form></div></div><div class="card"><div class="card-header"><span class="card-title">Agenda ${unitLabel}</span><span id="agenda-count" class="planning-count"></span></div><div class="card-body"><p style="margin:0 0 12px;color:#64748b;font-size:11px">Agenda berstatus draft dapat diajukan. Setelah dikirim, statusnya mengikuti proses Admin, Pimpinan, dan Humas.</p><div class="planning-table-wrap"><table class="planning-table"><thead><tr><th>Jadwal</th><th>Agenda</th><th>Jenis</th><th>Unit / PIC</th><th>Target responden</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="agenda-rows"></tbody></table></div><div id="agenda-empty" class="planning-empty" hidden>Belum ada agenda unit ini pada tahun terpilih.</div></div></div>`;
   }
-  return `<div class="card" style="margin-bottom:16px"><div class="card-header"><span class="card-title"><i class="fa-solid fa-lightbulb"></i> Inisiatif AK/Dosen</span></div><div class="card-body"><p style="margin:0 0 12px;color:#64748b;font-size:12px">Catat gagasan AK atau dosen sebagai draft, lalu ajukan untuk diverifikasi dan diputuskan melalui alur PRISMO.</p><div class="planning-unit-note">Unit kerja: <strong>${unitLabel}</strong></div><form id="inisiatif-form" class="planning-form initiative-form">${sharedFields}<input name="pengusul" required maxlength="100" placeholder="Nama pengusul (AK / Dosen)" aria-label="Pengusul"><input name="pic" maxlength="100" placeholder="PIC tindak lanjut" aria-label="PIC tindak lanjut"><input name="target" type="date" aria-label="Target waktu"><textarea name="tujuan" required maxlength="600" rows="2" placeholder="Tujuan dan ringkasan inisiatif" aria-label="Tujuan dan ringkasan inisiatif"></textarea><button class="planning-button" type="submit"><i class="fa-solid fa-floppy-disk"></i> Simpan Draft</button></form></div></div><div class="card"><div class="card-header"><span class="card-title">Inisiatif ${unitLabel}</span><span id="inisiatif-count" class="planning-count"></span></div><div class="card-body"><p style="margin:0 0 12px;color:#64748b;font-size:11px">Draft dapat diajukan ke Admin. Usulan yang disetujui Pimpinan diteruskan sebagai kegiatan ke Humas.</p><div class="planning-table-wrap"><table class="planning-table"><thead><tr><th>Inisiatif</th><th>Pengusul</th><th>Tujuan</th><th>PIC</th><th>Target</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="inisiatif-rows"></tbody></table></div><div id="inisiatif-empty" class="planning-empty" hidden>Belum ada inisiatif untuk unit ini.</div></div></div>`;
+  return `<div class="card" style="margin-bottom:16px"><div class="card-header"><span class="card-title"><i class="fa-solid fa-lightbulb"></i> Inisiatif AK/Dosen</span></div><div class="card-body"><p style="margin:0 0 12px;color:#64748b;font-size:12px">Data awal berasal dari sheet unit. Unit kerja dapat mengelola judul, jenis, tahun, cluster, tautan publikasi, dan catatan.</p><div class="planning-unit-note">Unit kerja: <strong>${unitLabel}</strong></div></div></div><div id="inisiatif-editor" hidden></div><div class="card"><div class="card-header"><span class="card-title">Data Inisiatif ${unitLabel}</span><span id="inisiatif-count" class="planning-count"></span><button class="planning-button" type="button" onclick="openInisiatifEditor()"><i class="fa-solid fa-plus"></i> Tambah Data</button></div><div class="card-body"><p style="margin:0 0 12px;color:#64748b;font-size:11px">Data hanya ditampilkan untuk unit kerja yang sedang login. Link publikasi dapat berisi lebih dari satu tautan.</p><div class="planning-table-wrap"><table class="planning-table"><thead><tr><th>No</th><th>Judul</th><th>Jenis</th><th>Tahun</th><th>Cluster 1</th><th>Cluster 2</th><th>Link Publikasi</th><th>Catatan</th><th>Aksi</th></tr></thead><tbody id="inisiatif-rows"></tbody></table></div><div id="inisiatif-empty" class="planning-empty" hidden>Tidak ada data inisiatif untuk unit ini.</div></div></div>`;
 }
 
 document.querySelectorAll('.nav-tab').forEach(tab=>{
