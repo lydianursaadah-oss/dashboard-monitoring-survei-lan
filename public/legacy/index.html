@@ -437,8 +437,24 @@ function handleUsernameInput(val) {
     .grid-3   { display: grid; grid-template-columns: 1fr 1fr 1fr;     gap: 16px; margin-bottom: 16px; }
     .grid-3-1 { display: grid; grid-template-columns: 2fr 1fr;         gap: 16px; margin-bottom: 16px; }
     .grid-1-2 { display: grid; grid-template-columns: 1fr 2fr;         gap: 16px; margin-bottom: 16px; }
+    /* Portal insight charts: give the channel summary enough width for readable cards. */
+    #portal-subview-overview .portal-insights-grid {
+      display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px; margin-bottom: 16px;
+    }
+    #portal-subview-overview .portal-channel-panel { grid-column: 1 / -1; }
+    #portal-subview-overview .portal-channel-grid { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
     @media (max-width: 1100px) {
       .grid-2, .grid-3, .grid-3-1, .grid-1-2 { grid-template-columns: 1fr; }
+      #portal-subview-overview .portal-channel-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+    }
+    @media (max-width: 768px) {
+      #portal-subview-overview .portal-insights-grid { grid-template-columns: 1fr; }
+      #portal-subview-overview .portal-channel-panel { grid-column: auto; }
+      #portal-subview-overview .portal-channel-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+    }
+    @media (max-width: 480px) {
+      #portal-subview-overview .portal-channel-grid { grid-template-columns: 1fr !important; }
     }
 
     /* ═══════════════════ PROGRESS BAR ═══════════════════ */
@@ -2866,7 +2882,7 @@ window.addEventListener('focus', () => {
         <div class="kpi-grid" id="portal-kpi-grid" style="margin-bottom:16px"></div>
 
         <!-- BARIS 2: STATUS PUBLIKASI, PUBLIKASI PER BULAN, JANGKAUAN CHANNEL -->
-        <div class="grid-3" style="margin-bottom:16px">
+        <div class="portal-insights-grid">
           <!-- Status Publikasi -->
           <div class="card" style="margin-bottom:0">
             <div class="card-header" style="padding:12px 16px">
@@ -2889,12 +2905,12 @@ window.addEventListener('focus', () => {
           </div>
 
           <!-- Jangkauan Channel -->
-          <div class="card" style="margin-bottom:0">
+          <div class="card portal-channel-panel" style="margin-bottom:0">
             <div class="card-header" style="padding:12px 16px">
               <span class="card-title"><i class="fa-solid fa-bullhorn"></i> Jangkauan Channel</span>
             </div>
             <div class="card-body" style="padding:14px 16px">
-              <div class="channel-grid" id="portal-channel-grid"></div>
+              <div class="channel-grid portal-channel-grid" id="portal-channel-grid"></div>
             </div>
           </div>
         </div>
