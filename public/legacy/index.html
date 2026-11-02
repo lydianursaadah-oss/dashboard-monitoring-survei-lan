@@ -10076,12 +10076,14 @@ async function submitPrismoPengajuan(statusTarget) {
 
   const synced = await pushPrismoProposalsToSupabase(list);
   if (!synced) {
-    alert('Pengajuan belum tersimpan di database bersama. Data masih ada di browser ini; periksa konfigurasi DATABASE_URL di Vercel dan coba lagi.');
-    return;
+    alert(editId
+      ? 'Usulan berhasil diupdate di browser ini!\n(Catatan: Belum tersinkron ke database cloud. Pastikan Environment Variable DATABASE_URL sudah diatur di dashboard Vercel).'
+      : 'Usulan kegiatan berhasil disimpan di browser ini!\n(Catatan: Belum tersinkron ke database cloud. Pastikan Environment Variable DATABASE_URL sudah diatur di dashboard Vercel).');
+  } else {
+    alert(editId
+      ? (statusTarget === 'diajukan' ? 'Usulan berhasil diupdate dan dikirim ke Admin DSPK2AN!' : 'Draft revisi usulan berhasil diupdate.')
+      : (statusTarget === 'diajukan' ? 'Usulan kegiatan berhasil diajukan ke Admin DSPK2AN!' : 'Draft usulan kegiatan berhasil disimpan.'));
   }
-  alert(editId
-    ? (statusTarget === 'diajukan' ? 'Usulan berhasil diupdate dan dikirim ke Admin DSPK2AN!' : 'Draft revisi usulan berhasil diupdate.')
-    : (statusTarget === 'diajukan' ? 'Usulan kegiatan berhasil diajukan ke Admin DSPK2AN!' : 'Draft usulan kegiatan berhasil disimpan.'));
 
   closePrismoPengajuanModal();
   const dynPanel = document.getElementById('sindisa-panel-dynamic');
