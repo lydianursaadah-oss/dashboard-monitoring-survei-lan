@@ -484,30 +484,29 @@ function handleUsernameInput(val) {
     .badge-gray   { background: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; }
     .badge-teal   { background: #ccfbf1; color: #0f766e; border: 1px solid #99f6e4; }
 
-    /* ═══════════════════ CHANNEL CARDS (Professional & Compact) ═══════════════════ */
+    /* ═══════════════════ CHANNEL CARDS (Professional) ═══════════════════ */
     .channel-grid {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
     }
     .channel-card {
-      display: flex; align-items: center; gap: 9px;
+      display: flex; align-items: center; gap: 12px;
       background: var(--bg3); border: 1px solid var(--border);
-      border-radius: 9px; padding: 7px 9px; min-height: 48px;
+      border-radius: 12px; padding: 13px 14px;
       transition: box-shadow .18s, transform .18s, border-color .18s;
       cursor: default;
     }
-    .channel-card:hover { box-shadow: var(--shadow-sm); transform: translateY(-1px); border-color: var(--border2); }
+    .channel-card:hover { box-shadow: var(--shadow); transform: translateY(-1px); border-color: var(--border2); }
     .channel-icon-wrap {
-      width: 32px; height: 32px; border-radius: 8px;
+      width: 42px; height: 42px; border-radius: 10px;
       display: flex; align-items: center; justify-content: center;
       flex-shrink: 0;
     }
-    .channel-icon-wrap svg { width: 16px; height: 16px; }
+    .channel-icon-wrap svg { width: 22px; height: 22px; }
     .channel-info { flex: 1; min-width: 0; }
-    .channel-header-row { display: flex; align-items: baseline; justify-content: space-between; gap: 4px; }
-    .channel-name { font-size: 11px; font-weight: 600; color: var(--text1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .channel-count-badge { font-size: 13px; font-weight: 800; line-height: 1; flex-shrink: 0; }
-    .channel-pct { font-size: 9.5px; color: var(--text3); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .channel-bar-mini { height: 3px; background: var(--border); border-radius: 2px; margin-top: 4px; overflow: hidden; }
+    .channel-name { font-size: 11px; font-weight: 600; color: var(--text1); }
+    .channel-count-badge { font-size: 20px; font-weight: 800; line-height: 1.1; margin-top: 1px; }
+    .channel-pct { font-size: 10px; color: var(--text3); margin-top: 1px; }
+    .channel-bar-mini { height: 3px; background: var(--border); border-radius: 2px; margin-top: 5px; overflow: hidden; }
     .channel-bar-fill { height: 100%; border-radius: 2px; transition: width .6s ease; }
 
     /* ═══════════════════ ALERT FLAGS ═══════════════════ */
@@ -561,56 +560,10 @@ function handleUsernameInput(val) {
     }
     .timeline-title { font-size: 11px; color: var(--text1); flex: 1; min-width: 0; }
 
-    /* ═══════════════════ DONUT CENTER & STATUS TILES ═══════════════════ */
-    .donut-center-metric {
-      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      pointer-events: none; text-align: center;
-    }
-    .donut-center-val {
-      font-size: 20px; font-weight: 800; color: var(--text1); line-height: 1; letter-spacing: -0.5px;
-    }
-    .donut-center-lbl {
-      font-size: 9.5px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 3px;
-    }
-    .donut-status-cards {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
-    }
-    .donut-status-card {
-      padding: 6px 9px; border-radius: 8px; border: 1px solid var(--border);
-      display: flex; flex-direction: column; gap: 2px;
-    }
-    .donut-status-card.selesai {
-      background: #f0fdf4; border-color: #bbf7d0;
-    }
-    .donut-status-card.belum {
-      background: #fff1f2; border-color: #fecdd3;
-    }
-    .donut-status-header {
-      display: flex; align-items: center; justify-content: space-between; font-size: 10px; font-weight: 600;
-    }
-    .donut-status-card.selesai .donut-status-header { color: #166534; }
-    .donut-status-card.belum .donut-status-header { color: #9f1239; }
-    .donut-status-body {
-      display: flex; align-items: baseline; justify-content: space-between;
-    }
-    .donut-status-val {
-      font-size: 14.5px; font-weight: 800; line-height: 1;
-    }
-    .donut-status-card.selesai .donut-status-val { color: #15803d; }
-    .donut-status-card.belum .donut-status-val { color: #e11d48; }
-    .donut-status-pct {
-      font-size: 10px; font-weight: 700; color: var(--text3);
-    }
-    .status-progress-track {
-      height: 5px; background: #fee2e2; border-radius: 4px; overflow: hidden; margin-top: 7px;
-    }
-    .status-progress-fill {
-      height: 100%; background: #10b981; border-radius: 4px; transition: width .6s ease;
-    }
-    .donut-legend { display: flex; flex-direction: column; gap: 6px; }
-    .donut-legend-item { display: flex; align-items: center; gap: 8px; font-size: 11px; }
-    .donut-legend-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+    /* ═══════════════════ DONUT LEGEND ═══════════════════ */
+    .donut-legend { display: flex; flex-direction: column; gap: 9px; }
+    .donut-legend-item { display: flex; align-items: center; gap: 9px; font-size: 11px; }
+    .donut-legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
     .donut-legend-label { flex: 1; color: var(--text1); }
     .donut-legend-value { color: var(--text1); font-weight: 700; }
     .donut-legend-pct { color: var(--text3); font-size: 10px; margin-left: 2px; }
@@ -2352,20 +2305,13 @@ window.addEventListener('focus', () => {
           <span class="card-title"><i class="fa-solid fa-circle-half-stroke"></i> Status Publikasi</span>
         </div>
         <div class="card-body">
-          <div class="chart-wrap" style="height:135px;position:relative">
-            <canvas id="chart-status-donut"></canvas>
-            <div class="donut-center-metric">
-              <span class="donut-center-val" id="donut-center-val">0</span>
-              <span class="donut-center-lbl">Publikasi</span>
-            </div>
-          </div>
-          <div id="donut-legend" style="margin-top:10px"></div>
+          <div class="chart-wrap" style="height:150px"><canvas id="chart-status-donut"></canvas></div>
+          <div class="donut-legend" id="donut-legend" style="margin-top:14px"></div>
         </div>
       </div>
       <div class="card">
-        <div class="card-header" style="display:flex;align-items:center;justify-content:space-between">
+        <div class="card-header">
           <span class="card-title" id="title-chart-monthly"><i class="fa-solid fa-chart-bar"></i> Publikasi per Bulan (2026)</span>
-          <span class="badge" id="monthly-peak" style="background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe;font-size:10px;font-weight:600;display:none"></span>
         </div>
         <div class="card-body">
           <div class="chart-wrap" style="height:220px"><canvas id="chart-monthly"></canvas></div>
@@ -2927,22 +2873,15 @@ window.addEventListener('focus', () => {
               <span class="card-title"><i class="fa-solid fa-circle-half-stroke"></i> Status Publikasi</span>
             </div>
             <div class="card-body" style="padding:14px 16px">
-              <div class="chart-wrap" style="height:135px;position:relative">
-                <canvas id="portal-chart-status-donut"></canvas>
-                <div class="donut-center-metric">
-                  <span class="donut-center-val" id="portal-donut-center-val">0</span>
-                  <span class="donut-center-lbl">Publikasi</span>
-                </div>
-              </div>
-              <div id="portal-donut-legend" style="margin-top:10px"></div>
+              <div class="chart-wrap" style="height:150px"><canvas id="portal-chart-status-donut"></canvas></div>
+              <div class="donut-legend" id="portal-donut-legend" style="margin-top:14px"></div>
             </div>
           </div>
 
           <!-- Publikasi per Bulan -->
           <div class="card" style="margin-bottom:0">
-            <div class="card-header" style="padding:12px 16px;display:flex;align-items:center;justify-content:space-between">
+            <div class="card-header" style="padding:12px 16px">
               <span class="card-title"><i class="fa-solid fa-chart-bar"></i> Publikasi per Bulan (2026)</span>
-              <span class="badge" id="portal-monthly-peak" style="background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe;font-size:10px;font-weight:600;display:none"></span>
             </div>
             <div class="card-body" style="padding:14px 16px">
               <div class="chart-wrap" style="height:220px"><canvas id="portal-chart-monthly"></canvas></div>
@@ -6260,52 +6199,15 @@ function renderCharts(){
   destroyChart('status');
   const selesai=data.filter(d=>getStatus(d)==='selesai').length;
   const belum=data.filter(d=>getStatus(d)==='belum').length;
-  const pctSelesai = data.length ? Math.round(selesai / data.length * 100) : 0;
-  const pctBelum = data.length ? Math.round(belum / data.length * 100) : 0;
-  const statusColors=['#10b981','#f43f5e'];
-
-  const canvasStatus = document.getElementById('chart-status-donut');
-  if(canvasStatus && typeof Chart !== 'undefined') {
-    charts['status']=new Chart(canvasStatus,{
-      type:'doughnut',
-      data:{labels:['Selesai','Belum Selesai'],datasets:[{data:[selesai,belum],backgroundColor:statusColors,borderWidth:2,borderColor:'#fff',hoverOffset:4}]},
-      options:{cutout:'74%',maintainAspectRatio:false,plugins:{legend:{display:false},datalabels:{display:false},tooltip:CHART_TOOLTIP}}
-    });
-  }
-
-  const centerVal = document.getElementById('donut-center-val');
-  if(centerVal) centerVal.textContent = data.length;
-
-  const donutLegend = document.getElementById('donut-legend');
-  if(donutLegend) {
-    donutLegend.innerHTML = `
-      <div class="donut-status-cards">
-        <div class="donut-status-card selesai">
-          <div class="donut-status-header">
-            <span><i class="fa-solid fa-circle-check"></i> Selesai</span>
-            <span class="donut-status-pct">${pctSelesai}%</span>
-          </div>
-          <div class="donut-status-body">
-            <span class="donut-status-val">${selesai}</span>
-            <span style="font-size:9.5px;color:#166534">publikasi</span>
-          </div>
-        </div>
-        <div class="donut-status-card belum">
-          <div class="donut-status-header">
-            <span><i class="fa-regular fa-clock"></i> Belum</span>
-            <span class="donut-status-pct">${pctBelum}%</span>
-          </div>
-          <div class="donut-status-body">
-            <span class="donut-status-val">${belum}</span>
-            <span style="font-size:9.5px;color:#9f1239">publikasi</span>
-          </div>
-        </div>
-      </div>
-      <div class="status-progress-track" title="Tingkat Penyelesaian: ${pctSelesai}% (${selesai}/${data.length})">
-        <div class="status-progress-fill" style="width:${pctSelesai}%"></div>
-      </div>
-    `;
-  }
+  const statusColors=['#22c55e','#ef4444'];
+  charts['status']=new Chart(document.getElementById('chart-status-donut'),{
+    type:'doughnut',
+    data:{labels:['Selesai','Belum Selesai'],datasets:[{data:[selesai,belum],backgroundColor:statusColors,borderWidth:2,borderColor:'#fff',hoverOffset:5}]},
+    options:{cutout:'72%',maintainAspectRatio:false,plugins:{legend:{display:false},datalabels:{display:false},tooltip:CHART_TOOLTIP}}
+  });
+  document.getElementById('donut-legend').innerHTML=[['Selesai',selesai,'#22c55e'],['Belum Selesai',belum,'#ef4444']].map(([l,v,c])=>
+    `<div class="donut-legend-item"><div class="donut-legend-dot" style="background:${c}"></div><div class="donut-legend-label">${l}</div><div class="donut-legend-value">${v}</div><div class="donut-legend-pct">${data.length?Math.round(v/data.length*100):0}%</div></div>`
+  ).join('');
 
   /* ─── Monthly Bar ─── */
   destroyChart('monthly');
@@ -6318,98 +6220,36 @@ function renderCharts(){
   const monthCounts={};
   MONTH_ORDER.forEach(m=>monthCounts[m]={selesai:0,belum:0});
   dataMonthly.forEach(d=>{ const m=MONTH_ORDER.find(mo=>d.jadwal.toLowerCase().includes(mo.toLowerCase())); if(m) monthCounts[m][getStatus(d)]++; });
-
-  let peakMonth = '';
-  let peakVal = 0;
-  MONTH_ORDER.forEach(m => {
-    const tot = monthCounts[m].selesai + monthCounts[m].belum;
-    if(tot > peakVal) { peakVal = tot; peakMonth = m.slice(0,3); }
+  charts['monthly']=new Chart(document.getElementById('chart-monthly'),{
+    type:'bar',
+    data:{
+      labels:MONTH_ORDER.map(m=>m.slice(0,3)),
+      datasets:[
+        {label:'Selesai',       data:MONTH_ORDER.map(m=>monthCounts[m].selesai), backgroundColor:'rgba(34,197,94,.85)', borderRadius:3,borderSkipped:false},
+        {label:'Belum Selesai', data:MONTH_ORDER.map(m=>monthCounts[m].belum),   backgroundColor:'rgba(239,68,68,.85)', borderRadius:3,borderSkipped:false},
+      ]
+    },
+    options:{...baseOpts(),scales:{x:{stacked:true,ticks:{color:TICK_COLOR,font:TICK_FONT},grid:{color:CHART_GRID}},y:{stacked:true,beginAtZero:true,ticks:{color:TICK_COLOR,font:TICK_FONT,stepSize:1},grid:{color:CHART_GRID}}},plugins:{legend:{display:true,position:'top',labels:LEGEND_LABEL},datalabels:{display:false},tooltip:CHART_TOOLTIP}}
   });
-  const peakBadge = document.getElementById('monthly-peak');
-  if(peakBadge) {
-    if(peakVal > 0) {
-      peakBadge.style.display = 'inline-flex';
-      peakBadge.innerHTML = `<i class="fa-solid fa-arrow-trend-up"></i> Puncak: ${peakMonth} (${peakVal})`;
-    } else {
-      peakBadge.style.display = 'none';
-    }
-  }
 
-  const canvasMonthly = document.getElementById('chart-monthly');
-  if(canvasMonthly && typeof Chart !== 'undefined') {
-    charts['monthly']=new Chart(canvasMonthly,{
-      type:'bar',
-      data:{
-        labels:MONTH_ORDER.map(m=>m.slice(0,3)),
-        datasets:[
-          {label:'Selesai',       data:MONTH_ORDER.map(m=>monthCounts[m].selesai), backgroundColor:'#10b981', borderRadius:4, borderSkipped:false, maxBarThickness:16, categoryPercentage:0.72, barPercentage:0.85},
-          {label:'Belum Selesai', data:MONTH_ORDER.map(m=>monthCounts[m].belum),   backgroundColor:'#f43f5e', borderRadius:4, borderSkipped:false, maxBarThickness:16, categoryPercentage:0.72, barPercentage:0.85},
-        ]
-      },
-      options:{
-        maintainAspectRatio:false,
-        scales:{
-          x:{
-            stacked:true,
-            ticks:{color:TICK_COLOR, font:{family:'Inter',size:10,weight:'600'}, autoSkip:false, maxRotation:0},
-            grid:{display:false}
-          },
-          y:{
-            stacked:true,
-            beginAtZero:true,
-            ticks:{color:TICK_COLOR, font:TICK_FONT, stepSize:1, precision:0},
-            grid:{color:CHART_GRID}
-          }
-        },
-        plugins:{
-          legend:{
-            display:true,
-            position:'top',
-            align:'end',
-            labels:{
-              boxWidth:8,
-              boxHeight:8,
-              usePointStyle:true,
-              pointStyle:'circle',
-              font:{family:'Inter',size:10.5,weight:'600'},
-              color:TICK_COLOR,
-              padding:10
-            }
-          },
-          datalabels:{display:false},
-          tooltip:CHART_TOOLTIP
-        }
-      }
-    });
-  }
-
-  /* ─── Channel Summary (Professional & Compact Cards) ─── */
+  /* ─── Channel Summary (Professional Cards) ─── */
   const maxCh=Math.max(...CHANNEL_DEFS.map(cd=>data.filter(d=>hasLink(d[cd.field])).length),1);
-  const chSummaryEl = document.getElementById('channel-summary-grid');
-  if(chSummaryEl) {
-    chSummaryEl.innerHTML=CHANNEL_DEFS.map(cd=>{
-      const cnt=data.filter(d=>hasLink(d[cd.field])).length;
-      const pct=data.length?Math.round(cnt/data.length*100):0;
-      const barPct=Math.round(cnt/maxCh*100);
-      return `
-        <div class="channel-card" title="${cd.label}: ${cnt} publikasi (${pct}%)">
-          <div class="channel-icon-wrap" style="background:${cd.bg};border:1px solid ${cd.border}">
-            <svg width="16" height="16" style="color:${cd.color}"><use href="#${cd.iconId}"/></svg>
-          </div>
-          <div class="channel-info">
-            <div class="channel-header-row">
-              <span class="channel-name">${cd.label}</span>
-              <span class="channel-count-badge" style="color:${cd.color}">${cnt}</span>
-            </div>
-            <div class="channel-pct">${pct}% publikasi · ${cd.sublabel}</div>
-            <div class="channel-bar-mini">
-              <div class="channel-bar-fill" style="width:${barPct}%;background:${cd.color}"></div>
-            </div>
-          </div>
-        </div>
-      `;
-    }).join('');
-  }
+  document.getElementById('channel-summary-grid').innerHTML=CHANNEL_DEFS.map(cd=>{
+    const cnt=data.filter(d=>hasLink(d[cd.field])).length;
+    const pct=data.length?Math.round(cnt/data.length*100):0;
+    const barPct=Math.round(cnt/maxCh*100);
+    return `<div class="channel-card">
+      <div class="channel-icon-wrap" style="background:${cd.bg};border:1.5px solid ${cd.border}">
+        <svg width="22" height="22" style="color:${cd.color}"><use href="#${cd.iconId}"/></svg>
+      </div>
+      <div class="channel-info">
+        <div class="channel-name">${cd.label}</div>
+        <div class="channel-count-badge" style="color:${cd.color}">${cnt}</div>
+        <div class="channel-pct">${pct}% publikasi · ${cd.sublabel}</div>
+        <div class="channel-bar-mini"><div class="channel-bar-fill" style="width:${barPct}%;background:${cd.color}"></div></div>
+      </div>
+    </div>`;
+  }).join('');
 
   /* ─── Unit Bar ─── */
   destroyChart('unit-bar');
@@ -8572,50 +8412,19 @@ function renderPortalCharts() {
     if(portalCharts['status']) portalCharts['status'].destroy();
     const selesai = data.filter(d=>getStatus(d)==='selesai').length;
     const belum = data.filter(d=>getStatus(d)==='belum').length;
-    const pctSelesai = data.length ? Math.round(selesai / data.length * 100) : 0;
-    const pctBelum = data.length ? Math.round(belum / data.length * 100) : 0;
-
     const canvasStatus = document.getElementById('portal-chart-status-donut');
     if(canvasStatus && typeof Chart !== 'undefined') {
       portalCharts['status'] = new Chart(canvasStatus, {
         type: 'doughnut',
-        data: { labels:['Selesai','Belum Selesai'], datasets:[{data:[selesai,belum], backgroundColor:['#10b981','#f43f5e'], borderWidth:2, borderColor:'#fff', hoverOffset:4}] },
-        options: { cutout:'74%', maintainAspectRatio:false, plugins:{legend:{display:false},datalabels:{display:false},tooltip:(typeof CHART_TOOLTIP!=='undefined'?CHART_TOOLTIP:{})} }
+        data: { labels:['Selesai','Belum Selesai'], datasets:[{data:[selesai,belum], backgroundColor:['#22c55e','#ef4444'], borderWidth:2, borderColor:'#fff', hoverOffset:5}] },
+        options: { cutout:'72%', maintainAspectRatio:false, plugins:{legend:{display:false},datalabels:{display:false},tooltip:(typeof CHART_TOOLTIP!=='undefined'?CHART_TOOLTIP:{})} }
       });
-    }
-
-    const centerVal = document.getElementById('portal-donut-center-val');
-    if(centerVal) centerVal.textContent = data.length;
-
-    const donutLeg = document.getElementById('portal-donut-legend');
-    if(donutLeg) {
-      donutLeg.innerHTML = `
-        <div class="donut-status-cards">
-          <div class="donut-status-card selesai">
-            <div class="donut-status-header">
-              <span><i class="fa-solid fa-circle-check"></i> Selesai</span>
-              <span class="donut-status-pct">${pctSelesai}%</span>
-            </div>
-            <div class="donut-status-body">
-              <span class="donut-status-val">${selesai}</span>
-              <span style="font-size:9.5px;color:#166534">publikasi</span>
-            </div>
-          </div>
-          <div class="donut-status-card belum">
-            <div class="donut-status-header">
-              <span><i class="fa-regular fa-clock"></i> Belum</span>
-              <span class="donut-status-pct">${pctBelum}%</span>
-            </div>
-            <div class="donut-status-body">
-              <span class="donut-status-val">${belum}</span>
-              <span style="font-size:9.5px;color:#9f1239">publikasi</span>
-            </div>
-          </div>
-        </div>
-        <div class="status-progress-track" title="Tingkat Penyelesaian: ${pctSelesai}% (${selesai}/${data.length})">
-          <div class="status-progress-fill" style="width:${pctSelesai}%"></div>
-        </div>
-      `;
+      const donutLeg = document.getElementById('portal-donut-legend');
+      if(donutLeg) {
+        donutLeg.innerHTML = [['Selesai',selesai,'#22c55e'],['Belum Selesai',belum,'#ef4444']].map(([l,v,c])=>
+          `<div class="donut-legend-item"><div class="donut-legend-dot" style="background:${c}"></div><div class="donut-legend-label">${l}</div><div class="donut-legend-value">${v}</div><div class="donut-legend-pct">${data.length?Math.round(v/data.length*100):0}%</div></div>`
+        ).join('');
+      }
     }
   } catch(e) { console.warn('Status chart error:', e); }
 
@@ -8630,23 +8439,6 @@ function renderPortalCharts() {
       const m = MONTH_ORDER.find(mo => d.jadwal.toLowerCase().includes(mo.toLowerCase()));
       if(m) monthCounts[m][getStatus(d)]++;
     });
-
-    let peakMonth = '';
-    let peakVal = 0;
-    MONTH_ORDER.forEach(m => {
-      const tot = monthCounts[m].selesai + monthCounts[m].belum;
-      if(tot > peakVal) { peakVal = tot; peakMonth = m.slice(0,3); }
-    });
-    const peakBadge = document.getElementById('portal-monthly-peak');
-    if(peakBadge) {
-      if(peakVal > 0) {
-        peakBadge.style.display = 'inline-flex';
-        peakBadge.innerHTML = `<i class="fa-solid fa-arrow-trend-up"></i> Puncak: ${peakMonth} (${peakVal})`;
-      } else {
-        peakBadge.style.display = 'none';
-      }
-    }
-
     const canvasMonthly = document.getElementById('portal-chart-monthly');
     if(canvasMonthly && typeof Chart !== 'undefined') {
       portalCharts['monthly'] = new Chart(canvasMonthly, {
@@ -8654,44 +8446,11 @@ function renderPortalCharts() {
         data: {
           labels: MONTH_ORDER.map(m=>m.slice(0,3)),
           datasets: [
-            {label:'Selesai', data:MONTH_ORDER.map(m=>monthCounts[m].selesai), backgroundColor:'#10b981', borderRadius:4, borderSkipped:false, maxBarThickness:16, categoryPercentage:0.72, barPercentage:0.85},
-            {label:'Belum Selesai', data:MONTH_ORDER.map(m=>monthCounts[m].belum), backgroundColor:'#f43f5e', borderRadius:4, borderSkipped:false, maxBarThickness:16, categoryPercentage:0.72, barPercentage:0.85},
+            {label:'Selesai', data:MONTH_ORDER.map(m=>monthCounts[m].selesai), backgroundColor:'rgba(34,197,94,.85)', borderRadius:3, borderSkipped:false},
+            {label:'Belum Selesai', data:MONTH_ORDER.map(m=>monthCounts[m].belum), backgroundColor:'rgba(239,68,68,.85)', borderRadius:3, borderSkipped:false},
           ]
         },
-        options: {
-          maintainAspectRatio:false,
-          scales:{
-            x:{
-              stacked:true,
-              ticks:{color:TICK_COLOR, font:{family:'Inter',size:10,weight:'600'}, autoSkip:false, maxRotation:0},
-              grid:{display:false}
-            },
-            y:{
-              stacked:true,
-              beginAtZero:true,
-              ticks:{color:TICK_COLOR, font:TICK_FONT, stepSize:1, precision:0},
-              grid:{color:CHART_GRID}
-            }
-          },
-          plugins:{
-            legend:{
-              display:true,
-              position:'top',
-              align:'end',
-              labels:{
-                boxWidth:8,
-                boxHeight:8,
-                usePointStyle:true,
-                pointStyle:'circle',
-                font:{family:'Inter',size:10.5,weight:'600'},
-                color:TICK_COLOR,
-                padding:10
-              }
-            },
-            datalabels:{display:false},
-            tooltip:(typeof CHART_TOOLTIP!=='undefined'?CHART_TOOLTIP:{})
-          }
-        }
+        options: { ...(typeof baseOpts==='function'?baseOpts():{}), scales:{x:{stacked:true,ticks:{color:TICK_COLOR,font:TICK_FONT},grid:{color:CHART_GRID}},y:{stacked:true,beginAtZero:true,ticks:{color:TICK_COLOR,font:TICK_FONT,stepSize:1},grid:{color:CHART_GRID}}}, plugins:{legend:{display:true,position:'top',labels:LEGEND_LABEL},datalabels:{display:false},tooltip:(typeof CHART_TOOLTIP!=='undefined'?CHART_TOOLTIP:{})} }
       });
     }
   } catch(e) { console.warn('Monthly chart error:', e); }
@@ -8706,19 +8465,15 @@ function renderPortalCharts() {
         const pct = data.length ? Math.round(cnt/data.length*100) : 0;
         const barPct = Math.round(cnt/maxCh*100);
         return `
-          <div class="channel-card" title="${cd.label}: ${cnt} publikasi (${pct}%)">
-            <div class="channel-icon-wrap" style="background:${cd.bg};border:1px solid ${cd.border}">
-              <svg width="16" height="16" style="color:${cd.color}"><use href="#${cd.iconId}"/></svg>
+          <div class="channel-card">
+            <div class="channel-icon-wrap" style="background:${cd.bg};border:1.5px solid ${cd.border}">
+              <svg width="20" height="20" style="color:${cd.color}"><use href="#${cd.iconId}"/></svg>
             </div>
             <div class="channel-info">
-              <div class="channel-header-row">
-                <span class="channel-name">${cd.label}</span>
-                <span class="channel-count-badge" style="color:${cd.color}">${cnt}</span>
-              </div>
-              <div class="channel-pct">${pct}% publikasi · ${cd.sublabel}</div>
-              <div class="channel-bar-mini">
-                <div class="channel-bar-fill" style="width:${barPct}%;background:${cd.color}"></div>
-              </div>
+              <div class="channel-name">${cd.label}</div>
+              <div class="channel-count-badge" style="color:${cd.color}">${cnt}</div>
+              <div class="channel-pct">${pct}% &bull; ${cd.sublabel}</div>
+              <div class="channel-bar-mini"><div class="channel-bar-fill" style="width:${barPct}%;background:${cd.color}"></div></div>
             </div>
           </div>`;
       }).join('');
