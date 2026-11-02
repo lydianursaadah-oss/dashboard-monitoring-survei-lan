@@ -1813,6 +1813,23 @@ const SUPABASE_CONFIG = {
   anonKey: localStorage.getItem('lan_supabase_key') || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImltdGVnaGZyZ2RkanZna3hhcndpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMxMzQ2NzYsImV4cCI6MjEwODcxMDY3Nn0.23YPuFy6PfmMdURqDR4OX1Qi6agjGrZSHgNjple3Ilo'
 };
 
+async function savePublikasiApi(row, no = null) {
+  const url = no == null ? '/api/publikasi' : `/api/publikasi/${encodeURIComponent(no)}`;
+  const response = await fetch(url, {
+    method: no == null ? 'POST' : 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(row)
+  });
+  if (!response.ok) throw new Error(await response.text());
+  return response.json();
+}
+
+async function deletePublikasiApi(no) {
+  const response = await fetch(`/api/publikasi/${encodeURIComponent(no)}`, { method: 'DELETE' });
+  if (!response.ok) throw new Error(await response.text());
+  return response.json();
+}
+
 const GOOGLE_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/1p-gYkKlG9qY0uhmayAhery5JEG-j6D5FQQShcKXFQ9E/gviz/tq?tqx=out:csv&gid=988003932';
 
 let supabaseClient = null;
@@ -1986,13 +2003,7 @@ function parseGoogleSheetCSV(text) {
 
 async function syncUsersFromSupabase() {
   try {
-    const url = `${SUPABASE_CONFIG.url}/rest/v1/users?select=*`;
-    const res = await fetch(url, {
-      headers: {
-        'apikey': SUPABASE_CONFIG.anonKey,
-        'Authorization': `Bearer ${SUPABASE_CONFIG.anonKey}`
-      }
-    });
+    const res = await fetch('/api/users');
     if (res.ok) {
       const data = await res.json();
       if (Array.isArray(data) && data.length > 0) {
@@ -2024,13 +2035,7 @@ async function syncDataFromSupabase(isManual = false) {
 
   try {
     // 1. Primary: Ambil data langsung dari tabel 'publikasi' Supabase
-    const sUrl = `${SUPABASE_CONFIG.url}/rest/v1/publikasi?select=*&order=no.asc`;
-    const res = await fetch(sUrl, {
-      headers: {
-        'apikey': SUPABASE_CONFIG.anonKey,
-        'Authorization': `Bearer ${SUPABASE_CONFIG.anonKey}`
-      }
-    });
+    const res = await fetch('/api/publikasi');
 
     if (res.ok) {
       const data = await res.json();
@@ -3821,7 +3826,7 @@ window.addEventListener('focus', () => {
         </div>
 
         <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:20px;padding-top:14px;border-top:1px solid #f1f5f9;flex-wrap:wrap;">
-          <button type="button" onclick="submitPrismoPengajuan('diajukan')" style="display:inline-flex;align-items:center;gap:6px;padding:9px 20px;border:none;background:#2563eb;color:#fff;border-radius:8px;font-size:12.5px;font-weight:700;cursor:pointer;box-shadow:0 2px 6px rgba(37,99,235,0.25);"><i class="fa-solid fa-paper-plane"></i> Kirim</button>
+          <button type="button" id="prismo-btn-submit-pengajuan" onclick="submitPrismoPengajuan('diajukan')" style="display:inline-flex;align-items:center;gap:6px;padding:9px 20px;border:none;background:#2563eb;color:#fff;border-radius:8px;font-size:12.5px;font-weight:700;cursor:pointer;box-shadow:0 2px 6px rgba(37,99,235,0.25);"><i class="fa-solid fa-paper-plane" id="prismo-btn-submit-icon"></i> <span id="prismo-btn-submit-text">Kirim</span></button>
         </div>
       </div>
     </form>
@@ -5836,9 +5841,8 @@ function saveNewAgenda(e){
   closeAddAgendaModal();
   document.getElementById('add-agenda-form').reset();
 
-  // Simpan permanen ke Supabase Database
-  if (supabaseClient) {
-    supabaseClient.from('publikasi').insert([{
+  // Simpan permanen melalui API Drizzle
+  savePublikasiApi({
       no: newNo,
       unit: unit,
       judul: judul,
@@ -5847,13 +5851,8 @@ function saveNewAgenda(e){
       tahun: tahun,
       cluster: cluster,
       ket: ket
-    }]).then(({ error }) => {
-      if (error) console.error('[SUPABASE INSERT ERROR]', error);
-      else showNotificationToast('✅ Data agenda baru berhasil disimpan ke database Supabase!', 'success');
-    });
-  } else {
-    showNotificationToast('✅ Agenda baru tersimpan lokal!', 'success');
-  }
+  }).then(() => showNotificationToast('✅ Data agenda baru berhasil disimpan ke database!', 'success'))
+    .catch(error => { console.error('[API PUBLIKASI INSERT ERROR]', error); showNotificationToast('Gagal menyimpan agenda ke database.', 'warn'); });
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -6919,29 +6918,15 @@ async function saveChannelLinkFromModal(e) {
   };
   const dbCol = fieldToDbCol[field] || field;
 
-  // 4. Update to Supabase REST API
+  // 4. Update through the Drizzle API
   try {
-    if (typeof SUPABASE_CONFIG !== 'undefined' && SUPABASE_CONFIG.url && SUPABASE_CONFIG.anonKey) {
-      const payload = { [dbCol]: urlVal };
-      if (markAsDone) {
-        payload.ket = 'Selesai';
-        payload.status = 'Selesai';
-      }
-      fetch(`${SUPABASE_CONFIG.url}/rest/v1/publikasi?no=eq.${item.no}`, {
-        method: 'PATCH',
-        headers: {
-          'apikey': SUPABASE_CONFIG.anonKey,
-          'Authorization': `Bearer ${SUPABASE_CONFIG.anonKey}`,
-          'Content-Type': 'application/json',
-          'Prefer': 'return=representation'
-        },
-        body: JSON.stringify(payload)
-      }).then(res => {
-        console.log('[SUPABASE] Channel link synced to DB:', res.status);
-      }).catch(err => {
-        console.warn('[SUPABASE] Failed to sync channel link to DB:', err);
-      });
-    }
+    const payload = { [dbCol]: urlVal };
+    if (markAsDone) payload.ket = 'Selesai';
+    savePublikasiApi(payload, item.no).then(() => {
+      console.log('[PRISMO API] Channel link synced to DB:', item.no);
+    }).catch(err => {
+      console.warn('[PRISMO API] Failed to sync channel link to DB:', err);
+    });
   } catch(err){}
 
   if (btn) {
@@ -9097,10 +9082,10 @@ function submitSindisaActivityForm(e) {
   saveApprovals(list);
   try { localStorage.setItem('lan_pub_data', JSON.stringify(RAW)); } catch(err){}
 
-  // Push ke database Supabase agar otomatis tersimpan di 1 database pusat
-  if (typeof supabaseClient !== 'undefined' && supabaseClient) {
+  // Push melalui API Drizzle agar tersimpan di database pusat
+  {
     if (topikVal === '__NEW__') {
-      supabaseClient.from('publikasi').insert([{
+      savePublikasiApi({
         no: targetSurveyNo,
         unit: targetUnit,
         judul: targetJudul,
@@ -9109,16 +9094,18 @@ function submitSindisaActivityForm(e) {
         tahun: '2026',
         cluster: 'Tata Kelola & Manajemen ASN',
         ket: 'Tahap ' + stageObj.name + ' - ' + summaryNote
-      }]).then(({ error }) => {
-        if (error) console.warn('[SUPABASE INSERT WARNING]', error);
-        else console.log('[SUPABASE INSERT SUCCESS] Usulan survei baru tersimpan di Supabase.');
+      }).then(() => {
+        console.log('[PRISMO API INSERT SUCCESS] Usulan survei baru tersimpan.');
+      }).catch(error => {
+        console.warn('[PRISMO API INSERT WARNING]', error);
       });
     } else {
-      supabaseClient.from('publikasi').update({
+      savePublikasiApi({
         ket: (stageId === 7 ? 'Selesai - ' : ('Tahap ' + stageObj.name + ' - ')) + summaryNote
-      }).eq('no', targetSurveyNo).then(({ error }) => {
-        if (error) console.warn('[SUPABASE UPDATE WARNING]', error);
-        else console.log('[SUPABASE UPDATE SUCCESS] Progres survei terupdate di Supabase.');
+      }, targetSurveyNo).then(() => {
+        console.log('[PRISMO API UPDATE SUCCESS] Progres survei terupdate.');
+      }).catch(error => {
+        console.warn('[PRISMO API UPDATE WARNING]', error);
       });
     }
   }
@@ -9472,12 +9459,12 @@ function getPrismoProposals() {
   return defaults;
 }
 
-function savePrismoProposals(list) {
+function savePrismoProposals(list, syncToServer = true) {
   try {
     localStorage.setItem('lan_prismo_proposals_v3', JSON.stringify(list));
   } catch(e) { console.warn(e); }
   if (typeof updatePortalBadges === 'function') updatePortalBadges();
-  pushPrismoProposalsToSupabase(list);
+  if (syncToServer) pushPrismoProposalsToSupabase(list);
 }
 
 function ensureApprovedProposalActivityRecords(proposals) {
@@ -9527,15 +9514,13 @@ function ensureApprovedProposalActivityRecords(proposals) {
     try { localStorage.setItem('lan_pub_data', JSON.stringify(RAW)); } catch(e) {}
     filteredData = [...RAW];
 
-    if (typeof supabaseClient !== 'undefined' && supabaseClient) {
+    {
       const rows = created.map(row => ({
         no: row.no, unit: row.unit, judul: row.judul, jenis: row.jenis, jadwal: row.jadwal,
         tahun: row.tahun, cluster: row.cluster, jurnal: row.jurnal, media: row.media,
         web_lan: '', web_unit: '', ig_lan: '', ig_unit: '', yt_lan: '', yt_unit: '', ket: row.ket
       }));
-      supabaseClient.from('publikasi').insert(rows).then(({ error }) => {
-        if (error) console.warn('[PRISMO] Approved activity sync warning:', error);
-      });
+      savePublikasiApi(rows).catch(error => console.warn('[PRISMO] Approved activity sync warning:', error));
     }
   }
   return created;
@@ -9620,69 +9605,33 @@ function renderPrismoProgressUnit(user) {
 
 // Sinkronisasi data usulan kegiatan PRISMO ke tabel 'prismo_proposals' di Supabase
 async function pushPrismoProposalsToSupabase(list) {
-  if (typeof SUPABASE_CONFIG === 'undefined' || !SUPABASE_CONFIG.url || !SUPABASE_CONFIG.anonKey) return false;
   try {
-    const rows = list.map(proposal => ({
-      id: proposal.id,
-      judul: proposal.judul || '',
-      unit: proposal.unit || '',
-      jenis: proposal.jenis || '',
-      cluster: proposal.cluster || '',
-      target_tanggal: proposal.target_selesai || null,
-      pic: proposal.pic || '',
-      status_global: proposal.status || 'diajukan',
-      tahap_aktif: Number(proposal.tahap_aktif) || 1,
-      prioritas: proposal.prioritas === true || proposal.prioritas === 'Tinggi',
-      doc_proposal: proposal.dokumen_proposal || '',
-      doc_nama: proposal.tor_nama || '',
-      doc_jenis: proposal.tor_jenis || 'TOR dan Proposal',
-      doc_ket: proposal.tor_keterangan || '',
-      doc_access_status: proposal.tor_status_akses || 'Belum dicek',
-      catatan_pimpinan: proposal.catatan_kepala ? [proposal.catatan_kepala] : [],
-      riwayat_keputusan: Array.isArray(proposal.riwayat) ? proposal.riwayat : [],
-      payload: proposal
-    }));
-    const res = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/prismo_proposals`, {
+    const res = await fetch('/api/prismo-proposals', {
       method: 'POST',
-      headers: {
-        'apikey': SUPABASE_CONFIG.anonKey,
-        'Authorization': `Bearer ${SUPABASE_CONFIG.anonKey}`,
-        'Content-Type': 'application/json',
-        'Prefer': 'resolution=merge-duplicates'
-      },
-      body: JSON.stringify(rows)
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(list)
     });
     if (res.ok) {
       console.log(`[SUPABASE PRISMO] Berhasil mengunggah ${list.length} usulan kegiatan ke Supabase.`);
       return true;
     } else {
-      console.warn('[SUPABASE PRISMO PUSH WARNING]', await res.text());
+      console.warn('[PRISMO API PUSH WARNING]', await res.text());
       return false;
     }
   } catch(err) {
-    console.warn('[SUPABASE PRISMO PUSH ERROR]', err);
+    console.warn('[PRISMO API PUSH ERROR]', err);
     return false;
   }
 }
 
 // Ambil data usulan kegiatan PRISMO langsung dari Cloud Supabase
 async function syncPrismoProposalsFromSupabase() {
-  if (typeof SUPABASE_CONFIG === 'undefined' || !SUPABASE_CONFIG.url || !SUPABASE_CONFIG.anonKey) return;
   try {
-    const res = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/prismo_proposals?select=*&order=id.asc`, {
-      headers: {
-        'apikey': SUPABASE_CONFIG.anonKey,
-        'Authorization': `Bearer ${SUPABASE_CONFIG.anonKey}`
-      }
-    });
+    const res = await fetch('/api/prismo-proposals');
     if (res.ok) {
       const data = await res.json();
       if (Array.isArray(data) && data.length > 0) {
-        const normalized = data.map(row => normalizeProposalRecord({
-          ...row,
-          ...(row && row.payload && typeof row.payload === 'object' ? row.payload : {}),
-          id: row.id || (row.payload && row.payload.id)
-        }));
+        const normalized = data.map(row => normalizeProposalRecord(row));
         localStorage.setItem('lan_prismo_proposals_v3', JSON.stringify(normalized));
         const curr = getCurrentUser();
         const dynPanel = document.getElementById('sindisa-panel-dynamic');
@@ -9694,15 +9643,15 @@ async function syncPrismoProposalsFromSupabase() {
           try { renderSindisaAccTable(); } catch(e){}
         }
         if (typeof updatePortalBadges === 'function') updatePortalBadges();
-        console.log(`[SUPABASE PRISMO] Sinkronisasi ${normalized.length} usulan dari Supabase berhasil.`);
+        console.log(`[PRISMO API] Sinkronisasi ${normalized.length} usulan dari server berhasil.`);
         return normalized;
       } else if (Array.isArray(data) && data.length === 0) {
-        console.log('[SUPABASE PRISMO] Tabel Supabase kosong, melakukan inisialisasi default...');
+        console.log('[PRISMO API] Tabel kosong, menginisialisasi data default...');
         await pushPrismoProposalsToSupabase(DEFAULT_PRISMO_PROPOSALS);
       }
     }
   } catch(err) {
-    console.warn('[SUPABASE PRISMO SYNC ERROR]', err);
+    console.warn('[PRISMO API SYNC ERROR]', err);
   }
 }
 
@@ -9897,11 +9846,16 @@ function openPrismoPengajuanModal(idToEdit) {
   const badge = document.getElementById('prismo-modal-mode-badge');
   const title = document.getElementById('prismo-wizard-title');
 
+  const submitText = document.getElementById('prismo-btn-submit-text');
+  const submitIcon = document.getElementById('prismo-btn-submit-icon');
+
   if (idToEdit) {
     const item = getPrismoProposalById(idToEdit);
     if (item) {
       if (badge) badge.textContent = 'Perbaikan Usulan: ' + item.id;
       if (title) title.textContent = 'Perbaiki Usulan Kegiatan';
+      if (submitText) submitText.textContent = 'Update';
+      if (submitIcon) submitIcon.className = 'fa-solid fa-rotate';
       document.getElementById('prismo-input-judul').value = item.judul || '';
       document.getElementById('prismo-input-jenis').value = item.jenis || 'Survei';
       document.getElementById('prismo-input-cluster').value = resolveClusterName(item.cluster) || 'Pelayanan Publik';
@@ -9923,6 +9877,8 @@ function openPrismoPengajuanModal(idToEdit) {
   } else {
     if (badge) badge.textContent = 'Pengajuan Baru';
     if (title) title.textContent = 'Form Usulan Kegiatan Survei / Kajian';
+    if (submitText) submitText.textContent = 'Kirim';
+    if (submitIcon) submitIcon.className = 'fa-solid fa-paper-plane';
     document.getElementById('prismo-pengajuan-form').reset();
     document.getElementById('prismo-edit-id').value = '';
     if (unitSelect) {
@@ -10013,7 +9969,7 @@ function updatePrismoSummaryBox() {
   `;
 }
 
-function submitPrismoPengajuan(statusTarget) {
+async function submitPrismoPengajuan(statusTarget) {
   const form = document.getElementById('prismo-pengajuan-form');
   if (form && !form.reportValidity()) return;
   const docProposal = '';
@@ -10089,9 +10045,8 @@ function submitPrismoPengajuan(statusTarget) {
           }
         ]
       };
-      savePrismoProposals(list);
+      savePrismoProposals(list, false);
       recordInternalAuditLog('PROPOSAL_RESUBMIT', { id: prev.id, unit: unitVal, status: statusTarget });
-      alert((statusTarget === 'diajukan') ? 'Perbaikan usulan berhasil dikirim ke Admin DSPK2AN!' : 'Draft revisi usulan berhasil disimpan.');
     }
   } else {
     const newSeq = String(list.length + 1).padStart(3, '0');
@@ -10115,10 +10070,18 @@ function submitPrismoPengajuan(statusTarget) {
       ]
     };
     list.unshift(newProposal);
-    savePrismoProposals(list);
+    savePrismoProposals(list, false);
     recordInternalAuditLog('PROPOSAL_CREATE', { id: newId, unit: unitVal, status: statusTarget });
-    alert((statusTarget === 'diajukan') ? 'Usulan kegiatan berhasil diajukan ke Admin DSPK2AN!' : 'Draft usulan kegiatan berhasil disimpan.');
   }
+
+  const synced = await pushPrismoProposalsToSupabase(list);
+  if (!synced) {
+    alert('Pengajuan belum tersimpan di database bersama. Data masih ada di browser ini; periksa konfigurasi DATABASE_URL di Vercel dan coba lagi.');
+    return;
+  }
+  alert(editId
+    ? (statusTarget === 'diajukan' ? 'Usulan berhasil diupdate dan dikirim ke Admin DSPK2AN!' : 'Draft revisi usulan berhasil diupdate.')
+    : (statusTarget === 'diajukan' ? 'Usulan kegiatan berhasil diajukan ke Admin DSPK2AN!' : 'Draft usulan kegiatan berhasil disimpan.'));
 
   closePrismoPengajuanModal();
   const dynPanel = document.getElementById('sindisa-panel-dynamic');
@@ -10916,26 +10879,13 @@ async function deletePrismoProposal(id) {
   }
   if (!confirm(`Hapus usulan "${proposal.judul}" (${proposal.id})? Tindakan ini tidak dapat dibatalkan.`)) return;
 
-  if (typeof SUPABASE_CONFIG !== 'undefined' && SUPABASE_CONFIG.url && SUPABASE_CONFIG.anonKey) {
-    try {
-      const response = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/prismo_proposals?id=eq.${encodeURIComponent(id)}`, {
-        method: 'DELETE',
-        headers: {
-          apikey: SUPABASE_CONFIG.anonKey,
-          Authorization: `Bearer ${SUPABASE_CONFIG.anonKey}`,
-          Prefer: 'return=minimal'
-        }
-      });
-      if (!response.ok) {
-        console.warn('[PRISMO] Gagal menghapus usulan dari Supabase:', await response.text());
-        alert('Usulan belum dapat dihapus dari server. Silakan coba lagi.');
-        return;
-      }
-    } catch (error) {
-      console.warn('[PRISMO] Gagal menghapus usulan dari Supabase:', error);
-      alert('Koneksi ke server gagal. Usulan belum dihapus. Silakan coba lagi.');
-      return;
-    }
+  try {
+    const response = await fetch(`/api/prismo-proposals/${encodeURIComponent(id)}`, { method: 'DELETE' });
+    if (!response.ok) throw new Error(await response.text());
+  } catch (error) {
+    console.warn('[PRISMO] Gagal menghapus usulan dari API:', error);
+    alert('Usulan belum dapat dihapus dari server. Silakan coba lagi.');
+    return;
   }
   const remaining = getPrismoProposals().filter(item => item.id !== id);
   try { localStorage.setItem('lan_prismo_proposals_v3', JSON.stringify(remaining)); } catch (error) { console.warn(error); }
@@ -12177,15 +12127,14 @@ async function savePortalProgress(e) {
   }
 
   try {
-    if (supabaseClient) {
+    {
       const sbRow = {
         status: rec.status,
         ket: rec.ket,
         jadwal: rec.jadwal
       };
-      const { error } = await supabaseClient.from('publikasi').update(sbRow).eq('no', rec.no);
-      if (error) console.warn('[SUPABASE UPDATE ERROR]', error);
-      else console.log('[SUPABASE UPDATE SUCCESS] Updated #', rec.no);
+      await savePublikasiApi(sbRow, rec.no);
+      console.log('[PRISMO API UPDATE SUCCESS] Updated #', rec.no);
     }
   } catch(err) {
     console.warn('[SUPABASE EXCEPTION]', err);
@@ -12998,16 +12947,17 @@ function submitAccDecision(e) {
   saveApprovals(list);
   try { localStorage.setItem('lan_pub_data', JSON.stringify(RAW)); } catch(err){}
 
-  if (typeof supabaseClient !== 'undefined' && supabaseClient) {
+  {
     if (idVal.startsWith('survey-')) {
       const surveyNo = parseInt(idVal.replace('survey-', ''));
       const d = RAW.find(x => x.no === surveyNo);
       if (d) {
-        supabaseClient.from('publikasi').update({
+        savePublikasiApi({
           ket: d.ket
-        }).eq('no', surveyNo).then(({ error }) => {
-          if (error) console.warn('[SUPABASE ACC UPDATE WARNING]', error);
-          else console.log('[SUPABASE ACC UPDATE SUCCESS] Status survei terupdate di Supabase.');
+        }, surveyNo).then(() => {
+          console.log('[PRISMO API ACC UPDATE SUCCESS] Status survei terupdate.');
+        }).catch(error => {
+          console.warn('[PRISMO API ACC UPDATE WARNING]', error);
         });
       }
     }
