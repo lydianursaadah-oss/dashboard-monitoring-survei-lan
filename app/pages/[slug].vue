@@ -27,27 +27,12 @@ useHead(() => ({ title: `${page.value?.title} — Monitoring Survei LAN RI` }))
 </script>
 
 <template>
-  <iframe
-    class="legacy-app"
-    :src="legacyUrl"
-    :title="page?.label || 'Halaman Monitoring Survei LAN RI'"
-  />
+  <main class="w-full h-[100dvh] overflow-hidden bg-slate-50">
+    <iframe
+      class="block w-full h-[100dvh] border-0"
+      :src="legacyUrl"
+      :title="page?.label || 'Halaman Monitoring Survei LAN RI'"
+    />
+  </main>
 </template>
 
-<style>
-html,
-body,
-#__nuxt {
-  width: 100%;
-  min-width: 320px;
-  height: 100%;
-  margin: 0;
-}
-
-.legacy-app {
-  display: block;
-  width: 100%;
-  height: 100dvh;
-  border: 0;
-}
-</style>
