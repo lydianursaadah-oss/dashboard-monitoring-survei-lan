@@ -2100,10 +2100,10 @@ function getAdminScheduleInfo(d) {
 }
 
 async function loadFromSupabase() {
-  if (!supabaseClient) return;
   try {
-    const { data, error } = await supabaseClient.from('publikasi').select('*').order('no', { ascending: true });
-    if (!error && Array.isArray(data) && data.length > 0) {
+    const response = await fetch('/api/publikasi');
+    const data = response.ok ? await response.json() : null;
+    if (Array.isArray(data) && data.length > 0) {
       DB = data.map(d => ({
         id: d.id,
         no: parseInt(d.no) || d.id,
@@ -2247,7 +2247,7 @@ async function restoreDeletedRecord(no, logIdx) {
   DB.sort((a, b) => a.no - b.no);
   saveDB();
 
-  if (supabaseClient) {
+  {
     const sbRow = {
       no: rec.no,
       unit: rec.unit,
@@ -2267,7 +2267,8 @@ async function restoreDeletedRecord(no, logIdx) {
       ket: rec.ket || 'Belum Selesai'
     };
     try {
-      await supabaseClient.from('publikasi').insert([sbRow]);
+      const response = await fetch('/api/publikasi', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(sbRow) });
+      if (!response.ok) throw new Error(await response.text());
       console.log('[SUPABASE RESTORE] Successfully inserted back into cloud for #', rec.no);
     } catch(e) {
       console.warn('[SUPABASE RESTORE ERROR]', e);
@@ -2565,7 +2566,7 @@ async function saveRecord(e){
   saveDB();
 
   // Simpan / update ke database Supabase
-  if (supabaseClient) {
+  {
     const sbRow = {
       no: rec.no,
       unit: rec.unit,
@@ -2586,16 +2587,15 @@ async function saveRecord(e){
     };
 
     try {
-      const { data: existing } = await supabaseClient.from('publikasi').select('id, no').eq('no', rec.no);
-      let sbRes;
-      if (existing && existing.length > 0) {
-        sbRes = await supabaseClient.from('publikasi').update(sbRow).eq('no', rec.no);
-      } else {
-        sbRes = await supabaseClient.from('publikasi').insert([sbRow]);
-      }
-      if (sbRes.error) {
-        console.error('[SUPABASE ERROR]', sbRes.error);
-        showToast('Tersimpan di lokal, gagal sinkron Supabase: ' + sbRes.error.message, 'warn');
+      const response = await fetch(id ? `/api/publikasi/${encodeURIComponent(rec.no)}` : '/api/publikasi', {
+        method: id ? 'PATCH' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(sbRow)
+      });
+      if (!response.ok) {
+        const message = await response.text();
+        console.error('[PRISMO API ERROR]', message);
+        showToast('Tersimpan di lokal, gagal sinkron API: ' + message, 'warn');
       } else {
         console.log('[SUPABASE] Berhasil disinkronkan ke cloud');
         showToast(id ? '✅ Perubahan berhasil disimpan & disinkron ke Supabase!' : '✅ Publikasi baru berhasil disimpan ke Supabase!', 'success');
@@ -2604,8 +2604,6 @@ async function saveRecord(e){
       console.error('[SUPABASE EXCEPTION]', err);
       showToast('Tersimpan di lokal, koneksi Supabase bermasalah', 'warn');
     }
-  } else {
-    showToast('Tersimpan di lokal (Supabase belum terhubung)', 'info');
   }
 
   showPage('data');
@@ -2617,13 +2615,9 @@ function deleteRecord(no){
   showConfirm('🗑️','Hapus Publikasi?',`"${d?.judul?.slice(0,60)||'Record ini'}" akan dihapus permanen.`, 'btn-danger', 'Hapus', ()=>{
     DB=DB.filter(r=>r.no!==no);
     saveDB();
-    if (supabaseClient) {
-      supabaseClient.from('publikasi').delete().eq('no', no)
-        .then(({ error }) => {
-          if(error) console.error('[SUPABASE DELETE ERROR]', error);
-          else console.log('[SUPABASE] Record dihapus dari cloud');
-        });
-    }
+    fetch(`/api/publikasi/${encodeURIComponent(no)}`, { method: 'DELETE' })
+      .then(response => { if (!response.ok) throw new Error('HTTP ' + response.status); console.log('[PRISMO API] Record dihapus'); })
+      .catch(error => console.error('[PRISMO API DELETE ERROR]', error));
     addLog(`Hapus: "${d?.judul?.slice(0,50)}" (No.${no})`, 'delete', d);
     showToast('Publikasi dihapus dari lokal & Supabase.','warn');
     renderStats(); renderDataTable();

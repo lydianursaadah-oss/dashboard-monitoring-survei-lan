@@ -4,6 +4,7 @@ node_modules/
 .env.local
 .nuxt/
 .output/
+.vercel/
 dist/
 
 # OS files
@@ -14,5 +15,6 @@ desktop.ini
 # Editor
 .vscode/
 .idea/
-*.swp
-*.swo
+# Logs
+*.log
+.nuxt-dev.log
