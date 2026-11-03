@@ -5243,12 +5243,16 @@ const UNIT_COLORS = {
   "MULTI":  {bg:"#f1f5f9", text:"#475569", bar:"#94a3b8"},
 };
 const CLUSTER_COLORS = {
-  "Prioritas Presiden":          {bg:"#fee2e2", text:"#b91c1c", bar:"#ef4444"},
-  "Tata Kelola & Manajemen ASN": {bg:"#dbeafe", text:"#1d4ed8", bar:"#3b82f6"},
-  "Pelayanan Publik":            {bg:"#dcfce7", text:"#15803d", bar:"#22c55e"},
-  "Digitalisasi":                {bg:"#eff6ff", text:"#6d28d9", bar:"#8b5cf6"},
+  "Program Prioritas Presiden":      {bg:"#fee2e2", text:"#b91c1c", bar:"#ef4444"},
+  "Prioritas Presiden":              {bg:"#fee2e2", text:"#b91c1c", bar:"#ef4444"},
+  "Digitalisasi":                    {bg:"#eff6ff", text:"#6d28d9", bar:"#8b5cf6"},
+  "Tata Kelola dan Manajemen ASN":   {bg:"#dbeafe", text:"#1d4ed8", bar:"#3b82f6"},
+  "Tata Kelola & Manajemen ASN":     {bg:"#dbeafe", text:"#1d4ed8", bar:"#3b82f6"},
+  "Manajemen Kinerja":               {bg:"#fef3c7", text:"#92400e", bar:"#f59e0b"},
+  "Pelayanan Publik":                {bg:"#dcfce7", text:"#15803d", bar:"#22c55e"},
+  "Manajemen Pemerintahan":          {bg:"#f0fdfa", text:"#0f766e", bar:"#14b8a6"},
   "Desentralisasi & Otonomi Daerah": {bg:"#fef3c7", text:"#92400e", bar:"#f59e0b"},
-  "Inovasi Administrasi Negara": {bg:"#f0fdfa", text:"#0f766e", bar:"#14b8a6"},
+  "Inovasi Administrasi Negara":     {bg:"#f0fdfa", text:"#0f766e", bar:"#14b8a6"},
   "Daftar cluster kebijakan final sedang disiapkan": {bg:"#f1f5f9", text:"#475569", bar:"#64748b"},
 };
 
@@ -5261,13 +5265,12 @@ const CLUSTER_COLORS = {
 const CLUSTER_PLACEHOLDER_NEUTRAL = "Daftar cluster kebijakan final sedang disiapkan";
 
 const DEFAULT_MASTER_CLUSTERS = [
-  { code: "CL-01", name: "Prioritas Presiden", legacyNames: ["Prioritas Presiden", "Prioritas Presiden & Kebijakan Strategis"], isPlaceholder: false, active: true, sortOrder: 1 },
-  { code: "CL-02", name: "Tata Kelola & Manajemen ASN", legacyNames: ["Tata Kelola & Manajemen ASN", "Manajemen ASN"], isPlaceholder: false, active: true, sortOrder: 2 },
-  { code: "CL-03", name: "Pelayanan Publik", legacyNames: ["Pelayanan Publik"], isPlaceholder: false, active: true, sortOrder: 3 },
-  { code: "CL-04", name: "Digitalisasi", legacyNames: ["Digitalisasi", "Digitalisasi & Transformasi Digital"], isPlaceholder: false, active: true, sortOrder: 4 },
-  { code: "CL-05", name: "Desentralisasi & Otonomi Daerah", legacyNames: ["Desentralisasi & Otonomi Daerah"], isPlaceholder: false, active: true, sortOrder: 5 },
-  { code: "CL-06", name: "Inovasi Administrasi Negara", legacyNames: ["Inovasi Administrasi Negara"], isPlaceholder: false, active: true, sortOrder: 6 },
-  { code: "CL-PENDING", name: CLUSTER_PLACEHOLDER_NEUTRAL, legacyNames: ["Belum Ditentukan", "Lainnya"], isPlaceholder: true, active: true, sortOrder: 99 }
+  { code: "CL-01", name: "Program Prioritas Presiden", legacyNames: ["Prioritas Presiden", "Prioritas Presiden & Kebijakan Strategis"], isPlaceholder: false, active: true, sortOrder: 1 },
+  { code: "CL-02", name: "Digitalisasi", legacyNames: ["Digitalisasi", "Digitalisasi & Transformasi Digital"], isPlaceholder: false, active: true, sortOrder: 2 },
+  { code: "CL-03", name: "Tata Kelola dan Manajemen ASN", legacyNames: ["Tata Kelola dan Manajemen ASN", "Tata Kelola & Manajemen ASN", "Manajemen ASN", "Manajemen ASN & Birokrasi"], isPlaceholder: false, active: true, sortOrder: 3 },
+  { code: "CL-04", name: "Manajemen Kinerja", legacyNames: ["Manajemen Kinerja"], isPlaceholder: false, active: true, sortOrder: 4 },
+  { code: "CL-05", name: "Pelayanan Publik", legacyNames: ["Pelayanan Publik", "Pelayanan Publik & Inovasi"], isPlaceholder: false, active: true, sortOrder: 5 },
+  { code: "CL-06", name: "Manajemen Pemerintahan", legacyNames: ["Manajemen Pemerintahan", "Inovasi Administrasi Negara", "Desentralisasi & Otonomi Daerah", "Ekonomi & Pembangunan Daerah"], isPlaceholder: false, active: true, sortOrder: 6 }
 ];
 
 function getMasterClustersConfig() {
@@ -5275,15 +5278,25 @@ function getMasterClustersConfig() {
     const saved = localStorage.getItem('prismo_master_clusters_v1');
     if (saved) {
       const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      if (parsed && typeof parsed === 'object' && Array.isArray(parsed.items)) return parsed;
+      if (Array.isArray(parsed) && parsed.length > 0) return { isFinalized: true, items: parsed };
     }
   } catch (e) { console.warn('Master cluster load warning:', e); }
-  return [...DEFAULT_MASTER_CLUSTERS];
+  return { isFinalized: true, items: JSON.parse(JSON.stringify(DEFAULT_MASTER_CLUSTERS)) };
+}
+
+function getMasterClustersList() {
+  const cfg = getMasterClustersConfig();
+  if (Array.isArray(cfg)) return cfg;
+  return Array.isArray(cfg.items) ? cfg.items : [];
 }
 
 function saveMasterClustersConfig(clusters) {
   try {
-    localStorage.setItem('prismo_master_clusters_v1', JSON.stringify(clusters));
+    const dataToSave = (clusters && typeof clusters === 'object' && Array.isArray(clusters.items))
+      ? clusters
+      : { isFinalized: true, items: Array.isArray(clusters) ? clusters : DEFAULT_MASTER_CLUSTERS };
+    localStorage.setItem('prismo_master_clusters_v1', JSON.stringify(dataToSave));
     populateDropdowns();
     if (typeof initPortalDropdowns === 'function') initPortalDropdowns();
     populateAllClusterSelects();
@@ -5291,17 +5304,14 @@ function saveMasterClustersConfig(clusters) {
 }
 
 function getActiveClusterNames() {
-  const list = getMasterClustersConfig().filter(c => c.active !== false);
-  if (!list.some(c => c.name === CLUSTER_PLACEHOLDER_NEUTRAL)) {
-    list.push({ code: "CL-PENDING", name: CLUSTER_PLACEHOLDER_NEUTRAL, isPlaceholder: true, active: true });
-  }
+  const list = getMasterClustersList().filter(c => c.active !== false);
   return list.map(c => c.name);
 }
 
 function resolveClusterName(rawCluster) {
-  if (!rawCluster || !String(rawCluster).trim()) return CLUSTER_PLACEHOLDER_NEUTRAL;
+  if (!rawCluster || !String(rawCluster).trim()) return 'Tata Kelola dan Manajemen ASN';
   const val = String(rawCluster).trim();
-  const master = getMasterClustersConfig();
+  const master = getMasterClustersList();
   for (const m of master) {
     if (m.name.toLowerCase() === val.toLowerCase()) return m.name;
     if (Array.isArray(m.legacyNames) && m.legacyNames.some(l => l.toLowerCase() === val.toLowerCase())) {
@@ -11811,9 +11821,9 @@ function renderMasterClusterManager() {
             </tr>
           </thead>
           <tbody>
-            ${cfg.items.map((item, idx) => `
+            ${(cfg.items || getMasterClustersList()).map((item, idx) => `
               <tr style="border-bottom:1px solid #f1f5f9;">
-                <td style="padding:10px 12px;font-weight:700;color:#64748b;">${escapeHtml(item.id)}</td>
+                <td style="padding:10px 12px;font-weight:700;color:#64748b;">${escapeHtml(item.code || item.id || ('CL-0' + (idx + 1)))}</td>
                 <td style="padding:10px 12px;font-weight:700;color:#1e293b;">${escapeHtml(item.name)}</td>
                 <td style="padding:10px 12px;color:#475569;">${(item.legacyNames || []).map(escapeHtml).join(', ') || '-'}</td>
                 <td style="padding:10px 12px;">

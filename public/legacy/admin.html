@@ -1901,22 +1901,25 @@ if (window.supabase && SUPABASE_URL && SUPABASE_KEY) {
 const LS_MASTER_CLUSTERS = 'prismo_master_clusters_v1';
 const CLUSTER_PLACEHOLDER_TEXT = 'Daftar cluster kebijakan final sedang disiapkan';
 const DEFAULT_MASTER_CLUSTERS = [
-  { code: 'CLUSTER_PENDING_HUMAS', name: CLUSTER_PLACEHOLDER_TEXT, isPlaceholder: true, color: '#64748b' },
-  { code: 'CLUSTER_ASN', name: 'Manajemen ASN & Birokrasi', isPlaceholder: false, color: '#2563eb' },
-  { code: 'CLUSTER_PELAYANAN', name: 'Pelayanan Publik & Inovasi', isPlaceholder: false, color: '#059669' },
-  { code: 'CLUSTER_EKONOMI', name: 'Ekonomi & Pembangunan Daerah', isPlaceholder: false, color: '#d97706' },
-  { code: 'CLUSTER_KOMPETENSI', name: 'Pengembangan Kompetensi', isPlaceholder: false, color: '#9333ea' },
-  { code: 'CLUSTER_PRIORITAS', name: 'Prioritas Presiden', isPlaceholder: false, color: '#dc2626' },
-  { code: 'CLUSTER_DIGITALISASI', name: 'Digitalisasi', isPlaceholder: false, color: '#0891b2' }
+  { code: 'CL-01', name: 'Program Prioritas Presiden', isPlaceholder: false, color: '#ef4444' },
+  { code: 'CL-02', name: 'Digitalisasi', isPlaceholder: false, color: '#8b5cf6' },
+  { code: 'CL-03', name: 'Tata Kelola dan Manajemen ASN', isPlaceholder: false, color: '#3b82f6' },
+  { code: 'CL-04', name: 'Manajemen Kinerja', isPlaceholder: false, color: '#f59e0b' },
+  { code: 'CL-05', name: 'Pelayanan Publik', isPlaceholder: false, color: '#22c55e' },
+  { code: 'CL-06', name: 'Manajemen Pemerintahan', isPlaceholder: false, color: '#14b8a6' }
 ];
 const CLUSTER_LEGACY_MAPPING = {
-  'Tata Kelola & Manajemen ASN': 'Manajemen ASN & Birokrasi',
-  'Manajemen ASN': 'Manajemen ASN & Birokrasi',
-  'Pelayanan Publik': 'Pelayanan Publik & Inovasi',
-  'Ekonomi Daerah': 'Ekonomi & Pembangunan Daerah',
-  'Bangkom': 'Pengembangan Kompetensi',
-  'Belum Ditentukan': CLUSTER_PLACEHOLDER_TEXT,
-  '[Menunggu Daftar Cluster Final Humas / Pak Puji]': CLUSTER_PLACEHOLDER_TEXT
+  'Prioritas Presiden': 'Program Prioritas Presiden',
+  'Prioritas Presiden & Kebijakan Strategis': 'Program Prioritas Presiden',
+  'Tata Kelola & Manajemen ASN': 'Tata Kelola dan Manajemen ASN',
+  'Manajemen ASN': 'Tata Kelola dan Manajemen ASN',
+  'Manajemen ASN & Birokrasi': 'Tata Kelola dan Manajemen ASN',
+  'Pelayanan Publik & Inovasi': 'Pelayanan Publik',
+  'Inovasi Administrasi Negara': 'Manajemen Pemerintahan',
+  'Desentralisasi & Otonomi Daerah': 'Manajemen Pemerintahan',
+  'Ekonomi & Pembangunan Daerah': 'Manajemen Pemerintahan',
+  'Pengembangan Kompetensi': 'Tata Kelola dan Manajemen ASN',
+  'Bangkom': 'Tata Kelola dan Manajemen ASN'
 };
 function getMasterClusters() {
   try {
