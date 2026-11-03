@@ -8124,7 +8124,9 @@ const ROLE_CONFIGS = {
       { id: "inbox_pengajuan", icon: "fa-inbox", label: "Inbox Pengajuan", badge: true, action: "openTab('inbox_pengajuan')" },
       { id: "persetujuan_pimpinan", icon: "fa-user-check", label: "Persetujuan Pimpinan", action: "openTab('persetujuan_pimpinan')" },
       { id: "monitoring_progress", icon: "fa-chart-line", label: "Monitoring Progress", action: "openTab('monitoring_progress')" },
-      { section: "PUBLIKASI" },
+      { section: "DATA & PUBLIKASI" },
+      { id: "data_publikasi", icon: "fa-table", label: "Data Publikasi", action: "openTab('data_publikasi')" },
+      { id: "tambah_publikasi", icon: "fa-plus-circle", label: "Tambah Publikasi", action: "openTab('tambah_publikasi')" },
       { id: "review_publikasi_awal", icon: "fa-magnifying-glass-chart", label: "Review Publikasi Awal", action: "openTab('review_publikasi_awal')" },
       { id: "review_publikasi_akhir", icon: "fa-file-circle-check", label: "Review Publikasi Akhir", action: "openTab('review_publikasi_akhir')" },
       { id: "kalender_publikasi", icon: "fa-calendar-days", label: "Kalender Publikasi", action: "openTab('kalender_publikasi')" },
@@ -9639,6 +9641,16 @@ const TAB_LABELS_MAP = {
 };
 
 function openTab(tabName) {
+  if (tabName === 'data_publikasi') {
+    switchMasterTab('data_publikasi');
+    openTab('master_data');
+    return;
+  }
+  if (tabName === 'tambah_publikasi') {
+    startNewPublicationForm();
+    openTab('master_data');
+    return;
+  }
   const standardPanels = ['dashboard', 'pengumuman', 'aktivitas', 'penulisan', 'publikasi', 'seminar', 'proposal'];
   const isStandard = ['dashboard', 'pengumuman'].includes(tabName);
   const dynPanel = document.getElementById('sindisa-panel-dynamic');
@@ -11774,13 +11786,21 @@ function filterPrismoPimpinanTable() {
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   PUSAT MASTER DATA TERPADU LAN RI (Admin DSPK2AN)
-   - Sub-Tab 1: Master Cluster Kebijakan
-   - Sub-Tab 2: Master Unit Kerja LAN RI
-   - Sub-Tab 3: Master Jenis Publikasi & Luaran
-   - Sub-Tab 4: Master Kanal Media Publikasi
+   PUSAT MASTER DATA & DATA PUBLIKASI TERPADU LAN RI (Admin DSPK2AN)
+   - Sub-Tab 1: Data Publikasi (Tabel & Monitoring CRUD)
+   - Sub-Tab 2: Tambah / Edit Publikasi (Formulir Input Langsung)
+   - Sub-Tab 3: Master Cluster Kebijakan (6 Cluster Resmi)
+   - Sub-Tab 4: Master Unit Kerja LAN RI (13 Satker)
+   - Sub-Tab 5: Master Jenis Publikasi & Luaran
+   - Sub-Tab 6: Master Kanal Media Publikasi
    ══════════════════════════════════════════════════════════════════ */
-let activeMasterTab = 'cluster'; // 'cluster' | 'unit' | 'jenis' | 'media'
+let activeMasterTab = 'data_publikasi'; // 'data_publikasi' | 'tambah_publikasi' | 'cluster' | 'unit' | 'jenis' | 'media'
+let editingPubNo = null;
+let pubSearchQuery = '';
+let pubFilterUnit = '';
+let pubFilterCluster = '';
+let pubFilterStatus = '';
+let pubFilterYear = '';
 
 const DEFAULT_MASTER_UNITS = [
   { code: 'SKPP', name: 'Pusat Studi Kebijakan Pelayanan Publik (SKPP)', category: 'Pusat Studi', active: true },
@@ -11866,8 +11886,199 @@ function saveMasterMediaConfig(list) {
 
 function switchMasterTab(tabName) {
   activeMasterTab = tabName;
+  if (tabName !== 'tambah_publikasi') editingPubNo = null;
   const container = document.getElementById('sindisa-panel-dynamic');
   if (container) container.innerHTML = renderMasterClusterManager();
+}
+
+function startNewPublicationForm() {
+  editingPubNo = null;
+  switchMasterTab('tambah_publikasi');
+}
+
+function startEditPublicationForm(no) {
+  editingPubNo = no;
+  switchMasterTab('tambah_publikasi');
+}
+
+function handlePubFilterChange() {
+  pubSearchQuery = (document.getElementById('pub-admin-search')?.value || '').toLowerCase().trim();
+  pubFilterUnit = document.getElementById('pub-admin-filter-unit')?.value || '';
+  pubFilterCluster = document.getElementById('pub-admin-filter-cluster')?.value || '';
+  pubFilterStatus = document.getElementById('pub-admin-filter-status')?.value || '';
+  pubFilterYear = document.getElementById('pub-admin-filter-year')?.value || '';
+  
+  const tbody = document.getElementById('pub-admin-table-body');
+  if (tbody) {
+    tbody.innerHTML = renderPublicationTableRows();
+  }
+}
+
+function renderPublicationTableRows() {
+  let list = Array.isArray(RAW) ? [...RAW] : [];
+  if (pubFilterYear) list = list.filter(d => String(d.tahun || '') === pubFilterYear);
+  if (pubFilterUnit) list = list.filter(d => getAllUnits(d.unit).includes(pubFilterUnit));
+  if (pubFilterCluster) list = list.filter(d => resolveClusterName(d.cluster) === pubFilterCluster);
+  if (pubFilterStatus) {
+    if (pubFilterStatus === 'selesai') list = list.filter(d => getStatus(d) === 'selesai');
+    else if (pubFilterStatus === 'belum') list = list.filter(d => getStatus(d) !== 'selesai');
+  }
+  if (pubSearchQuery) {
+    list = list.filter(d => 
+      (d.judul || '').toLowerCase().includes(pubSearchQuery) ||
+      (d.unit || '').toLowerCase().includes(pubSearchQuery) ||
+      (d.pic || '').toLowerCase().includes(pubSearchQuery) ||
+      String(d.no || '').includes(pubSearchQuery)
+    );
+  }
+
+  if (list.length === 0) {
+    return '<tr><td colspan="8" style="text-align:center;padding:24px;color:#94a3b8;"><i class="fa-solid fa-folder-open" style="font-size:24px;margin-bottom:8px;display:block;"></i>Tidak ada data publikasi yang sesuai filter.</td></tr>';
+  }
+
+  return list.map(item => {
+    const rawIdx = RAW.findIndex(x => x.no === item.no);
+    const resolvedCluster = resolveClusterName(item.cluster);
+    const cColor = CLUSTER_COLORS[resolvedCluster] || { bg: '#f1f5f9', text: '#475569', bar: '#94a3b8' };
+    const uColor = UNIT_COLORS[getPrimaryUnit(item.unit)] || { bg: '#f1f5f9', text: '#475569' };
+    const isDone = getStatus(item) === 'selesai';
+
+    return `
+      <tr style="border-bottom:1px solid #f1f5f9;">
+        <td style="padding:11px 12px;font-weight:700;color:#64748b;">${item.no}</td>
+        <td style="padding:11px 12px;">
+          <span class="badge" style="background:${uColor.bg};color:${uColor.text};font-weight:800;font-size:11px;">${escapeHtml(item.unit)}</span>
+        </td>
+        <td style="padding:11px 12px;max-width:320px;">
+          <strong style="font-size:13px;color:#1e293b;display:block;margin-bottom:2px;">${escapeHtml(item.judul)}</strong>
+          <span style="font-size:11px;color:#64748b;">${escapeHtml(item.jenis || 'Survei')} &bull; PIC: ${escapeHtml(item.pic || '-')}</span>
+        </td>
+        <td style="padding:11px 12px;">
+          <span class="badge" style="background:${cColor.bg};color:${cColor.text};font-weight:700;font-size:11px;">${escapeHtml(resolvedCluster)}</span>
+        </td>
+        <td style="padding:11px 12px;font-size:12px;color:#475569;white-space:nowrap;">
+          <i class="fa-solid fa-calendar-days" style="color:#94a3b8;margin-right:4px;"></i>${escapeHtml(item.jadwal || '-')}
+        </td>
+        <td style="padding:11px 12px;font-size:11.5px;color:#475569;">
+          ${escapeHtml(item.tahapan || 'Penyusunan instrumen')}
+        </td>
+        <td style="padding:11px 12px;">
+          <span class="badge ${isDone ? 'badge-green' : 'badge-yellow'}" style="font-size:11px;">
+            ${isDone ? '<i class="fa-solid fa-circle-check"></i> Selesai' : '<i class="fa-solid fa-hourglass-half"></i> Berjalan'}
+          </span>
+        </td>
+        <td style="padding:11px 12px;text-align:right;white-space:nowrap;">
+          <button type="button" onclick="openModal(${rawIdx >= 0 ? rawIdx : 0})" title="Detail Lengkap" style="padding:5px 9px;border:1px solid #cbd5e1;background:#f8fafc;border-radius:6px;font-size:11px;cursor:pointer;margin-right:3px;">
+            <i class="fa-solid fa-eye"></i>
+          </button>
+          <button type="button" onclick="startEditPublicationForm(${item.no})" title="Edit Publikasi" style="padding:5px 9px;border:1px solid #bfdbfe;background:#eff6ff;color:#1d4ed8;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;margin-right:3px;">
+            <i class="fa-solid fa-pen-to-square"></i>
+          </button>
+          <button type="button" onclick="handleDeletePublication(${item.no})" title="Hapus Publikasi" style="padding:5px 9px;border:1px solid #fecaca;background:#fef2f2;color:#dc2626;border-radius:6px;font-size:11px;cursor:pointer;">
+            <i class="fa-solid fa-trash"></i>
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function handleSavePublication(e) {
+  e.preventDefault();
+  const unit = document.getElementById('pub-form-unit').value;
+  const jenis = document.getElementById('pub-form-jenis').value;
+  const judul = (document.getElementById('pub-form-judul')?.value || '').trim();
+  const cluster = document.getElementById('pub-form-cluster').value;
+  const tahun = document.getElementById('pub-form-tahun').value || '2026';
+  const pic = (document.getElementById('pub-form-pic')?.value || '').trim();
+  const tahapan = document.getElementById('pub-form-tahapan').value;
+  const bulan = document.getElementById('pub-form-bulan').value;
+  const minggu = document.getElementById('pub-form-minggu').value;
+  const statusVal = document.getElementById('pub-form-status').value;
+  const docProposal = (document.getElementById('pub-form-doc')?.value || '').trim();
+  const ket = (document.getElementById('pub-form-ket')?.value || '').trim();
+  const jurnal = (document.getElementById('pub-form-jurnal')?.value || '').trim();
+  const media = (document.getElementById('pub-form-media')?.value || '').trim();
+  const webLan = (document.getElementById('pub-form-web-lan')?.value || '').trim();
+  const webUnit = (document.getElementById('pub-form-web-unit')?.value || '').trim();
+  const igLan = (document.getElementById('pub-form-ig-lan')?.value || '').trim();
+  const ytLan = (document.getElementById('pub-form-yt-lan')?.value || '').trim();
+
+  if (!unit || !judul) {
+    alert('Unit Kerja dan Judul Publikasi wajib diisi.');
+    return;
+  }
+
+  const jadwal = bulan ? `${bulan} (${minggu || '1'})` : 'November (1)';
+
+  if (editingPubNo) {
+    // Mode Edit
+    const idx = RAW.findIndex(x => x.no === editingPubNo);
+    if (idx !== -1) {
+      RAW[idx] = {
+        ...RAW[idx],
+        unit, jenis, judul, cluster, tahun, pic, tahapan, jadwal,
+        status: statusVal === 'selesai' ? 'Selesai' : 'Belum Selesai',
+        ket: ket || (statusVal === 'selesai' ? 'Selesai' : 'Belum Selesai'),
+        doc_proposal: docProposal,
+        jurnal, media, webLAN: webLan, webUnit, igLAN: igLan, ytLAN: ytLan
+      };
+    }
+  } else {
+    // Mode Tambah Baru
+    const newNo = RAW.length > 0 ? Math.max(...RAW.map(d => d.no || 0)) + 1 : 1;
+    const newItem = {
+      no: newNo,
+      unit, jenis: jenis || 'Survei', judul, cluster, tahun, pic, tahapan, jadwal,
+      status: statusVal === 'selesai' ? 'Selesai' : 'Belum Selesai',
+      ket: ket || (statusVal === 'selesai' ? 'Selesai' : 'Belum Selesai'),
+      doc_proposal: docProposal,
+      jurnal, media, webLAN: webLan, webUnit, igLAN: igLan, ytLAN: ytLan
+    };
+    RAW.unshift(newItem);
+  }
+
+  try { localStorage.setItem('lan_pub_data', JSON.stringify(RAW)); } catch (err) {}
+  filteredData = [...RAW];
+  populateDropdowns();
+  renderKPIs();
+  renderCharts();
+  renderTable();
+  if (typeof applyPortalFilters === 'function') {
+    initPortalDropdowns();
+    applyPortalFilters();
+  }
+
+  // Sync to API backend
+  savePublikasiApi({
+    no: editingPubNo || RAW[0].no,
+    unit, judul, jenis, jadwal, tahun, cluster, jurnal, media,
+    web_lan: webLan, web_unit: webUnit, ig_lan: igLan, ig_unit: '', yt_lan: ytLan, yt_unit: '',
+    ket: ket || statusVal
+  });
+
+  editingPubNo = null;
+  alert('Data publikasi berhasil disimpan!');
+  switchMasterTab('data_publikasi');
+}
+
+function handleDeletePublication(no) {
+  if (!confirm(`Apakah Anda yakin ingin menghapus data publikasi No. ${no}?`)) return;
+  const idx = RAW.findIndex(x => x.no === no);
+  if (idx !== -1) {
+    RAW.splice(idx, 1);
+    try { localStorage.setItem('lan_pub_data', JSON.stringify(RAW)); } catch (err) {}
+    filteredData = [...RAW];
+    populateDropdowns();
+    renderKPIs();
+    renderCharts();
+    renderTable();
+    if (typeof applyPortalFilters === 'function') {
+      initPortalDropdowns();
+      applyPortalFilters();
+    }
+    handlePubFilterChange();
+  }
 }
 
 function renderMasterClusterManager() {
@@ -11876,24 +12087,38 @@ function renderMasterClusterManager() {
   const unitList = getMasterUnitsConfig();
   const jenisList = getMasterJenisConfig();
   const mediaList = getMasterMediaConfig();
+  const totalPubCount = Array.isArray(RAW) ? RAW.length : 0;
+
+  // Pre-fill data if in edit mode
+  let editItem = null;
+  if (editingPubNo) {
+    editItem = RAW.find(x => x.no === editingPubNo);
+  }
 
   return `
     <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:22px;margin-bottom:20px;box-shadow:0 1px 3px rgba(0,0,0,0.03);">
       
-      <!-- Header Master Data Hub -->
+      <!-- Header Master Data & Publikasi -->
       <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:18px;">
         <div>
           <h3 style="font-size:18px;font-weight:800;color:#1e293b;margin-bottom:4px;display:flex;align-items:center;gap:8px;">
-            <i class="fa-solid fa-database" style="color:#2563eb;"></i> Manajemen Master Data LAN RI
+            <i class="fa-solid fa-database" style="color:#2563eb;"></i> Manajemen Master Data &amp; Data Publikasi LAN RI
           </h3>
           <p style="font-size:12.5px;color:#64748b;margin:0;">
-            Perubahan di sini otomatis menjadi acuan pada Form Input, Filter Dashboard, Tabel, Detail Kegiatan, Grafik, dan Ekspor tanpa merusak data historis.
+            Kelola data publikasi survei dan konfigurasi acuan master terpusat langsung dari Portal Admin DSPK2AN.
           </p>
         </div>
       </div>
 
-      <!-- Navigasi Sub-Tab Master Data -->
+      <!-- Navigasi 6 Sub-Tab -->
       <div style="display:flex;gap:8px;border-bottom:2px solid #e2e8f0;padding-bottom:12px;margin-bottom:20px;flex-wrap:wrap;">
+        <button type="button" onclick="switchMasterTab('data_publikasi')" style="display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:700;border:none;cursor:pointer;background:${activeMasterTab === 'data_publikasi' ? '#2563eb' : '#f1f5f9'};color:${activeMasterTab === 'data_publikasi' ? '#ffffff' : '#475569'};transition:all .18s;">
+          <i class="fa-solid fa-table"></i> Data Publikasi
+          <span style="background:${activeMasterTab === 'data_publikasi' ? 'rgba(255,255,255,0.25)' : '#cbd5e1'};padding:1px 7px;border-radius:10px;font-size:11px;">${totalPubCount}</span>
+        </button>
+        <button type="button" onclick="startNewPublicationForm()" style="display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:700;border:none;cursor:pointer;background:${activeMasterTab === 'tambah_publikasi' ? '#2563eb' : '#f1f5f9'};color:${activeMasterTab === 'tambah_publikasi' ? '#ffffff' : '#475569'};transition:all .18s;">
+          <i class="fa-solid fa-plus-circle"></i> ${editingPubNo ? 'Edit Publikasi' : 'Tambah Publikasi'}
+        </button>
         <button type="button" onclick="switchMasterTab('cluster')" style="display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:700;border:none;cursor:pointer;background:${activeMasterTab === 'cluster' ? '#2563eb' : '#f1f5f9'};color:${activeMasterTab === 'cluster' ? '#ffffff' : '#475569'};transition:all .18s;">
           <i class="fa-solid fa-layer-group"></i> Cluster Kebijakan
           <span style="background:${activeMasterTab === 'cluster' ? 'rgba(255,255,255,0.25)' : '#cbd5e1'};padding:1px 7px;border-radius:10px;font-size:11px;">${clusterList.length}</span>
@@ -11907,12 +12132,207 @@ function renderMasterClusterManager() {
           <span style="background:${activeMasterTab === 'jenis' ? 'rgba(255,255,255,0.25)' : '#cbd5e1'};padding:1px 7px;border-radius:10px;font-size:11px;">${jenisList.length}</span>
         </button>
         <button type="button" onclick="switchMasterTab('media')" style="display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:700;border:none;cursor:pointer;background:${activeMasterTab === 'media' ? '#2563eb' : '#f1f5f9'};color:${activeMasterTab === 'media' ? '#ffffff' : '#475569'};transition:all .18s;">
-          <i class="fa-solid fa-bullhorn"></i> Kanal Media Publikasi
+          <i class="fa-solid fa-bullhorn"></i> Kanal Media
           <span style="background:${activeMasterTab === 'media' ? 'rgba(255,255,255,0.25)' : '#cbd5e1'};padding:1px 7px;border-radius:10px;font-size:11px;">${mediaList.length}</span>
         </button>
       </div>
 
-      <!-- KONTEN TAB 1: CLUSTER KEBIJAKAN -->
+      <!-- KONTEN TAB 1: DATA PUBLIKASI -->
+      ${activeMasterTab === 'data_publikasi' ? `
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+          <div>
+            <h4 style="font-size:15px;font-weight:800;color:#1e293b;margin:0 0 2px 0;">
+              <i class="fa-solid fa-table" style="color:#2563eb;margin-right:6px;"></i>Daftar Seluruh Publikasi &amp; Monitoring Kegiatan
+            </h4>
+            <span style="font-size:12px;color:#64748b;">Kelola, cari, dan pantau status publikasi survei seluruh satker LAN RI.</span>
+          </div>
+          <button type="button" onclick="startNewPublicationForm()" style="padding:8px 16px;background:#2563eb;color:#fff;border:none;border-radius:8px;font-size:12.5px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;">
+            <i class="fa-solid fa-plus-circle"></i> Tambah Publikasi Baru
+          </button>
+        </div>
+
+        <!-- Filter Bar -->
+        <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;background:#f8fafc;padding:12px;border-radius:10px;border:1px solid #e2e8f0;">
+          <input type="text" id="pub-admin-search" oninput="handlePubFilterChange()" placeholder="Cari judul, unit, atau PIC..." style="flex:1;min-width:200px;padding:7px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:12px;" />
+          <select id="pub-admin-filter-unit" onchange="handlePubFilterChange()" style="padding:7px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:12px;">
+            <option value="">Semua Unit</option>
+            ${unitList.map(u => `<option value="${escapeHtml(u.code)}">${escapeHtml(u.code)}</option>`).join('')}
+          </select>
+          <select id="pub-admin-filter-cluster" onchange="handlePubFilterChange()" style="padding:7px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:12px;">
+            <option value="">Semua Cluster</option>
+            ${clusterList.map(c => `<option value="${escapeHtml(c.name)}">${escapeHtml(c.name)}</option>`).join('')}
+          </select>
+          <select id="pub-admin-filter-status" onchange="handlePubFilterChange()" style="padding:7px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:12px;">
+            <option value="">Semua Status</option>
+            <option value="selesai">Selesai</option>
+            <option value="belum">Belum Selesai</option>
+          </select>
+          <select id="pub-admin-filter-year" onchange="handlePubFilterChange()" style="padding:7px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:12px;">
+            <option value="">Semua Tahun</option>
+            <option value="2025">2025</option>
+            <option value="2026">2026</option>
+            <option value="2027">2027</option>
+          </select>
+        </div>
+
+        <!-- Tabel Data Publikasi -->
+        <div style="overflow-x:auto;border:1px solid #e2e8f0;border-radius:10px;">
+          <table style="width:100%;border-collapse:collapse;text-align:left;font-size:12.5px;">
+            <thead style="background:#f8fafc;border-bottom:1px solid #e2e8f0;">
+              <tr>
+                <th style="padding:10px 12px;width:50px;">No</th>
+                <th style="padding:10px 12px;">Unit</th>
+                <th style="padding:10px 12px;">Judul &amp; PIC</th>
+                <th style="padding:10px 12px;">Cluster</th>
+                <th style="padding:10px 12px;">Jadwal</th>
+                <th style="padding:10px 12px;">Tahapan</th>
+                <th style="padding:10px 12px;">Status</th>
+                <th style="padding:10px 12px;text-align:right;">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="pub-admin-table-body">
+              ${renderPublicationTableRows()}
+            </tbody>
+          </table>
+        </div>
+      ` : ''}
+
+      <!-- KONTEN TAB 2: TAMBAH / EDIT PUBLIKASI -->
+      ${activeMasterTab === 'tambah_publikasi' ? `
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <div>
+            <h4 style="font-size:16px;font-weight:800;color:#1e293b;margin:0 0 2px 0;">
+              <i class="fa-solid ${editingPubNo ? 'fa-pen-to-square' : 'fa-plus-circle'}" style="color:#2563eb;margin-right:6px;"></i>
+              ${editingPubNo ? `Edit Publikasi No. ${editingPubNo}` : 'Formulir Tambah Publikasi Baru'}
+            </h4>
+            <span style="font-size:12px;color:#64748b;">
+              Isi data formulir di bawah. Data langsung disinkronkan ke tabel monitoring dan visualisasi dashboard.
+            </span>
+          </div>
+          <button type="button" onclick="switchMasterTab('data_publikasi')" style="padding:6px 12px;background:#f8fafc;border:1px solid #cbd5e1;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">
+            <i class="fa-solid fa-arrow-left"></i> Kembali ke Tabel
+          </button>
+        </div>
+
+        <form id="pub-admin-entry-form" onsubmit="handleSavePublication(event)" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:20px;">
+          <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));gap:16px;margin-bottom:16px;">
+            
+            <div>
+              <label style="display:block;font-size:12px;font-weight:700;color:#1e293b;margin-bottom:5px;">Unit Kerja <span style="color:#dc2626;">*</span></label>
+              <select id="pub-form-unit" required style="width:100%;padding:8px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:12.5px;background:#fff;">
+                <option value="">— Pilih Unit Kerja —</option>
+                ${unitList.map(u => `<option value="${escapeHtml(u.code)}" ${editItem && editItem.unit === u.code ? 'selected' : ''}>${escapeHtml(u.code)} — ${escapeHtml(u.name)}</option>`).join('')}
+              </select>
+            </div>
+
+            <div>
+              <label style="display:block;font-size:12px;font-weight:700;color:#1e293b;margin-bottom:5px;">Jenis Publikasi</label>
+              <select id="pub-form-jenis" style="width:100%;padding:8px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:12.5px;background:#fff;">
+                ${jenisList.map(j => `<option value="${escapeHtml(j.name)}" ${editItem && editItem.jenis === j.name ? 'selected' : ''}>${escapeHtml(j.name)}</option>`).join('')}
+              </select>
+            </div>
+
+            <div style="grid-column: 1 / -1;">
+              <label style="display:block;font-size:12px;font-weight:700;color:#1e293b;margin-bottom:5px;">Judul Publikasi / Survei <span style="color:#dc2626;">*</span></label>
+              <textarea id="pub-form-judul" rows="2" required placeholder="Judul lengkap publikasi atau survei..." style="width:100%;padding:8px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:12.5px;background:#fff;resize:vertical;">${editItem ? escapeHtml(editItem.judul || '') : ''}</textarea>
+            </div>
+
+            <div>
+              <label style="display:block;font-size:12px;font-weight:700;color:#1e293b;margin-bottom:5px;">Cluster Kebijakan</label>
+              <select id="pub-form-cluster" style="width:100%;padding:8px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:12.5px;background:#fff;">
+                ${clusterList.map(c => `<option value="${escapeHtml(c.name)}" ${editItem && resolveClusterName(editItem.cluster) === c.name ? 'selected' : ''}>${escapeHtml(c.name)}</option>`).join('')}
+              </select>
+            </div>
+
+            <div>
+              <label style="display:block;font-size:12px;font-weight:700;color:#1e293b;margin-bottom:5px;">Tahun</label>
+              <select id="pub-form-tahun" style="width:100%;padding:8px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:12.5px;background:#fff;">
+                <option value="2025" ${editItem && String(editItem.tahun) === '2025' ? 'selected' : ''}>2025</option>
+                <option value="2026" ${!editItem || String(editItem.tahun) === '2026' ? 'selected' : ''}>2026</option>
+                <option value="2027" ${editItem && String(editItem.tahun) === '2027' ? 'selected' : ''}>2027</option>
+              </select>
+            </div>
+
+            <div>
+              <label style="display:block;font-size:12px;font-weight:700;color:#1e293b;margin-bottom:5px;">PIC / Ketua Tim</label>
+              <input type="text" id="pub-form-pic" value="${editItem ? escapeHtml(editItem.pic || '') : ''}" placeholder="Nama penanggung jawab kegiatan..." style="width:100%;padding:8px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:12.5px;background:#fff;" />
+            </div>
+
+            <div>
+              <label style="display:block;font-size:12px;font-weight:700;color:#1e293b;margin-bottom:5px;">Tahapan Pelaksanaan</label>
+              <select id="pub-form-tahapan" style="width:100%;padding:8px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:12.5px;background:#fff;">
+                <option value="Penyusunan instrumen" ${editItem && editItem.tahapan === 'Penyusunan instrumen' ? 'selected' : ''}>Penyusunan instrumen</option>
+                <option value="Pengumpulan data" ${editItem && editItem.tahapan === 'Pengumpulan data' ? 'selected' : ''}>Pengumpulan data</option>
+                <option value="Analisis data" ${editItem && editItem.tahapan === 'Analisis data' ? 'selected' : ''}>Analisis data</option>
+                <option value="Penulisan draf laporan" ${editItem && editItem.tahapan === 'Penulisan draf laporan' ? 'selected' : ''}>Penulisan draf laporan</option>
+                <option value="Review &amp; Diseminasi" ${editItem && editItem.tahapan === 'Review & Diseminasi' ? 'selected' : ''}>Review &amp; Diseminasi</option>
+                <option value="Publikasi selesai" ${editItem && editItem.tahapan === 'Publikasi selesai' ? 'selected' : ''}>Publikasi selesai</option>
+              </select>
+            </div>
+
+            <div>
+              <label style="display:block;font-size:12px;font-weight:700;color:#1e293b;margin-bottom:5px;">Jadwal Publikasi (Bulan &amp; Minggu)</label>
+              <div style="display:flex;gap:6px;">
+                <select id="pub-form-bulan" style="flex:2;padding:8px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:12.5px;background:#fff;">
+                  <option value="">— Bulan —</option>
+                  ${['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'].map(m => `<option value="${m}" ${editItem && (editItem.jadwal||'').includes(m) ? 'selected' : ''}>${m}</option>`).join('')}
+                </select>
+                <select id="pub-form-minggu" style="flex:1;padding:8px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:12.5px;background:#fff;">
+                  <option value="1">Mg 1</option>
+                  <option value="2">Mg 2</option>
+                  <option value="3">Mg 3</option>
+                  <option value="4">Mg 4</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label style="display:block;font-size:12px;font-weight:700;color:#1e293b;margin-bottom:5px;">Status Pelaksanaan</label>
+              <select id="pub-form-status" style="width:100%;padding:8px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:12.5px;background:#fff;">
+                <option value="belum" ${editItem && getStatus(editItem) !== 'selesai' ? 'selected' : ''}>Belum Selesai (Sedang Berjalan)</option>
+                <option value="selesai" ${editItem && getStatus(editItem) === 'selesai' ? 'selected' : ''}>Selesai Dipublikasikan</option>
+              </select>
+            </div>
+
+            <div style="grid-column: 1 / -1;">
+              <label style="display:block;font-size:12px;font-weight:700;color:#1e293b;margin-bottom:5px;">Link Dokumen TOR / Proposal (Google Drive / Docs)</label>
+              <input type="url" id="pub-form-doc" value="${editItem ? escapeHtml(editItem.doc_proposal || '') : ''}" placeholder="https://docs.google.com/... atau https://drive.google.com/..." style="width:100%;padding:8px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:12.5px;background:#fff;" />
+            </div>
+
+            <div style="grid-column: 1 / -1;">
+              <label style="display:block;font-size:12px;font-weight:700;color:#1e293b;margin-bottom:5px;">Catatan / Keterangan</label>
+              <input type="text" id="pub-form-ket" value="${editItem ? escapeHtml(editItem.ket || '') : ''}" placeholder="Catatan perkembangan atau catatan penting..." style="width:100%;padding:8px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:12.5px;background:#fff;" />
+            </div>
+
+          </div>
+
+          <!-- Bagian Link Kanal Diseminasi -->
+          <div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:14px;margin-bottom:18px;">
+            <div style="font-size:12px;font-weight:700;color:#1e293b;margin-bottom:10px;display:flex;align-items:center;gap:6px;">
+              <i class="fa-solid fa-bullhorn" style="color:#2563eb;"></i> Link Bukti Kanal Media Publikasi (Opsional)
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));gap:12px;">
+              <input type="text" id="pub-form-jurnal" value="${editItem ? escapeHtml(editItem.jurnal || '') : ''}" placeholder="Link Jurnal Ilmiah..." style="padding:7px 10px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;" />
+              <input type="text" id="pub-form-media" value="${editItem ? escapeHtml(editItem.media || '') : ''}" placeholder="Link Media Online / Siaran Pers..." style="padding:7px 10px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;" />
+              <input type="text" id="pub-form-web-lan" value="${editItem ? escapeHtml(editItem.webLAN || '') : ''}" placeholder="Link Website LAN RI..." style="padding:7px 10px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;" />
+              <input type="text" id="pub-form-web-unit" value="${editItem ? escapeHtml(editItem.webUnit || '') : ''}" placeholder="Link Website Unit Kerja..." style="padding:7px 10px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;" />
+              <input type="text" id="pub-form-ig-lan" value="${editItem ? escapeHtml(editItem.igLAN || '') : ''}" placeholder="Link Instagram LAN / Unit..." style="padding:7px 10px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;" />
+              <input type="text" id="pub-form-yt-lan" value="${editItem ? escapeHtml(editItem.ytLAN || '') : ''}" placeholder="Link YouTube LAN / Unit..." style="padding:7px 10px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;" />
+            </div>
+          </div>
+
+          <div style="display:flex;gap:10px;justify-content:flex-end;">
+            <button type="button" onclick="switchMasterTab('data_publikasi')" style="padding:9px 18px;border:1px solid #cbd5e1;background:#fff;color:#475569;border-radius:8px;font-size:12.5px;font-weight:600;cursor:pointer;">
+              Batal
+            </button>
+            <button type="submit" style="padding:9px 22px;background:#2563eb;color:#fff;border:none;border-radius:8px;font-size:12.5px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;">
+              <i class="fa-solid fa-floppy-disk"></i> ${editingPubNo ? 'Simpan Perubahan' : 'Simpan Publikasi'}
+            </button>
+          </div>
+        </form>
+      ` : ''}
+
+      <!-- KONTEN TAB 3: CLUSTER KEBIJAKAN -->
       ${activeMasterTab === 'cluster' ? `
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
           <div style="font-size:13px;font-weight:700;color:#1e293b;">
@@ -11967,7 +12387,7 @@ function renderMasterClusterManager() {
         </div>
       ` : ''}
 
-      <!-- KONTEN TAB 2: UNIT KERJA LAN RI -->
+      <!-- KONTEN TAB 4: UNIT KERJA LAN RI -->
       ${activeMasterTab === 'unit' ? `
         <div style="font-size:13px;font-weight:700;color:#1e293b;margin-bottom:14px;">
           <i class="fa-solid fa-building-columns" style="color:#2563eb;margin-right:6px;"></i>Daftar Master Unit Kerja / Satker LAN RI
@@ -12026,7 +12446,7 @@ function renderMasterClusterManager() {
         </div>
       ` : ''}
 
-      <!-- KONTEN TAB 3: JENIS PUBLIKASI & LUARAN -->
+      <!-- KONTEN TAB 5: JENIS PUBLIKASI & LUARAN -->
       ${activeMasterTab === 'jenis' ? `
         <div style="font-size:13px;font-weight:700;color:#1e293b;margin-bottom:14px;">
           <i class="fa-solid fa-file-lines" style="color:#2563eb;margin-right:6px;"></i>Daftar Master Jenis Publikasi &amp; Luaran Kegiatan
@@ -12076,7 +12496,7 @@ function renderMasterClusterManager() {
         </div>
       ` : ''}
 
-      <!-- KONTEN TAB 4: KANAL MEDIA PUBLIKASI -->
+      <!-- KONTEN TAB 6: KANAL MEDIA PUBLIKASI -->
       ${activeMasterTab === 'media' ? `
         <div style="font-size:13px;font-weight:700;color:#1e293b;margin-bottom:14px;">
           <i class="fa-solid fa-bullhorn" style="color:#2563eb;margin-right:6px;"></i>Daftar Master Kanal Media Diseminasi &amp; Publikasi
