@@ -2826,6 +2826,7 @@ window.addEventListener('focus', () => {
       </div>
 
       <!-- BANNER NOTIFIKASI PENGUMUMAN BARU -->
+      <div id="portal-new-announcement-notif" style="display:none;margin-bottom:14px;"></div>
 
       <!-- TAB PANEL 0: DASHBOARD INTERAKTIF PRISM -->
       <div class="sindisa-panel-box" id="sindisa-panel-dashboard" style="display:block;padding:0;border:none;box-shadow:none;background:transparent">
@@ -13666,9 +13667,10 @@ function canUserSeeAnnouncement(ann, user) {
   const isManager = canUserManageAnnouncements(user);
   if (ann.status !== 'Terbit' && !isManager) return false;
 
-  // Date range check for non-managers
+  // Date range check for non-managers (dinamis mengikuti hari ini)
   if (!isManager) {
-    const today = '2026-10-30';
+    const now = new Date();
+    const today = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
     if (ann.start_date && ann.start_date > today) return false;
     if (ann.end_date && ann.end_date < today) return false;
   }
@@ -13776,8 +13778,10 @@ function renderSindisaPengumuman() {
   const user = getCurrentUser();
   const canManage = canUserManageAnnouncements(user);
 
-  const btnAdd = document.getElementById('btn-create-pengumuman-panel');
+  const btnAdd = document.getElementById('btn-tambah-memo') || document.getElementById('btn-create-pengumuman-panel');
   if (btnAdd) btnAdd.style.display = canManage ? 'inline-flex' : 'none';
+  const actionsWrap = document.getElementById('announcements-actions');
+  if (actionsWrap) actionsWrap.style.display = canManage ? 'flex' : 'none';
   const list = getVisibleAnnouncementsForUser(user);
 
   if (list.length === 0) {
