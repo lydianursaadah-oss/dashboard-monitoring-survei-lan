@@ -112,3 +112,22 @@ export const prismoMasterClusters = pgTable('prismo_master_clusters', {
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 })
+
+export const prismoAnnouncements = pgTable('prismo_announcements', {
+  id: bigint('id', { mode: 'number' }).primaryKey(),
+  title: text('title').notNull(),
+  description: text('description').notNull(),
+  date: text('date'),
+  kategori: text('kategori').default('Umum'),
+  targetType: text('target_type').default('Semua pengguna'),
+  targetValue: text('target_value').default(''),
+  status: text('status').default('Terbit'),
+  startDate: text('start_date'),
+  endDate: text('end_date'),
+  attachmentUrl: text('attachment_url').default(''),
+  author: text('author').default('Admin DSPK2AN'),
+  authorRole: text('author_role').default('admin_dspk2an'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+})
+
