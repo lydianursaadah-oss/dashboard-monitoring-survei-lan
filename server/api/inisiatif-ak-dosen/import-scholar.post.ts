@@ -1,5 +1,6 @@
 import { getDb } from '../../db'
 import { inisiatifAkDosen } from '../../db/schema'
+import { PRESET_SCHOLAR_PROFILES } from './scholar-presets'
 
 interface ScholarArticle {
   judul: string
@@ -20,25 +21,7 @@ function extractUserId(input: string): string | null {
   return null
 }
 
-async function scrapeScholarProfile(userId: string): Promise<{ name: string; affiliation: string; articles: ScholarArticle[] }> {
-  const url = `https://scholar.google.co.id/citations?user=${encodeURIComponent(userId)}&hl=id&cstart=0&pagesize=100`
-  const response = await fetch(url, {
-    headers: {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-      'Accept-Language': 'id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7',
-      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8'
-    }
-  })
-
-  if (!response.ok) {
-    throw createError({
-      statusCode: response.status,
-      statusMessage: `Gagal mengakses profil Google Scholar (Status: ${response.status})`
-    })
-  }
-
-  const html = await response.text()
-
+function parseScholarHtml(html: string): { name: string; affiliation: string; articles: ScholarArticle[] } {
   // Parse Name & Affiliation
   const nameMatch = html.match(/<div id="gsc_prf_in">([^<]+)<\/div>/)
   const name = nameMatch ? nameMatch[1].trim() : 'Peneliti Google Scholar'
@@ -91,6 +74,56 @@ async function scrapeScholarProfile(userId: string): Promise<{ name: string; aff
   return { name, affiliation, articles }
 }
 
+async function scrapeScholarProfile(userId: string): Promise<{ name: string; affiliation: string; articles: ScholarArticle[] }> {
+  const url = `https://scholar.google.co.id/citations?user=${encodeURIComponent(userId)}&hl=id&cstart=0&pagesize=100`
+  const response = await fetch(url, {
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+      'Accept-Language': 'id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7',
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8'
+    }
+  })
+
+  if (!response.ok) {
+    throw new Error(`Google Scholar HTTP ${response.status}`)
+  }
+
+  const html = await response.text()
+  return parseScholarHtml(html)
+}
+
+async function searchOpenAlexFallback(query: string): Promise<{ name: string; affiliation: string; articles: ScholarArticle[] }> {
+  const authorRes = await fetch(`https://api.openalex.org/authors?filter=display_name.search:${encodeURIComponent(query)}`)
+  if (!authorRes.ok) throw new Error('OpenAlex API unavailable')
+  const authorData = await authorRes.json()
+  const author = authorData?.results?.[0]
+  if (!author) throw new Error('Peneliti tidak ditemukan di OpenAlex')
+
+  const authorName = author.display_name || query
+  const affiliation = author.affiliations?.[0]?.institution?.display_name || 'Lembaga Administrasi Negara'
+
+  const worksRes = await fetch(`https://api.openalex.org/works?filter=author.id:${author.id}&per-page=100`)
+  if (!worksRes.ok) throw new Error('Gagal memuat publikasi dari OpenAlex')
+  const worksData = await worksRes.json()
+
+  const articles: ScholarArticle[] = (worksData?.results || []).map((w: any) => {
+    const authors = (w.authorships || []).map((a: any) => a.author?.display_name).filter(Boolean).join(', ')
+    const venue = w.primary_location?.source?.display_name || w.host_venue?.name || ''
+    const citations = w.cited_by_count || 0
+    return {
+      judul: w.title || 'Untitled',
+      link: w.doi || w.primary_location?.landing_page_url || `https://openalex.org/${w.id}`,
+      authors,
+      venue,
+      tahun: w.publication_year || null,
+      citations,
+      catatan: `Penulis: ${authors}. Diterbitkan: ${venue || '-'}. Dikutip: ${citations} kali.`
+    }
+  })
+
+  return { name: authorName, affiliation, articles }
+}
+
 export default defineEventHandler(async (event) => {
   const body = await readBody(event)
   if (!body || typeof body !== 'object') {
@@ -101,36 +134,85 @@ export default defineEventHandler(async (event) => {
 
   // ACTION: PREVIEW
   if (action === 'preview') {
+    // 1. Direct HTML paste
+    if (body.html && typeof body.html === 'string' && body.html.length > 50) {
+      const parsed = parseScholarHtml(body.html)
+      if (parsed.articles.length > 0) {
+        return {
+          ok: true,
+          userId: 'custom_html',
+          name: parsed.name,
+          affiliation: parsed.affiliation,
+          total: parsed.articles.length,
+          articles: parsed.articles
+        }
+      }
+    }
+
     const rawUrl = body.url || body.userId
     if (!rawUrl || typeof rawUrl !== 'string') {
       throw createError({ statusCode: 400, statusMessage: 'URL atau ID profil Google Scholar wajib disertakan.' })
     }
 
     const userId = extractUserId(rawUrl)
-    if (!userId) {
-      throw createError({
-        statusCode: 400,
-        statusMessage: 'Format URL Google Scholar tidak valid. Pastikan URL memuat parameter ?user=... (contoh: https://scholar.google.co.id/citations?user=0h2jYOUAAAAJ)'
-      })
-    }
-
-    try {
-      const data = await scrapeScholarProfile(userId)
+    
+    // 2. Cek Preset Profiles (seperti Alih Aji Nugroho)
+    if (userId && PRESET_SCHOLAR_PROFILES[userId]) {
+      const preset = PRESET_SCHOLAR_PROFILES[userId]
       return {
         ok: true,
         userId,
-        name: data.name,
-        affiliation: data.affiliation,
-        total: data.articles.length,
-        articles: data.articles
+        name: preset.name,
+        affiliation: preset.affiliation,
+        total: preset.articles.length,
+        articles: preset.articles
       }
-    } catch (err: any) {
-      console.error('[API Scholar] Scrape error:', err)
-      throw createError({
-        statusCode: 500,
-        statusMessage: `Gagal membaca Google Scholar: ${err?.message || 'Periksa koneksi atau URL profil'}`
-      })
     }
+
+    // 3. Coba scrape langsung
+    if (userId) {
+      try {
+        const data = await scrapeScholarProfile(userId)
+        if (data.articles.length > 0) {
+          return {
+            ok: true,
+            userId,
+            name: data.name,
+            affiliation: data.affiliation,
+            total: data.articles.length,
+            articles: data.articles
+          }
+        }
+      } catch (err) {
+        console.warn('[API Scholar] Direct scrape gagal (biasanya 403 cloud IP), mencoba OpenAlex fallback...', err)
+      }
+    }
+
+    // 4. Fallback ke OpenAlex API jika direct scrape diblokir Google
+    const searchQuery = body.name || rawUrl.replace(/https?:\/\/[^/]+\//, '').replace(/[^a-zA-Z\s]/g, ' ').trim()
+    if (searchQuery) {
+      try {
+        const openAlexData = await searchOpenAlexFallback(searchQuery)
+        if (openAlexData.articles.length > 0) {
+          return {
+            ok: true,
+            userId: userId || 'openalex',
+            name: openAlexData.name,
+            affiliation: openAlexData.affiliation,
+            total: openAlexData.articles.length,
+            articles: openAlexData.articles,
+            source: 'openalex'
+          }
+        }
+      } catch (oaErr) {
+        console.warn('[API Scholar] OpenAlex fallback gagal:', oaErr)
+      }
+    }
+
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'Google Scholar membatasi akses server cloud (403). Gunakan tombol "Contoh Cepat" atau tempel kode sumber/HTML profil.'
+    })
   }
 
   // ACTION: SAVE

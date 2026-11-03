@@ -7412,11 +7412,25 @@ function openImportScholarModal() {
             </div>
           </div>
 
-          <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
             <button type="button" id="btn-fetch-scholar" onclick="fetchScholarPreview()" class="planning-button" style="background:#059669;color:#fff;padding:8px 18px;font-weight:700;border:none;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-size:12.5px;">
               <i class="fa-solid fa-cloud-arrow-down"></i> 1. Tarik &amp; Tinjau Data
             </button>
+            <button type="button" onclick="loadSampleScholar()" style="background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe;border-radius:6px;padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;" title="Muat 76 artikel Alih Aji Nugroho (STIA JKT)">
+              <i class="fa-solid fa-bolt" style="color:#eab308;"></i> Contoh Cepat: Alih Aji Nugroho (76 Publikasi)
+            </button>
+            <button type="button" onclick="togglePasteHtmlMode()" style="background:#f8fafc;color:#475569;border:1px solid #cbd5e1;border-radius:6px;padding:7px 12px;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;">
+              <i class="fa-solid fa-code"></i> Mode Tempel HTML
+            </button>
             <span id="scholar-fetch-status" style="font-size:12px;color:#64748b;"></span>
+          </div>
+
+          <div id="scholar-paste-container" style="display:none;margin-bottom:14px;background:#f8fafc;padding:12px;border-radius:8px;border:1px dashed #94a3b8;">
+            <label style="font-size:11px;font-weight:700;color:#334155;display:block;margin-bottom:4px;">Tempel Kode Sumber / HTML Profil Google Scholar (jika server cloud dibatasi Google):</label>
+            <textarea id="scholar-html-input" rows="3" placeholder="Buka profil Google Scholar di browser Anda, tekan Ctrl+U atau Copy Source, lalu tempel di sini..." style="width:100%;padding:8px;font-size:11.5px;border:1px solid #cbd5e1;border-radius:6px;font-family:monospace;"></textarea>
+            <button type="button" onclick="fetchScholarPreview(true)" class="planning-button" style="background:#0284c7;color:#fff;padding:6px 14px;font-size:12px;margin-top:6px;border:none;border-radius:4px;cursor:pointer;">
+              <i class="fa-solid fa-file-import"></i> Ekstrak dari HTML yang Ditempel
+            </button>
           </div>
 
           <div id="scholar-preview-container" style="display:none;margin-top:10px;border-top:1px solid #e2e8f0;padding-top:14px;">
@@ -7472,32 +7486,51 @@ function closeImportScholarModal() {
   scrapedScholarResult = null;
 }
 
-async function fetchScholarPreview() {
+function loadSampleScholar() {
   const urlInput = document.getElementById('scholar-url-input');
+  if (urlInput) urlInput.value = 'https://scholar.google.co.id/citations?user=0h2jYOUAAAAJ&hl=id';
+  const unitSelect = document.getElementById('scholar-target-unit');
+  if (unitSelect && !unitSelect.readOnly) unitSelect.value = 'STIA JKT';
+  fetchScholarPreview();
+}
+
+function togglePasteHtmlMode() {
+  const pasteBox = document.getElementById('scholar-paste-container');
+  if (pasteBox) {
+    pasteBox.style.display = (pasteBox.style.display === 'none' || !pasteBox.style.display) ? 'block' : 'none';
+  }
+}
+
+async function fetchScholarPreview(isFromHtml = false) {
+  const urlInput = document.getElementById('scholar-url-input');
+  const htmlInput = document.getElementById('scholar-html-input');
   const statusEl = document.getElementById('scholar-fetch-status');
   const btn = document.getElementById('btn-fetch-scholar');
   const previewContainer = document.getElementById('scholar-preview-container');
 
   const url = urlInput ? urlInput.value.trim() : '';
-  if (!url) {
+  const html = isFromHtml && htmlInput ? htmlInput.value.trim() : '';
+
+  if (!url && !html) {
     alert('Silakan masukkan URL atau ID profil Google Scholar.');
     return;
   }
 
   btn.disabled = true;
-  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menghubungi Google Scholar…';
-  if (statusEl) statusEl.innerHTML = '<span style="color:#059669;"><i class="fa-solid fa-spinner fa-spin"></i> Mengambil data publikasi…</span>';
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menghubungi sistem…';
+  if (statusEl) statusEl.innerHTML = '<span style="color:#059669;"><i class="fa-solid fa-spinner fa-spin"></i> Memproses publikasi…</span>';
 
   try {
+    const payload = html ? { action: 'preview', html } : { action: 'preview', url };
     const res = await fetch('/api/inisiatif-ak-dosen/import-scholar', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'preview', url })
+      body: JSON.stringify(payload)
     });
 
     const data = await res.json();
     if (!res.ok || !data.ok) {
-      throw new Error(data.message || data.statusMessage || 'Gagal memproses profil Google Scholar');
+      throw new Error(data.message || data.statusMessage || 'Gagal memproses profil');
     }
 
     scrapedScholarResult = data;
@@ -7527,7 +7560,7 @@ async function fetchScholarPreview() {
         <td style="text-align:center;color:#64748b;font-weight:700;padding:7px 6px;">${idx + 1}</td>
         <td style="padding:7px 10px;">
           <div style="font-weight:700;color:#1e293b;line-height:1.35;">${planningEscape(art.judul)}</div>
-          ${art.link ? `<a href="${planningEscape(art.link)}" target="_blank" rel="noopener noreferrer" style="font-size:10.5px;color:#2563eb;text-decoration:none;"><i class="fa-solid fa-arrow-up-right-from-square" style="font-size:9px;"></i> Lihat di Google Scholar</a>` : ''}
+          ${art.link ? `<a href="${planningEscape(art.link)}" target="_blank" rel="noopener noreferrer" style="font-size:10.5px;color:#2563eb;text-decoration:none;"><i class="fa-solid fa-arrow-up-right-from-square" style="font-size:9px;"></i> Lihat Sumber Publikasi</a>` : ''}
         </td>
         <td style="text-align:center;font-weight:700;color:#475569;padding:7px 6px;">${art.tahun || '—'}</td>
         <td style="padding:7px 10px;font-size:11px;color:#475569;">
@@ -7544,11 +7577,12 @@ async function fetchScholarPreview() {
   } catch (err) {
     console.error('Scholar error:', err);
     if (statusEl) statusEl.innerHTML = `<span style="color:#dc2626;"><i class="fa-solid fa-triangle-exclamation"></i> ${err.message || 'Gagal mengambil data'}</span>`;
-    alert('Gagal mengambil data dari Google Scholar: ' + (err.message || 'Periksa URL'));
+    alert('Gagal mengambil data: ' + (err.message || 'Periksa URL'));
   } finally {
     btn.disabled = false;
     btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-down"></i> 1. Tarik &amp; Tinjau Data';
   }
+}
 }
 
 function toggleSelectAllScholar(masterCb) {
@@ -7632,6 +7666,8 @@ window.renderInisiatifAkDosenRows = renderInisiatifAkDosenRows;
 window.openImportScholarModal = openImportScholarModal;
 window.closeImportScholarModal = closeImportScholarModal;
 window.fetchScholarPreview = fetchScholarPreview;
+window.loadSampleScholar = loadSampleScholar;
+window.togglePasteHtmlMode = togglePasteHtmlMode;
 window.toggleSelectAllScholar = toggleSelectAllScholar;
 window.updateScholarSelectedCount = updateScholarSelectedCount;
 window.saveScholarArticlesToDb = saveScholarArticlesToDb;
