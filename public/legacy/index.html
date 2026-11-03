@@ -7798,6 +7798,10 @@ function handleUserLogin(e) {
 }
 
 function handleUserLogout() {
+  try {
+    sessionStorage.removeItem('lan_portal_session_active');
+    sessionStorage.removeItem('lan_portal_active_tab');
+  } catch(e) {}
   const cur = getCurrentUser();
   if (cur && cur.username) {
     recordInternalAuditLog('USER_LOGOUT', { username: cur.username, role: cur.role });
@@ -9771,6 +9775,9 @@ const TAB_LABELS_MAP = {
 };
 
 function openTab(tabName) {
+  try {
+    sessionStorage.setItem('lan_portal_active_tab', tabName);
+  } catch(e) {}
   if (tabName === 'data_publikasi') {
     switchMasterTab('data_publikasi');
     openTab('master_data');
@@ -13723,6 +13730,11 @@ function openDeputiPortal(targetTab) {
   view.classList.add('active');
   document.body.style.overflow = 'hidden';
 
+  try {
+    sessionStorage.setItem('lan_portal_session_active', 'true');
+    if (targetTab) sessionStorage.setItem('lan_portal_active_tab', targetTab);
+  } catch(e) {}
+
   let user = getCurrentUser();
   if(!user || !user.name || user.name === 'User') {
     user = { name: 'Deputi', role: 'deputi', title: 'Deputi Kajian Kebijakan & Inovasi', unit: 'DEPUTI' };
@@ -13786,6 +13798,10 @@ function openDeputiPortal(targetTab) {
 }
 
 function exitDeputiPortal() {
+  try {
+    sessionStorage.removeItem('lan_portal_session_active');
+    sessionStorage.removeItem('lan_portal_active_tab');
+  } catch(e) {}
   const view = document.getElementById('deputi-portal-view');
   if(view) {
     view.classList.remove('active');
@@ -14612,9 +14628,25 @@ if (rYearInit) rYearInit.value = '2026';
 applyFilters();
 renderTable();
 
-// Initial check: Dashboard semua unit tetap menjadi halaman awal link (Public Landing)
+// Initial check: Auto-restore portal jika user sedang aktif bekerja di portal saat refresh
 (function initLandingState(){
   hideLandingLogin();
+
+  const currentUser = getCurrentUser();
+  const sessionActive = sessionStorage.getItem('lan_portal_session_active') === 'true';
+  const savedTab = sessionStorage.getItem('lan_portal_active_tab');
+
+  // Jika user sedang aktif login dan sebelumnya sedang berada di dalam portal, pertahankan sesi portal (auto-restore)
+  if (currentUser && currentUser.name && currentUser.name !== 'User' && sessionActive) {
+    const landing = document.getElementById('sipantau-login-landing');
+    if (landing) landing.style.setProperty('display', 'none', 'important');
+    openDeputiPortal(savedTab || 'dashboard');
+    if (typeof syncUsersFromSupabase === 'function') syncUsersFromSupabase();
+    if (typeof syncDataFromSupabase === 'function') syncDataFromSupabase(false);
+    if (typeof syncPrismoProposalsFromSupabase === 'function') syncPrismoProposalsFromSupabase();
+    if (typeof syncPrismoAnnouncementsFromSupabase === 'function') syncPrismoAnnouncementsFromSupabase();
+    return;
+  }
 
   const view = document.getElementById('deputi-portal-view');
   if (view) {
