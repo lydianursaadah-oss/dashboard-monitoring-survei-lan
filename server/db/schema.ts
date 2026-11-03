@@ -1,6 +1,7 @@
 import {
   bigint,
   bigserial,
+  boolean,
   date,
   integer,
   jsonb,
@@ -94,4 +95,20 @@ export const inisiatifAkDosen = pgTable('inisiatif_ak_dosen', {
   catatan: text('catatan').default(''),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+})
+
+
+export const prismoMasterClusters = pgTable('prismo_master_clusters', {
+  id: bigserial('id', { mode: 'number' }).primaryKey(),
+  code: text('code').notNull().unique(),
+  name: text('name').notNull().unique(),
+  description: text('description').default(''),
+  colorHex: text('color_hex').default('#2563eb'),
+  isPlaceholder: boolean('is_placeholder').default(false),
+  isActive: boolean('is_active').default(true),
+  legacyNames: jsonb('legacy_names').$type<string[]>().default([]),
+  sortOrder: integer('sort_order').default(0),
+  updatedBy: text('updated_by').default('system'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 })

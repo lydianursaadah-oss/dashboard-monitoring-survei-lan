@@ -28,12 +28,21 @@ CREATE TABLE IF NOT EXISTS public.prismo_master_clusters (
 -- Seed cluster eksisting + placeholder resmi tanpa mengubah data kegiatan lama
 INSERT INTO public.prismo_master_clusters (code, name, description, color_hex, is_placeholder, is_active, legacy_names, sort_order)
 VALUES
-    ('CLUSTER_PENDING_HUMAS', 'Daftar cluster kebijakan final sedang disiapkan', 'Placeholder netral sementara sebelum daftar cluster resmi dari Humas & stakeholder terkait ditetapkan', '#64748b', true, true, '["Belum Ditentukan", "Lainnya", "[Menunggu Daftar Cluster Final Humas / Pak Puji]"]'::jsonb, 1),
-    ('CLUSTER_ASN', 'Manajemen ASN & Birokrasi', 'Cluster historis Manajemen ASN & Reformasi Birokrasi', '#2563eb', false, true, '["Manajemen ASN & Birokrasi", "Manajemen ASN", "Tata Kelola & Manajemen ASN"]'::jsonb, 2),
-    ('CLUSTER_PELAYANAN', 'Pelayanan Publik & Inovasi', 'Cluster historis Pelayanan Publik & Inovasi Daerah', '#059669', false, true, '["Pelayanan Publik & Inovasi", "Pelayanan Publik"]'::jsonb, 3),
-    ('CLUSTER_EKONOMI', 'Ekonomi & Pembangunan Daerah', 'Cluster historis Ekonomi & Pembangunan Daerah', '#d97706', false, true, '["Ekonomi & Pembangunan Daerah", "Ekonomi Daerah"]'::jsonb, 4),
-    ('CLUSTER_KOMPETENSI', 'Pengembangan Kompetensi', 'Cluster historis Pengembangan Kompetensi ASN', '#9333ea', false, true, '["Pengembangan Kompetensi", "Bangkom"]'::jsonb, 5)
-ON CONFLICT (code) DO NOTHING;
+    ('CL-01', 'Program Prioritas Presiden', 'Program Prioritas Presiden & Kebijakan Strategis Nasional', '#ef4444', false, true, '["Program Prioritas Presiden", "Prioritas Presiden", "Prioritas Presiden & Kebijakan Strategis"]'::jsonb, 1),
+    ('CL-02', 'Digitalisasi', 'Transformasi Digital dan SPBE', '#8b5cf6', false, true, '["Digitalisasi", "Digitalisasi & Transformasi Digital"]'::jsonb, 2),
+    ('CL-03', 'Tata Kelola dan Manajemen ASN', 'Tata Kelola Lembaga, Reformasi Birokrasi dan Manajemen ASN', '#3b82f6', false, true, '["Tata Kelola dan Manajemen ASN", "Tata Kelola & Manajemen ASN", "Manajemen ASN", "Manajemen ASN & Birokrasi"]'::jsonb, 3),
+    ('CL-04', 'Manajemen Kinerja', 'Pengelolaan dan Akuntabilitas Kinerja Instansi dan ASN', '#f59e0b', false, true, '["Manajemen Kinerja"]'::jsonb, 4),
+    ('CL-05', 'Pelayanan Publik', 'Peningkatan Kualitas dan Inovasi Pelayanan Publik', '#22c55e', false, true, '["Pelayanan Publik", "Pelayanan Publik & Inovasi"]'::jsonb, 5),
+    ('CL-06', 'Manajemen Pemerintahan', 'Pemerintahan Umum, Otonomi Daerah, dan Administrasi Negara', '#14b8a6', false, true, '["Manajemen Pemerintahan", "Inovasi Administrasi Negara", "Desentralisasi & Otonomi Daerah", "Ekonomi & Pembangunan Daerah"]'::jsonb, 6)
+ON CONFLICT (code) DO UPDATE
+SET name = EXCLUDED.name,
+    description = EXCLUDED.description,
+    color_hex = EXCLUDED.color_hex,
+    is_placeholder = EXCLUDED.is_placeholder,
+    is_active = EXCLUDED.is_active,
+    legacy_names = EXCLUDED.legacy_names,
+    sort_order = EXCLUDED.sort_order,
+    updated_at = timezone('utc'::text, now());
 
 -- 2. PENAMBAHAN KOLOM PADA TABEL KEGIATAN/PUBLIKASI (Revisi #1 & #3)
 -- Menambahkan kolom pengingat keterlambatan & metadata Google Link TOR/Proposal
