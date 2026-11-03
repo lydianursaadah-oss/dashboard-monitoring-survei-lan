@@ -1024,8 +1024,9 @@ function handleUsernameInput(val) {
     }
     .sindisa-menu-item i { width: 18px; text-align: center; font-size: 14px; }
     .sindisa-badge {
-      margin-left: auto; background: #dc2626; color: #fff; font-size: 10px;
-      font-weight: 700; padding: 1px 7px; border-radius: 20px;
+      margin-left: auto; background: #dc2626; color: #fff; font-size: 10.5px;
+      font-weight: 800; padding: 2px 7px; border-radius: 20px; min-width: 18px; text-align: center;
+      line-height: 14px; box-shadow: 0 1px 3px rgba(220, 38, 38, 0.35);
     }
     .sindisa-badge.badge-purple { background: #1e40af; }
 
@@ -3085,7 +3086,12 @@ window.addEventListener('focus', () => {
 
       <!-- TAB PANEL 1: PENGUMUMAN & ARAHAN -->
       <div class="sindisa-panel-box" id="sindisa-panel-pengumuman" style="display:none">
-        <div id="announcements-actions" style="display:flex;justify-content:flex-end;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+        <div id="announcements-actions" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <button type="button" id="btn-mark-all-ann-read" onclick="markAllAnnouncementsAsRead()" style="padding:7px 14px;background:#f8fafc;color:#475569;border:1px solid #cbd5e1;border-radius:8px;font-size:11.5px;cursor:pointer;font-weight:700;display:inline-flex;align-items:center;gap:6px;transition:all .15s;">
+              <i class="fa-solid fa-check-double" style="color:#2563eb;"></i> Tandai Semua Dibaca
+            </button>
+          </div>
           <button id="btn-tambah-memo" onclick="openTambahPengumumanModal()" style="padding:8px 14px;background:#1e40af;color:#fff;border:none;border-radius:8px;font-size:12px;cursor:pointer;font-weight:700;display:inline-flex;align-items:center;gap:6px;">
             <i class="fa-solid fa-plus"></i> Buat Pengumuman
           </button>
@@ -8411,6 +8417,7 @@ async function syncPrismoAnnouncementsFromSupabase() {
       const curr = getCurrentUser();
       renderSindisaPengumuman();
       renderNewAnnouncementNotifBanner(curr);
+      if (typeof updatePortalBadges === 'function') updatePortalBadges();
       if (typeof renderPublicPriorityActionStrip === 'function') {
         try { renderPublicPriorityActionStrip(); } catch (e) {}
       }
@@ -8523,7 +8530,7 @@ const LEADERSHIP_MENUS = [
   { id: "monitoring_kegiatan", icon: "fa-chart-line", label: "Monitoring Kegiatan", action: "openTab('monitoring_kegiatan')" },
   { id: "inisiatif_ak_dosen", icon: "fa-lightbulb", label: "Inisiatif AK/Dosen", action: "openTab('inisiatif_ak_dosen')" },
   { id: "kegiatan_terlambat", icon: "fa-triangle-exclamation", label: "Kegiatan Terlambat", action: "openTab('kegiatan_terlambat')" },
-  { id: "pengumuman", icon: "fa-bullhorn", label: "Pengumuman", action: "openTab('pengumuman')" },
+  { id: "pengumuman", icon: "fa-bullhorn", label: "Pengumuman", badge: true, action: "openTab('pengumuman')" },
   { id: "profil_akun", icon: "fa-user-shield", label: "Profil/Akun", action: "openTab('profil_akun')" },
   { id: "logout", icon: "fa-right-from-bracket", label: "Logout", action: "handleUserLogout()" }
 ];
@@ -8536,7 +8543,7 @@ const ROLE_CONFIGS = {
     menus: [
       { section: "MENU UTAMA" },
       { id: "dashboard", icon: "fa-chart-pie", label: "Dashboard Unit", action: "openTab('dashboard')" },
-      { id: "pengumuman", icon: "fa-bullhorn", label: "Pengumuman", action: "openTab('pengumuman')" },
+      { id: "pengumuman", icon: "fa-bullhorn", label: "Pengumuman", badge: true, action: "openTab('pengumuman')" },
       { section: "PERENCANAAN" },
       { id: "agenda_tahunan", icon: "fa-calendar-days", label: "Agenda Analisis/Survei", action: "openTab('agenda_tahunan')" },
       { id: "inisiatif_ak_dosen", icon: "fa-lightbulb", label: "Inisiatif AK/Dosen", action: "openTab('inisiatif_ak_dosen')" },
@@ -8559,7 +8566,7 @@ const ROLE_CONFIGS = {
     menus: [
       { section: "MENU UTAMA" },
       { id: "dashboard", icon: "fa-chart-pie", label: "Dashboard Admin", action: "openTab('dashboard')" },
-      { id: "pengumuman", icon: "fa-bullhorn", label: "Kelola Pengumuman", action: "openTab('pengumuman')" },
+      { id: "pengumuman", icon: "fa-bullhorn", label: "Kelola Pengumuman", badge: true, action: "openTab('pengumuman')" },
       { section: "WORKFLOW PENGELOLAAN" },
       { id: "inbox_pengajuan", icon: "fa-inbox", label: "Inbox Pengajuan", badge: true, action: "openTab('inbox_pengajuan')" },
       { id: "persetujuan_pimpinan", icon: "fa-user-check", label: "Persetujuan Pimpinan", action: "openTab('persetujuan_pimpinan')" },
@@ -8598,7 +8605,7 @@ const ROLE_CONFIGS = {
     menus: [
       { section: "MENU UTAMA" },
       { id: "dashboard", icon: "fa-chart-pie", label: "Dashboard Publikasi", action: "openTab('dashboard')" },
-      { id: "pengumuman", icon: "fa-bullhorn", label: "Pengumuman", action: "openTab('pengumuman')" },
+      { id: "pengumuman", icon: "fa-bullhorn", label: "Pengumuman", badge: true, action: "openTab('pengumuman')" },
       { section: "ANTRIAN PUBLIKASI" },
       { id: "antrian_publikasi", icon: "fa-layer-group", label: "Antrian Siap Terbit", badge: true, action: "openTab('antrian_publikasi')" },
       { id: "review_desain", icon: "fa-palette", label: "Review Desain & Redaksi", action: "openTab('review_desain')" },
@@ -10122,6 +10129,7 @@ function openTab(tabName) {
       applyPortalFilters();
     } else if(tabName === 'pengumuman') {
       renderSindisaPengumuman();
+      if (typeof updatePortalBadges === 'function') updatePortalBadges();
     }
   } else {
     // Render dynamic panel untuk peran dan menu spesifik
@@ -10637,6 +10645,44 @@ function getProposalDecisionOverdueDays(item) {
   return Math.max(1, diffDays - 7);
 }
 
+
+function getUnreadAnnouncementsCount(user) {
+  try {
+    const u = user || (typeof getCurrentUser === 'function' ? getCurrentUser() : null);
+    if (!u) return 0;
+    const visible = (typeof getVisibleAnnouncementsForUser === 'function')
+      ? getVisibleAnnouncementsForUser(u).filter(a => a && a.status === 'Terbit')
+      : [];
+    const readIds = (typeof getReadAnnouncementIds === 'function')
+      ? getReadAnnouncementIds(u)
+      : [];
+    const unread = visible.filter(a => !readIds.includes(a.id));
+    return unread.length;
+  } catch (e) {
+    return 0;
+  }
+}
+
+function markAllAnnouncementsAsRead() {
+  try {
+    const user = getCurrentUser();
+    const key = 'prismo_read_ann_' + ((user && user.username) || 'guest');
+    const visible = (typeof getVisibleAnnouncementsForUser === 'function')
+      ? getVisibleAnnouncementsForUser(user).filter(a => a && a.status === 'Terbit')
+      : [];
+    const allIds = visible.map(a => a.id);
+    localStorage.setItem(key, JSON.stringify(allIds));
+    renderSindisaPengumuman();
+    renderNewAnnouncementNotifBanner(user);
+    if (typeof updatePortalBadges === 'function') updatePortalBadges();
+    if (typeof showNotificationToast === 'function') {
+      showNotificationToast('Semua pengumuman telah ditandai sudah dibaca.');
+    }
+  } catch (e) {
+    console.warn(e);
+  }
+}
+
 function updatePortalBadges() {
   try {
     const list = getPrismoProposals();
@@ -10652,6 +10698,10 @@ function updatePortalBadges() {
       && (!userUnit || p.unit === userUnit)
     ).length;
 
+    const unreadAnnouncementsCount = (typeof getUnreadAnnouncementsCount === 'function')
+      ? getUnreadAnnouncementsCount(curr)
+      : 0;
+
     document.querySelectorAll('#sipantau-role-menu .sindisa-menu-item').forEach(m => {
       const tabId = m.getAttribute('data-tab-id') || '';
       let badgeCount = 0;
@@ -10659,6 +10709,7 @@ function updatePortalBadges() {
       else if (tabId === 'perlu_persetujuan' || tabId === 'keputusan_pengajuan' || tabId === 'inbox_persetujuan') badgeCount = menungguPimpinanCount;
       else if (tabId === 'perbaikan_catatan') badgeCount = perluPerbaikanUnitCount;
       else if (tabId === 'laporan_bukti') badgeCount = laporanUnitCount;
+      else if (tabId === 'pengumuman') badgeCount = unreadAnnouncementsCount;
 
       let badgeEl = m.querySelector('.sindisa-badge');
       if (badgeCount > 0) {
@@ -14159,6 +14210,8 @@ function markAnnouncementAsRead(id) {
       localStorage.setItem(key, JSON.stringify(list));
     }
     renderNewAnnouncementNotifBanner(user);
+    if (typeof updatePortalBadges === 'function') updatePortalBadges();
+    if (typeof renderSindisaPengumuman === 'function') renderSindisaPengumuman();
   } catch (e) {}
 }
 
@@ -14221,7 +14274,11 @@ function renderSindisaPengumuman() {
   const btnAdd = document.getElementById('btn-tambah-memo') || document.getElementById('btn-create-pengumuman-panel');
   if (btnAdd) btnAdd.style.display = canManage ? 'inline-flex' : 'none';
   const actionsWrap = document.getElementById('announcements-actions');
-  if (actionsWrap) actionsWrap.style.display = canManage ? 'flex' : 'none';
+  if (actionsWrap) actionsWrap.style.display = 'flex';
+  const btnMarkAll = document.getElementById('btn-mark-all-ann-read');
+  const unreadCount = (typeof getUnreadAnnouncementsCount === 'function') ? getUnreadAnnouncementsCount(user) : 0;
+  if (btnMarkAll) btnMarkAll.style.display = unreadCount > 0 ? 'inline-flex' : 'none';
+  const readIds = (typeof getReadAnnouncementIds === 'function') ? getReadAnnouncementIds(user) : [];
   const list = getVisibleAnnouncementsForUser(user);
 
   if (list.length === 0) {
@@ -14242,6 +14299,7 @@ function renderSindisaPengumuman() {
           <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px;">
             <span class="badge badge-blue" style="font-size:10px;">${escapeHtml(p.kategori || 'Umum')}</span>
             ${statusBadge}
+            ${(!readIds.includes(p.id) && p.status === 'Terbit') ? '<span style="background:#dc2626;color:#fff;font-size:9.5px;font-weight:800;padding:1px 7px;border-radius:12px;display:inline-flex;align-items:center;gap:3px;"><i class="fa-solid fa-circle" style="font-size:5px;"></i> BARU</span>' : ''}
             <span style="font-size:11px;color:#64748b;"><i class="fa-solid fa-users"></i> Target: ${escapeHtml(p.target_type || 'Semua pengguna')}${p.target_value ? ' (' + escapeHtml(p.target_value) + ')' : ''}</span>
           </div>
           <a class="sindisa-item-title" href="javascript:void(0)" onclick="openDetailPengumumanModal(${p.id})" style="font-size:14px;font-weight:800;color:#1e293b;display:block;margin-bottom:3px;">
@@ -14401,6 +14459,7 @@ function submitPrismoPengumuman(forcedStatus) {
   closePrismoPengumumanModal();
   renderSindisaPengumuman();
   renderNewAnnouncementNotifBanner(user);
+  if (typeof updatePortalBadges === 'function') updatePortalBadges();
 
   if (typeof showNotificationToast === 'function') {
     showNotificationToast(status === 'Draft' ? 'Draft pengumuman berhasil disimpan.' : 'Pengumuman berhasil diterbitkan!', 'success');
