@@ -11773,72 +11773,361 @@ function filterPrismoPimpinanTable() {
   });
 }
 
-/* ── Revisi #2: Master Cluster Kebijakan Manager UI (Admin DSPK2AN) ── */
+/* ══════════════════════════════════════════════════════════════════
+   PUSAT MASTER DATA TERPADU LAN RI (Admin DSPK2AN)
+   - Sub-Tab 1: Master Cluster Kebijakan
+   - Sub-Tab 2: Master Unit Kerja LAN RI
+   - Sub-Tab 3: Master Jenis Publikasi & Luaran
+   - Sub-Tab 4: Master Kanal Media Publikasi
+   ══════════════════════════════════════════════════════════════════ */
+let activeMasterTab = 'cluster'; // 'cluster' | 'unit' | 'jenis' | 'media'
+
+const DEFAULT_MASTER_UNITS = [
+  { code: 'SKPP', name: 'Pusat Studi Kebijakan Pelayanan Publik (SKPP)', category: 'Pusat Studi', active: true },
+  { code: 'DAPKK', name: 'Direktorat Analisis & Pengembangan Kebijakan (DAPKK)', category: 'Direktorat', active: true },
+  { code: 'SKMP', name: 'Pusat Studi Kebijakan Manajemen Pemerintahan (SKMP)', category: 'Pusat Studi', active: true },
+  { code: 'SKTAN', name: 'Pusat Studi Kebijakan Tata Kelola & ASN (SKTAN)', category: 'Pusat Studi', active: true },
+  { code: 'SKMK', name: 'Pusat Studi Kebijakan Manajemen Kinerja (SKMK)', category: 'Pusat Studi', active: true },
+  { code: 'STIA JKT', name: 'Politeknik STIA LAN Jakarta', category: 'Perguruan Tinggi', active: true },
+  { code: 'STIA MKS', name: 'Politeknik STIA LAN Makassar', category: 'Perguruan Tinggi', active: true },
+  { code: 'STIA BDG', name: 'Politeknik STIA LAN Bandung', category: 'Perguruan Tinggi', active: true },
+  { code: 'DSPK2AN', name: 'Deputi Kajian Kebijakan & Inovasi (DSPK2AN)', category: 'Kedeputian', active: true },
+  { code: 'KDOD', name: 'Puslatbang KDOD Samarinda', category: 'Puslatbang', active: true },
+  { code: 'KHAN', name: 'Puslatbang KHAN Aceh', category: 'Puslatbang', active: true },
+  { code: 'PKASN', name: 'Puslatbang PKASN Jatinangor', category: 'Puslatbang', active: true },
+  { code: 'KMP', name: 'Puslatbang KMP Makassar', category: 'Puslatbang', active: true }
+];
+
+const DEFAULT_MASTER_JENIS = [
+  { code: 'JENIS-01', name: 'Survei', description: 'Survei dan Pengumpulan Data Kebijakan', active: true },
+  { code: 'JENIS-02', name: 'Kajian Kebijakan', description: 'Naskah Akademik dan Analisis Kebijakan', active: true },
+  { code: 'JENIS-03', name: 'Policy Brief', description: 'Ringkasan Eksekutif Rekomendasi Kebijakan', active: true },
+  { code: 'JENIS-04', name: 'Laporan Analisis', description: 'Laporan Komprehensif Hasil Evaluasi & Riset', active: true },
+  { code: 'JENIS-05', name: 'Buku Referensi', description: 'Publikasi Buku ISBN dan Bunga Rampai', active: true },
+  { code: 'JENIS-06', name: 'Jurnal Ilmiah', description: 'Artikel Ilmiah Terakreditasi Nasional/Internasional', active: true }
+];
+
+const DEFAULT_MASTER_MEDIA = [
+  { code: 'MED-01', name: 'Jurnal Ilmiah', type: 'Akademik', fieldKey: 'jurnal', active: true },
+  { code: 'MED-02', name: 'Media Massa / Online', type: 'Berita & Siaran Pers', fieldKey: 'media', active: true },
+  { code: 'MED-03', name: 'Website Resmi LAN RI', type: 'Portal Resmi', fieldKey: 'web_lan', active: true },
+  { code: 'MED-04', name: 'Website Unit Kerja', type: 'Portal Satker', fieldKey: 'web_unit', active: true },
+  { code: 'MED-05', name: 'Instagram LAN RI', type: 'Media Sosial', fieldKey: 'ig_lan', active: true },
+  { code: 'MED-06', name: 'Instagram Unit Kerja', type: 'Media Sosial Satker', fieldKey: 'ig_unit', active: true },
+  { code: 'MED-07', name: 'YouTube LAN RI', type: 'Video Streaming', fieldKey: 'yt_lan', active: true },
+  { code: 'MED-08', name: 'YouTube Unit Kerja', type: 'Video Streaming Satker', fieldKey: 'yt_unit', active: true },
+  { code: 'MED-09', name: 'Media Televisi', type: 'Penyiaran Nasional', fieldKey: 'media_televisi', active: true }
+];
+
+function getMasterUnitsConfig() {
+  try {
+    const saved = localStorage.getItem('prismo_master_units_v1');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (e) {}
+  return JSON.parse(JSON.stringify(DEFAULT_MASTER_UNITS));
+}
+
+function saveMasterUnitsConfig(list) {
+  try { localStorage.setItem('prismo_master_units_v1', JSON.stringify(list)); } catch (e) {}
+}
+
+function getMasterJenisConfig() {
+  try {
+    const saved = localStorage.getItem('prismo_master_jenis_v1');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (e) {}
+  return JSON.parse(JSON.stringify(DEFAULT_MASTER_JENIS));
+}
+
+function saveMasterJenisConfig(list) {
+  try { localStorage.setItem('prismo_master_jenis_v1', JSON.stringify(list)); } catch (e) {}
+}
+
+function getMasterMediaConfig() {
+  try {
+    const saved = localStorage.getItem('prismo_master_media_v1');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (e) {}
+  return JSON.parse(JSON.stringify(DEFAULT_MASTER_MEDIA));
+}
+
+function saveMasterMediaConfig(list) {
+  try { localStorage.setItem('prismo_master_media_v1', JSON.stringify(list)); } catch (e) {}
+}
+
+function switchMasterTab(tabName) {
+  activeMasterTab = tabName;
+  const container = document.getElementById('sindisa-panel-dynamic');
+  if (container) container.innerHTML = renderMasterClusterManager();
+}
+
 function renderMasterClusterManager() {
   const cfg = getMasterClustersConfig();
+  const clusterList = cfg.items || getMasterClustersList();
+  const unitList = getMasterUnitsConfig();
+  const jenisList = getMasterJenisConfig();
+  const mediaList = getMasterMediaConfig();
+
   return `
-    <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin-bottom:20px;">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
+    <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:22px;margin-bottom:20px;box-shadow:0 1px 3px rgba(0,0,0,0.03);">
+      
+      <!-- Header Master Data Hub -->
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:18px;">
         <div>
-          <h3 style="font-size:17px;font-weight:800;color:#1e293b;margin-bottom:4px;">
-            <i class="fa-solid fa-sitemap" style="color:#2563eb;margin-right:8px;"></i> Konfigurasi Master Cluster Kebijakan Terpusat
+          <h3 style="font-size:18px;font-weight:800;color:#1e293b;margin-bottom:4px;display:flex;align-items:center;gap:8px;">
+            <i class="fa-solid fa-database" style="color:#2563eb;"></i> Manajemen Master Data LAN RI
           </h3>
-          <p style="font-size:12.5px;color:#64748b;">
-            Sesuai hasil pembahasan bersama Humas &amp; Pak Puji. Perubahan di sini otomatis menjadi acuan pada Form Input, Filter Dashboard, Tabel, Detail Kegiatan, Grafik, dan Ekspor tanpa merusak data historis.
+          <p style="font-size:12.5px;color:#64748b;margin:0;">
+            Perubahan di sini otomatis menjadi acuan pada Form Input, Filter Dashboard, Tabel, Detail Kegiatan, Grafik, dan Ekspor tanpa merusak data historis.
           </p>
         </div>
-        <div style="display:flex;align-items:center;gap:10px;background:#f8fafc;padding:8px 14px;border-radius:10px;border:1px solid #cbd5e1;">
-          <label style="font-size:12px;font-weight:700;color:#1e293b;display:flex;align-items:center;gap:8px;cursor:pointer;">
+      </div>
+
+      <!-- Navigasi Sub-Tab Master Data -->
+      <div style="display:flex;gap:8px;border-bottom:2px solid #e2e8f0;padding-bottom:12px;margin-bottom:20px;flex-wrap:wrap;">
+        <button type="button" onclick="switchMasterTab('cluster')" style="display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:700;border:none;cursor:pointer;background:${activeMasterTab === 'cluster' ? '#2563eb' : '#f1f5f9'};color:${activeMasterTab === 'cluster' ? '#ffffff' : '#475569'};transition:all .18s;">
+          <i class="fa-solid fa-layer-group"></i> Cluster Kebijakan
+          <span style="background:${activeMasterTab === 'cluster' ? 'rgba(255,255,255,0.25)' : '#cbd5e1'};padding:1px 7px;border-radius:10px;font-size:11px;">${clusterList.length}</span>
+        </button>
+        <button type="button" onclick="switchMasterTab('unit')" style="display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:700;border:none;cursor:pointer;background:${activeMasterTab === 'unit' ? '#2563eb' : '#f1f5f9'};color:${activeMasterTab === 'unit' ? '#ffffff' : '#475569'};transition:all .18s;">
+          <i class="fa-solid fa-building-columns"></i> Unit Kerja LAN RI
+          <span style="background:${activeMasterTab === 'unit' ? 'rgba(255,255,255,0.25)' : '#cbd5e1'};padding:1px 7px;border-radius:10px;font-size:11px;">${unitList.length}</span>
+        </button>
+        <button type="button" onclick="switchMasterTab('jenis')" style="display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:700;border:none;cursor:pointer;background:${activeMasterTab === 'jenis' ? '#2563eb' : '#f1f5f9'};color:${activeMasterTab === 'jenis' ? '#ffffff' : '#475569'};transition:all .18s;">
+          <i class="fa-solid fa-file-lines"></i> Jenis Publikasi
+          <span style="background:${activeMasterTab === 'jenis' ? 'rgba(255,255,255,0.25)' : '#cbd5e1'};padding:1px 7px;border-radius:10px;font-size:11px;">${jenisList.length}</span>
+        </button>
+        <button type="button" onclick="switchMasterTab('media')" style="display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:700;border:none;cursor:pointer;background:${activeMasterTab === 'media' ? '#2563eb' : '#f1f5f9'};color:${activeMasterTab === 'media' ? '#ffffff' : '#475569'};transition:all .18s;">
+          <i class="fa-solid fa-bullhorn"></i> Kanal Media Publikasi
+          <span style="background:${activeMasterTab === 'media' ? 'rgba(255,255,255,0.25)' : '#cbd5e1'};padding:1px 7px;border-radius:10px;font-size:11px;">${mediaList.length}</span>
+        </button>
+      </div>
+
+      <!-- KONTEN TAB 1: CLUSTER KEBIJAKAN -->
+      ${activeMasterTab === 'cluster' ? `
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+          <div style="font-size:13px;font-weight:700;color:#1e293b;">
+            <i class="fa-solid fa-tags" style="color:#2563eb;margin-right:6px;"></i>Daftar Master Cluster Kebijakan Resmi
+          </div>
+          <label style="font-size:12px;font-weight:700;color:#1e293b;display:flex;align-items:center;gap:8px;cursor:pointer;background:#f8fafc;padding:6px 12px;border-radius:8px;border:1px solid #cbd5e1;">
             <input type="checkbox" id="chk-master-cluster-finalized" ${cfg.isFinalized ? 'checked' : ''} onchange="toggleMasterClusterFinalized(this.checked)" style="width:16px;height:16px;accent-color:#16a34a;" />
             Daftar Cluster Resmi Telah Ditetapkan
           </label>
         </div>
-      </div>
 
-      ${!cfg.isFinalized ? `
-        <div style="background:#fffbeb;border:1.5px solid #fde68a;border-left:4px solid #d97706;padding:12px 16px;border-radius:8px;margin-bottom:16px;font-size:12.5px;color:#92400e;font-weight:700;">
-          <i class="fa-solid fa-circle-info"></i> Status Placeholder Aktif: "${CLUSTER_PLACEHOLDER_NEUTRAL}"
+        <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+          <input type="text" id="input-new-cluster-name" placeholder="Nama Cluster Kebijakan Baru..." style="flex:1;min-width:220px;padding:8px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:12.5px;" />
+          <input type="text" id="input-new-cluster-legacy" placeholder="Mapping Cluster Lama (pisahkan koma jika ada)..." style="flex:1;min-width:220px;padding:8px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:12.5px;" />
+          <button onclick="addNewMasterClusterItem()" style="padding:8px 16px;background:#2563eb;color:#fff;border:none;border-radius:8px;font-size:12.5px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;">
+            <i class="fa-solid fa-plus"></i> Tambah Cluster
+          </button>
+        </div>
+
+        <div style="overflow-x:auto;border:1px solid #e2e8f0;border-radius:10px;">
+          <table style="width:100%;border-collapse:collapse;text-align:left;font-size:12.5px;">
+            <thead style="background:#f8fafc;border-bottom:1px solid #e2e8f0;">
+              <tr>
+                <th style="padding:10px 12px;">Kode</th>
+                <th style="padding:10px 12px;">Nama Cluster Kebijakan</th>
+                <th style="padding:10px 12px;">Mapping Cluster Historis</th>
+                <th style="padding:10px 12px;">Status</th>
+                <th style="padding:10px 12px;text-align:right;">Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${clusterList.map((item, idx) => `
+                <tr style="border-bottom:1px solid #f1f5f9;">
+                  <td style="padding:10px 12px;font-weight:700;color:#64748b;">${escapeHtml(item.code || item.id || ('CL-0' + (idx + 1)))}</td>
+                  <td style="padding:10px 12px;font-weight:700;color:#1e293b;">${escapeHtml(item.name)}</td>
+                  <td style="padding:10px 12px;color:#475569;">${(item.legacyNames || []).map(escapeHtml).join(', ') || '-'}</td>
+                  <td style="padding:10px 12px;">
+                    <span class="badge ${item.active !== false ? 'badge-green' : 'badge-gray'}">${item.active !== false ? 'Aktif' : 'Nonaktif'}</span>
+                  </td>
+                  <td style="padding:10px 12px;text-align:right;white-space:nowrap;">
+                    <button onclick="editMasterClusterItem(${idx})" title="Edit Cluster" style="padding:4px 9px;border:1px solid #bfdbfe;background:#eff6ff;color:#1d4ed8;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;margin-right:4px;">
+                      <i class="fa-solid fa-pen-to-square"></i> Edit
+                    </button>
+                    <button onclick="toggleMasterClusterItemActive(${idx})" style="padding:4px 9px;border:1px solid #cbd5e1;background:#f8fafc;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;">
+                      ${item.active !== false ? 'Nonaktifkan' : 'Aktifkan'}
+                    </button>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
         </div>
       ` : ''}
 
-      <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
-        <input type="text" id="input-new-cluster-name" placeholder="Nama Cluster Kebijakan Baru..." style="flex:1;min-width:220px;padding:8px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:12.5px;" />
-        <input type="text" id="input-new-cluster-legacy" placeholder="Mapping Cluster Lama (pisahkan koma jika ada)..." style="flex:1;min-width:220px;padding:8px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:12.5px;" />
-        <button onclick="addNewMasterClusterItem()" style="padding:8px 16px;background:#2563eb;color:#fff;border:none;border-radius:8px;font-size:12.5px;font-weight:700;cursor:pointer;">
-          <i class="fa-solid fa-plus"></i> Tambah Cluster
-        </button>
-      </div>
+      <!-- KONTEN TAB 2: UNIT KERJA LAN RI -->
+      ${activeMasterTab === 'unit' ? `
+        <div style="font-size:13px;font-weight:700;color:#1e293b;margin-bottom:14px;">
+          <i class="fa-solid fa-building-columns" style="color:#2563eb;margin-right:6px;"></i>Daftar Master Unit Kerja / Satker LAN RI
+        </div>
 
-      <div style="overflow-x:auto;border:1px solid #e2e8f0;border-radius:10px;">
-        <table style="width:100%;border-collapse:collapse;text-align:left;font-size:12.5px;">
-          <thead style="background:#f8fafc;border-bottom:1px solid #e2e8f0;">
-            <tr>
-              <th style="padding:10px 12px;">Kode</th>
-              <th style="padding:10px 12px;">Nama Cluster Kebijakan</th>
-              <th style="padding:10px 12px;">Mapping Cluster Historis</th>
-              <th style="padding:10px 12px;">Status</th>
-              <th style="padding:10px 12px;text-align:right;">Aksi</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${(cfg.items || getMasterClustersList()).map((item, idx) => `
-              <tr style="border-bottom:1px solid #f1f5f9;">
-                <td style="padding:10px 12px;font-weight:700;color:#64748b;">${escapeHtml(item.code || item.id || ('CL-0' + (idx + 1)))}</td>
-                <td style="padding:10px 12px;font-weight:700;color:#1e293b;">${escapeHtml(item.name)}</td>
-                <td style="padding:10px 12px;color:#475569;">${(item.legacyNames || []).map(escapeHtml).join(', ') || '-'}</td>
-                <td style="padding:10px 12px;">
-                  <span class="badge ${item.active !== false ? 'badge-green' : 'badge-gray'}">${item.active !== false ? 'Aktif' : 'Nonaktif'}</span>
-                </td>
-                <td style="padding:10px 12px;text-align:right;">
-                  <button onclick="toggleMasterClusterItemActive(${idx})" style="padding:4px 10px;border:1px solid #cbd5e1;background:#f8fafc;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;">
-                    ${item.active !== false ? 'Nonaktifkan' : 'Aktifkan'}
-                  </button>
-                </td>
+        <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+          <input type="text" id="input-new-unit-code" placeholder="Kode Unit (contoh: PUSLATBANG-X)..." style="width:180px;padding:8px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:12.5px;" />
+          <input type="text" id="input-new-unit-name" placeholder="Nama Lengkap Unit Kerja..." style="flex:1;min-width:220px;padding:8px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:12.5px;" />
+          <select id="input-new-unit-category" style="padding:8px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:12.5px;">
+            <option>Pusat Studi</option>
+            <option>Kedeputian</option>
+            <option>Direktorat</option>
+            <option>Perguruan Tinggi</option>
+            <option>Puslatbang</option>
+            <option>Biro</option>
+          </select>
+          <button onclick="addNewMasterUnitItem()" style="padding:8px 16px;background:#2563eb;color:#fff;border:none;border-radius:8px;font-size:12.5px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;">
+            <i class="fa-solid fa-plus"></i> Tambah Unit
+          </button>
+        </div>
+
+        <div style="overflow-x:auto;border:1px solid #e2e8f0;border-radius:10px;">
+          <table style="width:100%;border-collapse:collapse;text-align:left;font-size:12.5px;">
+            <thead style="background:#f8fafc;border-bottom:1px solid #e2e8f0;">
+              <tr>
+                <th style="padding:10px 12px;">Kode</th>
+                <th style="padding:10px 12px;">Nama Unit Kerja</th>
+                <th style="padding:10px 12px;">Kategori Satker</th>
+                <th style="padding:10px 12px;">Status</th>
+                <th style="padding:10px 12px;text-align:right;">Aksi</th>
               </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              ${unitList.map((item, idx) => `
+                <tr style="border-bottom:1px solid #f1f5f9;">
+                  <td style="padding:10px 12px;font-weight:700;color:#2563eb;">${escapeHtml(item.code)}</td>
+                  <td style="padding:10px 12px;font-weight:700;color:#1e293b;">${escapeHtml(item.name)}</td>
+                  <td style="padding:10px 12px;color:#475569;">
+                    <span class="badge" style="background:#f1f5f9;color:#334155;">${escapeHtml(item.category || 'Satker')}</span>
+                  </td>
+                  <td style="padding:10px 12px;">
+                    <span class="badge ${item.active !== false ? 'badge-green' : 'badge-gray'}">${item.active !== false ? 'Aktif' : 'Nonaktif'}</span>
+                  </td>
+                  <td style="padding:10px 12px;text-align:right;white-space:nowrap;">
+                    <button onclick="editMasterUnitItem(${idx})" title="Edit Unit" style="padding:4px 9px;border:1px solid #bfdbfe;background:#eff6ff;color:#1d4ed8;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;margin-right:4px;">
+                      <i class="fa-solid fa-pen-to-square"></i> Edit
+                    </button>
+                    <button onclick="toggleMasterUnitItemActive(${idx})" style="padding:4px 9px;border:1px solid #cbd5e1;background:#f8fafc;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;">
+                      ${item.active !== false ? 'Nonaktifkan' : 'Aktifkan'}
+                    </button>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      ` : ''}
+
+      <!-- KONTEN TAB 3: JENIS PUBLIKASI & LUARAN -->
+      ${activeMasterTab === 'jenis' ? `
+        <div style="font-size:13px;font-weight:700;color:#1e293b;margin-bottom:14px;">
+          <i class="fa-solid fa-file-lines" style="color:#2563eb;margin-right:6px;"></i>Daftar Master Jenis Publikasi &amp; Luaran Kegiatan
+        </div>
+
+        <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+          <input type="text" id="input-new-jenis-code" placeholder="Kode (contoh: JENIS-07)..." style="width:160px;padding:8px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:12.5px;" />
+          <input type="text" id="input-new-jenis-name" placeholder="Nama Jenis Publikasi (contoh: Policy Paper)..." style="flex:1;min-width:200px;padding:8px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:12.5px;" />
+          <input type="text" id="input-new-jenis-desc" placeholder="Deskripsi Singkat..." style="flex:1;min-width:200px;padding:8px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:12.5px;" />
+          <button onclick="addNewMasterJenisItem()" style="padding:8px 16px;background:#2563eb;color:#fff;border:none;border-radius:8px;font-size:12.5px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;">
+            <i class="fa-solid fa-plus"></i> Tambah Jenis
+          </button>
+        </div>
+
+        <div style="overflow-x:auto;border:1px solid #e2e8f0;border-radius:10px;">
+          <table style="width:100%;border-collapse:collapse;text-align:left;font-size:12.5px;">
+            <thead style="background:#f8fafc;border-bottom:1px solid #e2e8f0;">
+              <tr>
+                <th style="padding:10px 12px;">Kode</th>
+                <th style="padding:10px 12px;">Nama Jenis Publikasi</th>
+                <th style="padding:10px 12px;">Deskripsi / Cakupan</th>
+                <th style="padding:10px 12px;">Status</th>
+                <th style="padding:10px 12px;text-align:right;">Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${jenisList.map((item, idx) => `
+                <tr style="border-bottom:1px solid #f1f5f9;">
+                  <td style="padding:10px 12px;font-weight:700;color:#64748b;">${escapeHtml(item.code)}</td>
+                  <td style="padding:10px 12px;font-weight:700;color:#1e293b;">${escapeHtml(item.name)}</td>
+                  <td style="padding:10px 12px;color:#475569;">${escapeHtml(item.description || '-')}</td>
+                  <td style="padding:10px 12px;">
+                    <span class="badge ${item.active !== false ? 'badge-green' : 'badge-gray'}">${item.active !== false ? 'Aktif' : 'Nonaktif'}</span>
+                  </td>
+                  <td style="padding:10px 12px;text-align:right;white-space:nowrap;">
+                    <button onclick="editMasterJenisItem(${idx})" title="Edit Jenis" style="padding:4px 9px;border:1px solid #bfdbfe;background:#eff6ff;color:#1d4ed8;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;margin-right:4px;">
+                      <i class="fa-solid fa-pen-to-square"></i> Edit
+                    </button>
+                    <button onclick="toggleMasterJenisItemActive(${idx})" style="padding:4px 9px;border:1px solid #cbd5e1;background:#f8fafc;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;">
+                      ${item.active !== false ? 'Nonaktifkan' : 'Aktifkan'}
+                    </button>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      ` : ''}
+
+      <!-- KONTEN TAB 4: KANAL MEDIA PUBLIKASI -->
+      ${activeMasterTab === 'media' ? `
+        <div style="font-size:13px;font-weight:700;color:#1e293b;margin-bottom:14px;">
+          <i class="fa-solid fa-bullhorn" style="color:#2563eb;margin-right:6px;"></i>Daftar Master Kanal Media Diseminasi &amp; Publikasi
+        </div>
+
+        <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+          <input type="text" id="input-new-media-code" placeholder="Kode (contoh: MED-10)..." style="width:160px;padding:8px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:12.5px;" />
+          <input type="text" id="input-new-media-name" placeholder="Nama Kanal (contoh: Podcast LAN RI)..." style="flex:1;min-width:200px;padding:8px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:12.5px;" />
+          <input type="text" id="input-new-media-type" placeholder="Tipe Media (contoh: Audio Streaming)..." style="flex:1;min-width:180px;padding:8px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:12.5px;" />
+          <button onclick="addNewMasterMediaItem()" style="padding:8px 16px;background:#2563eb;color:#fff;border:none;border-radius:8px;font-size:12.5px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;">
+            <i class="fa-solid fa-plus"></i> Tambah Media
+          </button>
+        </div>
+
+        <div style="overflow-x:auto;border:1px solid #e2e8f0;border-radius:10px;">
+          <table style="width:100%;border-collapse:collapse;text-align:left;font-size:12.5px;">
+            <thead style="background:#f8fafc;border-bottom:1px solid #e2e8f0;">
+              <tr>
+                <th style="padding:10px 12px;">Kode</th>
+                <th style="padding:10px 12px;">Nama Kanal Media</th>
+                <th style="padding:10px 12px;">Kategori Media</th>
+                <th style="padding:10px 12px;">Status</th>
+                <th style="padding:10px 12px;text-align:right;">Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${mediaList.map((item, idx) => `
+                <tr style="border-bottom:1px solid #f1f5f9;">
+                  <td style="padding:10px 12px;font-weight:700;color:#64748b;">${escapeHtml(item.code)}</td>
+                  <td style="padding:10px 12px;font-weight:700;color:#1e293b;">${escapeHtml(item.name)}</td>
+                  <td style="padding:10px 12px;color:#475569;">
+                    <span class="badge" style="background:#eff6ff;color:#1e40af;">${escapeHtml(item.type || 'Media')}</span>
+                  </td>
+                  <td style="padding:10px 12px;">
+                    <span class="badge ${item.active !== false ? 'badge-green' : 'badge-gray'}">${item.active !== false ? 'Aktif' : 'Nonaktif'}</span>
+                  </td>
+                  <td style="padding:10px 12px;text-align:right;white-space:nowrap;">
+                    <button onclick="editMasterMediaItem(${idx})" title="Edit Media" style="padding:4px 9px;border:1px solid #bfdbfe;background:#eff6ff;color:#1d4ed8;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;margin-right:4px;">
+                      <i class="fa-solid fa-pen-to-square"></i> Edit
+                    </button>
+                    <button onclick="toggleMasterMediaItemActive(${idx})" style="padding:4px 9px;border:1px solid #cbd5e1;background:#f8fafc;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;">
+                      ${item.active !== false ? 'Nonaktifkan' : 'Aktifkan'}
+                    </button>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      ` : ''}
+
     </div>
   `;
 }
@@ -11854,19 +12143,34 @@ function addNewMasterClusterItem() {
   const nameEl = document.getElementById('input-new-cluster-name');
   const legEl = document.getElementById('input-new-cluster-legacy');
   const name = nameEl ? nameEl.value.trim() : '';
-  if (!name) {
-    alert('Silakan isi nama cluster kebijakan.');
-    return;
-  }
+  if (!name) { alert('Silakan isi nama cluster kebijakan.'); return; }
   const legacy = legEl && legEl.value.trim() ? legEl.value.split(',').map(s => s.trim()).filter(Boolean) : [name];
   const cfg = getMasterClustersConfig();
   cfg.items.push({
-    id: 'CL-' + String(cfg.items.length + 1).padStart(2, '0'),
+    code: 'CL-' + String(cfg.items.length + 1).padStart(2, '0'),
     name,
     active: true,
     color: '#2563eb',
     legacyNames: legacy
   });
+  saveMasterClustersConfig(cfg);
+  renderDynamicRoleTab('master_data', getCurrentUser());
+}
+
+function editMasterClusterItem(idx) {
+  const cfg = getMasterClustersConfig();
+  if (!cfg.items[idx]) return;
+  const current = cfg.items[idx];
+  const newName = prompt('Ubah Nama Cluster Kebijakan:', current.name);
+  if (newName === null) return;
+  const trimmed = newName.trim();
+  if (!trimmed) { alert('Nama cluster tidak boleh kosong.'); return; }
+  const legacyStr = (current.legacyNames || []).join(', ');
+  const newLegacy = prompt('Ubah Mapping Cluster Historis (pisahkan koma):', legacyStr);
+  current.name = trimmed;
+  if (newLegacy !== null) {
+    current.legacyNames = newLegacy.split(',').map(s => s.trim()).filter(Boolean);
+  }
   saveMasterClustersConfig(cfg);
   renderDynamicRoleTab('master_data', getCurrentUser());
 }
@@ -11878,6 +12182,124 @@ function toggleMasterClusterItemActive(idx) {
   saveMasterClustersConfig(cfg);
   renderDynamicRoleTab('master_data', getCurrentUser());
 }
+
+/* ── Handlers Master Unit ── */
+function addNewMasterUnitItem() {
+  const codeEl = document.getElementById('input-new-unit-code');
+  const nameEl = document.getElementById('input-new-unit-name');
+  const catEl = document.getElementById('input-new-unit-category');
+  const code = codeEl ? codeEl.value.trim().toUpperCase() : '';
+  const name = nameEl ? nameEl.value.trim() : '';
+  const category = catEl ? catEl.value : 'Pusat Studi';
+  if (!code || !name) { alert('Kode dan Nama Unit wajib diisi.'); return; }
+  const list = getMasterUnitsConfig();
+  if (list.some(u => u.code === code)) { alert('Kode unit sudah ada!'); return; }
+  list.push({ code, name, category, active: true });
+  saveMasterUnitsConfig(list);
+  renderDynamicRoleTab('master_data', getCurrentUser());
+}
+
+function editMasterUnitItem(idx) {
+  const list = getMasterUnitsConfig();
+  if (!list[idx]) return;
+  const current = list[idx];
+  const newName = prompt('Ubah Nama Unit Kerja:', current.name);
+  if (newName === null) return;
+  const trimmed = newName.trim();
+  if (!trimmed) { alert('Nama unit tidak boleh kosong.'); return; }
+  const newCat = prompt('Ubah Kategori Unit (Pusat Studi / Kedeputian / Direktorat / Perguruan Tinggi / Puslatbang / Biro):', current.category || '');
+  current.name = trimmed;
+  if (newCat !== null && newCat.trim()) current.category = newCat.trim();
+  saveMasterUnitsConfig(list);
+  renderDynamicRoleTab('master_data', getCurrentUser());
+}
+
+function toggleMasterUnitItemActive(idx) {
+  const list = getMasterUnitsConfig();
+  if (!list[idx]) return;
+  list[idx].active = list[idx].active === false ? true : false;
+  saveMasterUnitsConfig(list);
+  renderDynamicRoleTab('master_data', getCurrentUser());
+}
+
+/* ── Handlers Master Jenis ── */
+function addNewMasterJenisItem() {
+  const codeEl = document.getElementById('input-new-jenis-code');
+  const nameEl = document.getElementById('input-new-jenis-name');
+  const descEl = document.getElementById('input-new-jenis-desc');
+  const code = codeEl ? codeEl.value.trim().toUpperCase() : '';
+  const name = nameEl ? nameEl.value.trim() : '';
+  const description = descEl ? descEl.value.trim() : '';
+  if (!code || !name) { alert('Kode dan Nama Jenis Publikasi wajib diisi.'); return; }
+  const list = getMasterJenisConfig();
+  if (list.some(j => j.code === code)) { alert('Kode jenis sudah ada!'); return; }
+  list.push({ code, name, description, active: true });
+  saveMasterJenisConfig(list);
+  renderDynamicRoleTab('master_data', getCurrentUser());
+}
+
+function editMasterJenisItem(idx) {
+  const list = getMasterJenisConfig();
+  if (!list[idx]) return;
+  const current = list[idx];
+  const newName = prompt('Ubah Nama Jenis Publikasi:', current.name);
+  if (newName === null) return;
+  const trimmed = newName.trim();
+  if (!trimmed) { alert('Nama tidak boleh kosong.'); return; }
+  const newDesc = prompt('Ubah Deskripsi:', current.description || '');
+  current.name = trimmed;
+  if (newDesc !== null) current.description = newDesc.trim();
+  saveMasterJenisConfig(list);
+  renderDynamicRoleTab('master_data', getCurrentUser());
+}
+
+function toggleMasterJenisItemActive(idx) {
+  const list = getMasterJenisConfig();
+  if (!list[idx]) return;
+  list[idx].active = list[idx].active === false ? true : false;
+  saveMasterJenisConfig(list);
+  renderDynamicRoleTab('master_data', getCurrentUser());
+}
+
+/* ── Handlers Master Media ── */
+function addNewMasterMediaItem() {
+  const codeEl = document.getElementById('input-new-media-code');
+  const nameEl = document.getElementById('input-new-media-name');
+  const typeEl = document.getElementById('input-new-media-type');
+  const code = codeEl ? codeEl.value.trim().toUpperCase() : '';
+  const name = nameEl ? nameEl.value.trim() : '';
+  const type = typeEl ? typeEl.value.trim() : 'Media';
+  if (!code || !name) { alert('Kode dan Nama Kanal Media wajib diisi.'); return; }
+  const list = getMasterMediaConfig();
+  if (list.some(m => m.code === code)) { alert('Kode media sudah ada!'); return; }
+  list.push({ code, name, type, active: true });
+  saveMasterMediaConfig(list);
+  renderDynamicRoleTab('master_data', getCurrentUser());
+}
+
+function editMasterMediaItem(idx) {
+  const list = getMasterMediaConfig();
+  if (!list[idx]) return;
+  const current = list[idx];
+  const newName = prompt('Ubah Nama Kanal Media:', current.name);
+  if (newName === null) return;
+  const trimmed = newName.trim();
+  if (!trimmed) { alert('Nama media tidak boleh kosong.'); return; }
+  const newType = prompt('Ubah Tipe/Kategori Media:', current.type || '');
+  current.name = trimmed;
+  if (newType !== null && newType.trim()) current.type = newType.trim();
+  saveMasterMediaConfig(list);
+  renderDynamicRoleTab('master_data', getCurrentUser());
+}
+
+function toggleMasterMediaItemActive(idx) {
+  const list = getMasterMediaConfig();
+  if (!list[idx]) return;
+  list[idx].active = list[idx].active === false ? true : false;
+  saveMasterMediaConfig(list);
+  renderDynamicRoleTab('master_data', getCurrentUser());
+}
+
 
 /* ══════════════════════════════════════════════════════════
    RENDERER HALAMAN & TAB DINAMIS ROLE WORKFLOW PRISMO

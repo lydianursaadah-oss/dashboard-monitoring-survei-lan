@@ -542,7 +542,7 @@
                   <select class="form-control" id="f-cluster">
                     <option value="">— Memuat Master Cluster… —</option>
                   </select>
-                  <div class="form-hint">Daftar cluster terpusat &amp; dapat disesuaikan pada menu Pengaturan setelah daftar resmi Humas / Pak Puji ditetapkan.</div>
+                  <div class="form-hint">Daftar cluster terpusat &amp; dapat disesuaikan pada menu Pengaturan secara terpusat.</div>
                 </div>
 
                 <div class="form-group">
@@ -768,15 +768,15 @@
           <!-- Master Cluster Kebijakan (Revisi #2: Configurable Master Cluster) -->
           <div class="card" style="grid-column: 1 / -1">
             <div class="card-header">
-              <span class="card-title"><i class="fa-solid fa-layer-group"></i> Master Cluster Kebijakan (Configurable — Menunggu Daftar Final Humas / Pak Puji)</span>
+              <span class="card-title"><i class="fa-solid fa-layer-group"></i> Master Cluster Kebijakan Terpusat</span>
             </div>
             <div class="card-body">
               <div class="alert alert-info" style="margin-bottom:12px">
                 <i class="fa-solid fa-circle-info"></i>
-                <span>Daftar cluster kebijakan dikelola terpusat di sini (tidak di-hardcode di komponen). Sebelum daftar resmi dari Humas / Pak Puji diterima, gunakan placeholder atau daftar yang dapat dikonfigurasi. Data lama dipetakan otomatis melalui <code>CLUSTER_LEGACY_MAPPING</code> agar data historis tidak rusak.</span>
+                <span>Daftar cluster kebijakan dikelola terpusat di sini (tidak di-hardcode di komponen). Data lama dipetakan otomatis melalui <code>CLUSTER_LEGACY_MAPPING</code> agar data historis tidak rusak.</span>
               </div>
               <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
-                <input type="text" class="form-control" id="new-master-cluster-name" placeholder="Nama cluster baru (setelah daftar resmi Humas / Pak Puji tersedia)…" style="flex:1;min-width:240px"/>
+                <input type="text" class="form-control" id="new-master-cluster-name" placeholder="Nama cluster baru…" style="flex:1;min-width:240px"/>
                 <button type="button" class="btn btn-primary btn-sm" onclick="addMasterClusterItem()"><i class="fa-solid fa-plus"></i> Tambah Cluster Master</button>
                 <button type="button" class="btn btn-outline btn-sm" onclick="resetMasterClustersToDefault()"><i class="fa-solid fa-rotate-left"></i> Kembalikan Default</button>
               </div>
