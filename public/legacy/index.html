@@ -8124,15 +8124,12 @@ const ROLE_CONFIGS = {
       { id: "inbox_pengajuan", icon: "fa-inbox", label: "Inbox Pengajuan", badge: true, action: "openTab('inbox_pengajuan')" },
       { id: "persetujuan_pimpinan", icon: "fa-user-check", label: "Persetujuan Pimpinan", action: "openTab('persetujuan_pimpinan')" },
       { id: "monitoring_progress", icon: "fa-chart-line", label: "Monitoring Progress", action: "openTab('monitoring_progress')" },
-      { section: "DATA & PUBLIKASI" },
-      { id: "data_publikasi", icon: "fa-table", label: "Data Publikasi", action: "openTab('data_publikasi')" },
-      { id: "tambah_publikasi", icon: "fa-plus-circle", label: "Tambah Publikasi", action: "openTab('tambah_publikasi')" },
+      { section: "PUBLIKASI" },
       { id: "review_publikasi_awal", icon: "fa-magnifying-glass-chart", label: "Review Publikasi Awal", action: "openTab('review_publikasi_awal')" },
       { id: "review_publikasi_akhir", icon: "fa-file-circle-check", label: "Review Publikasi Akhir", action: "openTab('review_publikasi_akhir')" },
       { id: "kalender_publikasi", icon: "fa-calendar-days", label: "Kalender Publikasi", action: "openTab('kalender_publikasi')" },
       { id: "inisiatif_ak_dosen", icon: "fa-lightbulb", label: "Inisiatif AK/Dosen", action: "openTab('inisiatif_ak_dosen')" },
       { section: "SISTEM" },
-      { id: "laporan_rekapitulasi", icon: "fa-chart-simple", label: "Laporan & Rekapitulasi", action: "openTab('laporan_rekapitulasi')" },
       { id: "master_data", icon: "fa-database", label: "Master Data & Cluster", action: "openTab('master_data')" }
     ],
     defaultTab: "dashboard"
@@ -11794,7 +11791,7 @@ function filterPrismoPimpinanTable() {
    - Sub-Tab 5: Master Jenis Publikasi & Luaran
    - Sub-Tab 6: Master Kanal Media Publikasi
    ══════════════════════════════════════════════════════════════════ */
-let activeMasterTab = 'data_publikasi'; // 'data_publikasi' | 'tambah_publikasi' | 'cluster' | 'unit' | 'jenis' | 'media'
+let activeMasterTab = 'cluster'; // 'data_publikasi' | 'tambah_publikasi' | 'cluster' | 'unit' | 'jenis' | 'media'
 let editingPubNo = null;
 let pubSearchQuery = '';
 let pubFilterUnit = '';
