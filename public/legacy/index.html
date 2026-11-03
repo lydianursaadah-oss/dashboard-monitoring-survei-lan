@@ -7357,11 +7357,284 @@ async function deleteInisiatifRow(id) {
   alert('Data inisiatif berhasil dihapus.');
 }
 
+/* ══════════════════════════════════════════════════════════
+   FITUR IMPOR GOOGLE SCHOLAR
+   ══════════════════════════════════════════════════════════ */
+let scrapedScholarResult = null;
+
+function openImportScholarModal() {
+  const user = getCurrentUser();
+  const modalEl = document.getElementById('inisiatif-scholar-modal');
+  if (!modalEl) return;
+  const isUnit = isUnitUser(user) && !!user.unit;
+  const allUnitList = ['SKMK', 'SKTAN', 'SKPP', 'SKMP', 'STIA BDG', 'STIA JKT', 'STIA MKS', 'DSPK2AN', 'DAPKK'];
+  const defaultUnit = isUnit ? user.unit : 'STIA JKT';
+
+  modalEl.innerHTML = `
+    <div style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(15,23,42,0.65);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;overflow-y:auto;backdrop-filter:blur(2px);">
+      <div class="card" style="width:100%;max-width:920px;max-height:92vh;display:flex;flex-direction:column;margin:auto;box-shadow:0 20px 25px -5px rgba(0,0,0,0.3);border:none;border-radius:12px;overflow:hidden;background:#fff;">
+        <div class="card-header" style="background:#047857;color:#fff;display:flex;align-items:center;justify-content:space-between;padding:14px 20px;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <i class="fa-solid fa-graduation-cap" style="font-size:20px;color:#a7f3d0;"></i>
+            <div>
+              <h3 style="margin:0;font-size:15px;font-weight:800;color:#fff;">Impor Publikasi dari Google Scholar</h3>
+              <p style="margin:2px 0 0;font-size:11.5px;color:#d1fae5;">Tarik publikasi dosen/peneliti secara otomatis ke menu Inisiatif AK/Dosen PRISMO</p>
+            </div>
+          </div>
+          <button type="button" onclick="closeImportScholarModal()" style="background:none;border:none;color:#fff;font-size:24px;line-height:1;cursor:pointer;opacity:0.85;" title="Tutup">&times;</button>
+        </div>
+
+        <div class="card-body" style="padding:18px 20px;overflow-y:auto;flex:1;">
+          <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px 14px;margin-bottom:14px;font-size:12px;color:#166534;">
+            <i class="fa-solid fa-circle-info" style="margin-right:4px;"></i> <strong>Panduan:</strong> Masukkan URL profil Google Scholar dosen/peneliti (misal: <code>https://scholar.google.co.id/citations?user=0h2jYOUAAAAJ&hl=id</code>). Sistem akan membaca nama profil, afiliasi, dan semua publikasi beserta tahun, jurnal, dan sitasi.
+          </div>
+
+          <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:12px;margin-bottom:12px;">
+            <div>
+              <label style="font-size:11px;font-weight:700;color:#334155;display:block;margin-bottom:4px;">URL Profil Google Scholar *</label>
+              <input type="text" id="scholar-url-input" value="https://scholar.google.co.id/citations?user=0h2jYOUAAAAJ&hl=id" placeholder="https://scholar.google.co.id/citations?user=..." style="width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;">
+            </div>
+            <div>
+              <label style="font-size:11px;font-weight:700;color:#334155;display:block;margin-bottom:4px;">Unit Kerja Target *</label>
+              ${isUnit ? `
+                <input type="text" id="scholar-target-unit" value="${planningEscape(user.unit)}" readonly style="width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:6px;background:#f8fafc;font-weight:700;color:#1e40af;font-size:12px;">
+              ` : `
+                <select id="scholar-target-unit" style="width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:6px;background:#fff;font-size:12px;font-weight:600;">
+                  ${allUnitList.map(u => `<option value="${u}" ${u === defaultUnit ? 'selected' : ''}>${u}</option>`).join('')}
+                </select>
+              `}
+            </div>
+            <div>
+              <label style="font-size:11px;font-weight:700;color:#334155;display:block;margin-bottom:4px;">Default Cluster Kebijakan</label>
+              <select id="scholar-target-cluster" style="width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:6px;background:#fff;font-size:12px;">
+                ${getActiveClusterNames().map(c => `<option value="${planningEscape(c)}" ${c.includes('Tata Kelola') ? 'selected' : ''}>${planningEscape(c)}</option>`).join('')}
+              </select>
+            </div>
+          </div>
+
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+            <button type="button" id="btn-fetch-scholar" onclick="fetchScholarPreview()" class="planning-button" style="background:#059669;color:#fff;padding:8px 18px;font-weight:700;border:none;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-size:12.5px;">
+              <i class="fa-solid fa-cloud-arrow-down"></i> 1. Tarik &amp; Tinjau Data
+            </button>
+            <span id="scholar-fetch-status" style="font-size:12px;color:#64748b;"></span>
+          </div>
+
+          <div id="scholar-preview-container" style="display:none;margin-top:10px;border-top:1px solid #e2e8f0;padding-top:14px;">
+            <div id="scholar-author-card" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px 16px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+              <div>
+                <div id="scholar-author-name" style="font-size:14px;font-weight:800;color:#1e293b;"></div>
+                <div id="scholar-author-aff" style="font-size:12px;color:#64748b;"></div>
+              </div>
+              <div id="scholar-articles-stat" class="badge" style="background:#ecfdf5;color:#047857;border:1px solid #a7f3d0;font-size:12px;padding:6px 12px;font-weight:700;"></div>
+            </div>
+
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+              <label style="font-size:12px;font-weight:700;color:#334155;display:inline-flex;align-items:center;gap:6px;cursor:pointer;">
+                <input type="checkbox" id="scholar-select-all" checked onchange="toggleSelectAllScholar(this)">
+                <span>Pilih Semua Publikasi (<span id="scholar-total-count">0</span>)</span>
+              </label>
+              <span style="font-size:11.5px;color:#64748b;">Hilangkan centang pada artikel yang tidak ingin disimpan</span>
+            </div>
+
+            <div style="max-height:280px;overflow-y:auto;border:1px solid #cbd5e1;border-radius:6px;background:#fff;">
+              <table style="width:100%;border-collapse:collapse;font-size:11.5px;">
+                <thead style="background:#f1f5f9;position:sticky;top:0;z-index:2;">
+                  <tr>
+                    <th style="width:36px;padding:8px 6px;text-align:center;">Pilih</th>
+                    <th style="width:40px;padding:8px 6px;text-align:center;">No</th>
+                    <th style="padding:8px 10px;text-align:left;">Judul Publikasi</th>
+                    <th style="width:65px;padding:8px 6px;text-align:center;">Tahun</th>
+                    <th style="width:220px;padding:8px 10px;text-align:left;">Penulis / Jurnal</th>
+                    <th style="width:55px;padding:8px 6px;text-align:center;">Sitasi</th>
+                  </tr>
+                </thead>
+                <tbody id="scholar-preview-tbody"></tbody>
+              </table>
+            </div>
+
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;padding-top:12px;border-top:1px solid #e2e8f0;">
+              <button type="button" class="filter-reset" onclick="closeImportScholarModal()" style="padding:8px 14px;font-size:12px;">Batal</button>
+              <button type="button" id="btn-save-scholar" onclick="saveScholarArticlesToDb()" class="planning-button" style="background:#1e40af;color:#fff;padding:9px 18px;font-size:12.5px;font-weight:700;display:inline-flex;align-items:center;gap:7px;border:none;border-radius:6px;cursor:pointer;">
+                <i class="fa-solid fa-floppy-disk"></i> <span id="btn-save-scholar-label">2. Simpan Artikel Terpilih ke Database PRISMO</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  modalEl.hidden = false;
+}
+
+function closeImportScholarModal() {
+  const modalEl = document.getElementById('inisiatif-scholar-modal');
+  if (modalEl) { modalEl.hidden = true; modalEl.innerHTML = ''; }
+  scrapedScholarResult = null;
+}
+
+async function fetchScholarPreview() {
+  const urlInput = document.getElementById('scholar-url-input');
+  const statusEl = document.getElementById('scholar-fetch-status');
+  const btn = document.getElementById('btn-fetch-scholar');
+  const previewContainer = document.getElementById('scholar-preview-container');
+
+  const url = urlInput ? urlInput.value.trim() : '';
+  if (!url) {
+    alert('Silakan masukkan URL atau ID profil Google Scholar.');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menghubungi Google Scholar…';
+  if (statusEl) statusEl.innerHTML = '<span style="color:#059669;"><i class="fa-solid fa-spinner fa-spin"></i> Mengambil data publikasi…</span>';
+
+  try {
+    const res = await fetch('/api/inisiatif-ak-dosen/import-scholar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'preview', url })
+    });
+
+    const data = await res.json();
+    if (!res.ok || !data.ok) {
+      throw new Error(data.message || data.statusMessage || 'Gagal memproses profil Google Scholar');
+    }
+
+    scrapedScholarResult = data;
+
+    // Render Preview Header
+    document.getElementById('scholar-author-name').textContent = data.name || 'Peneliti Google Scholar';
+    document.getElementById('scholar-author-aff').textContent = data.affiliation || 'Afiliasi Peneliti';
+    document.getElementById('scholar-articles-stat').textContent = `Ditemukan ${data.articles.length} Publikasi`;
+    document.getElementById('scholar-total-count').textContent = data.articles.length;
+
+    // Auto-detect unit from affiliation if possible
+    const aff = (data.affiliation || '').toUpperCase();
+    const unitSelect = document.getElementById('scholar-target-unit');
+    if (unitSelect && !unitSelect.readOnly) {
+      if (aff.includes('JAKARTA')) unitSelect.value = 'STIA JKT';
+      else if (aff.includes('BANDUNG')) unitSelect.value = 'STIA BDG';
+      else if (aff.includes('MAKASSAR')) unitSelect.value = 'STIA MKS';
+    }
+
+    // Render Preview Rows
+    const tbody = document.getElementById('scholar-preview-tbody');
+    tbody.innerHTML = data.articles.map((art, idx) => `
+      <tr style="border-bottom:1px solid #e2e8f0;">
+        <td style="text-align:center;padding:7px 6px;">
+          <input type="checkbox" class="scholar-row-cb" data-index="${idx}" checked onchange="updateScholarSelectedCount()">
+        </td>
+        <td style="text-align:center;color:#64748b;font-weight:700;padding:7px 6px;">${idx + 1}</td>
+        <td style="padding:7px 10px;">
+          <div style="font-weight:700;color:#1e293b;line-height:1.35;">${planningEscape(art.judul)}</div>
+          ${art.link ? `<a href="${planningEscape(art.link)}" target="_blank" rel="noopener noreferrer" style="font-size:10.5px;color:#2563eb;text-decoration:none;"><i class="fa-solid fa-arrow-up-right-from-square" style="font-size:9px;"></i> Lihat di Google Scholar</a>` : ''}
+        </td>
+        <td style="text-align:center;font-weight:700;color:#475569;padding:7px 6px;">${art.tahun || '—'}</td>
+        <td style="padding:7px 10px;font-size:11px;color:#475569;">
+          <div><strong>Penulis:</strong> ${planningEscape(art.authors || '—')}</div>
+          <div><strong>Jurnal:</strong> ${planningEscape(art.venue || '—')}</div>
+        </td>
+        <td style="text-align:center;font-weight:700;color:#047857;padding:7px 6px;">${art.citations || 0}</td>
+      </tr>
+    `).join('');
+
+    previewContainer.style.display = 'block';
+    updateScholarSelectedCount();
+    if (statusEl) statusEl.innerHTML = `✅ <strong>Berhasil:</strong> Ditemukan <strong>${data.articles.length} artikel</strong> dari ${planningEscape(data.name)}.`;
+  } catch (err) {
+    console.error('Scholar error:', err);
+    if (statusEl) statusEl.innerHTML = `<span style="color:#dc2626;"><i class="fa-solid fa-triangle-exclamation"></i> ${err.message || 'Gagal mengambil data'}</span>`;
+    alert('Gagal mengambil data dari Google Scholar: ' + (err.message || 'Periksa URL'));
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-down"></i> 1. Tarik &amp; Tinjau Data';
+  }
+}
+
+function toggleSelectAllScholar(masterCb) {
+  const cbs = document.querySelectorAll('.scholar-row-cb');
+  cbs.forEach(cb => cb.checked = masterCb.checked);
+  updateScholarSelectedCount();
+}
+
+function updateScholarSelectedCount() {
+  const cbs = document.querySelectorAll('.scholar-row-cb:checked');
+  const count = cbs.length;
+  const labelEl = document.getElementById('btn-save-scholar-label');
+  const btn = document.getElementById('btn-save-scholar');
+  if (labelEl) labelEl.textContent = `2. Simpan ${count} Artikel Terpilih ke Database PRISMO`;
+  if (btn) btn.disabled = (count === 0);
+}
+
+async function saveScholarArticlesToDb() {
+  if (!scrapedScholarResult || !scrapedScholarResult.articles) {
+    alert('Belum ada data artikel yang ditarik.');
+    return;
+  }
+
+  const selectedIdxs = [...document.querySelectorAll('.scholar-row-cb:checked')].map(cb => Number(cb.dataset.index));
+  if (!selectedIdxs.length) {
+    alert('Pilih minimal satu artikel untuk disimpan.');
+    return;
+  }
+
+  const unitSelect = document.getElementById('scholar-target-unit');
+  const clusterSelect = document.getElementById('scholar-target-cluster');
+  const unit = unitSelect ? unitSelect.value : 'STIA JKT';
+  const cluster1 = clusterSelect ? clusterSelect.value : 'Tata Kelola & Manajemen ASN';
+
+  const selectedArticles = selectedIdxs.map(idx => scrapedScholarResult.articles[idx]);
+
+  const btn = document.getElementById('btn-save-scholar');
+  btn.disabled = true;
+  btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan ${selectedArticles.length} artikel ke Supabase…`;
+
+  try {
+    const res = await fetch('/api/inisiatif-ak-dosen/import-scholar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'save',
+        unit,
+        cluster1,
+        researcherName: scrapedScholarResult.name,
+        articles: selectedArticles
+      })
+    });
+
+    const data = await res.json();
+    if (!res.ok || !data.ok) {
+      throw new Error(data.message || data.statusMessage || 'Gagal menyimpan ke database');
+    }
+
+    // Tambahkan data baru ke inisiatifAkDosenRows di memori lokal agar langsung terlihat
+    if (Array.isArray(data.items) && data.items.length > 0) {
+      inisiatifAkDosenRows.unshift(...data.items);
+      saveStoredInisiatifLocal(inisiatifAkDosenRows);
+      filterInisiatifTable(1);
+    }
+
+    closeImportScholarModal();
+    alert(`🎉 Sukses! Sebanyak ${data.count || selectedArticles.length} artikel dari Google Scholar (${scrapedScholarResult.name}) telah berhasil ditambahkan ke unit ${unit}!`);
+  } catch (err) {
+    console.error('Save scholar error:', err);
+    alert('Terjadi kesalahan saat menyimpan artikel: ' + (err.message || 'Periksa koneksi database'));
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
 window.openInisiatifEditor = openInisiatifEditor;
 window.closeInisiatifEditor = closeInisiatifEditor;
 window.deleteInisiatifRow = deleteInisiatifRow;
 window.filterInisiatifTable = filterInisiatifTable;
 window.renderInisiatifAkDosenRows = renderInisiatifAkDosenRows;
+window.openImportScholarModal = openImportScholarModal;
+window.closeImportScholarModal = closeImportScholarModal;
+window.fetchScholarPreview = fetchScholarPreview;
+window.toggleSelectAllScholar = toggleSelectAllScholar;
+window.updateScholarSelectedCount = updateScholarSelectedCount;
+window.saveScholarArticlesToDb = saveScholarArticlesToDb;
 
 document.addEventListener('submit', async event => {
   if (event.target.id !== 'inisiatif-db-form') return;
@@ -7527,9 +7800,14 @@ function renderPlanningUnitPage(kind, user) {
     <div class="card" style="margin-bottom:16px;">
       <div class="card-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
         <span class="card-title"><i class="fa-solid fa-lightbulb" style="color:#eab308;margin-right:6px;"></i> Inisiatif AK / Dosen</span>
-        <button class="planning-button" type="button" onclick="openInisiatifEditor()" style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:#1e40af;color:#fff;border-radius:6px;border:none;font-weight:700;font-size:12px;cursor:pointer;">
-          <i class="fa-solid fa-plus"></i> Tambah Inisiatif Baru
-        </button>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <button class="planning-button" type="button" onclick="openImportScholarModal()" style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:#059669;color:#fff;border-radius:6px;border:none;font-weight:700;font-size:12px;cursor:pointer;" title="Tarik publikasi dosen/peneliti dari Google Scholar">
+            <i class="fa-solid fa-graduation-cap"></i> Impor dari Google Scholar
+          </button>
+          <button class="planning-button" type="button" onclick="openInisiatifEditor()" style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:#1e40af;color:#fff;border-radius:6px;border:none;font-weight:700;font-size:12px;cursor:pointer;">
+            <i class="fa-solid fa-plus"></i> Tambah Inisiatif Baru
+          </button>
+        </div>
       </div>
       <div class="card-body">
         <p style="margin:0 0 12px;color:#64748b;font-size:12px;">
@@ -7566,6 +7844,7 @@ function renderPlanningUnitPage(kind, user) {
       </div>
     </div>
 
+    <div id="inisiatif-scholar-modal" hidden></div>
     <div id="inisiatif-editor" hidden></div>
 
     <div class="card">
