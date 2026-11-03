@@ -2072,7 +2072,8 @@ async function syncDataFromSupabase(isManual = false) {
         try { localStorage.setItem('lan_pub_data', JSON.stringify(mapped)); } catch(e){}
 
         refreshAllPRISMViews();
-        if (typeof syncPrismoProposalsFromSupabase === 'function') syncPrismoProposalsFromSupabase();
+          if (typeof syncPrismoProposalsFromSupabase === 'function') syncPrismoProposalsFromSupabase();
+  if (typeof syncPrismoAnnouncementsFromSupabase === 'function') syncPrismoAnnouncementsFromSupabase();
         const nowStr = new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
         setGasBadge('', `Terhubung Supabase (${data.length} Survei · ${nowStr})`);
 
@@ -8044,6 +8045,130 @@ function savePrismoAnnouncements(list) {
 
 let DEPUTI_PENGUMUMAN = getPrismoAnnouncements();
 
+/* ══════════════════════════════════════════════════════════════════
+   SINKRONISASI PENGUMUMAN DENGAN CLOUD SUPABASE (Hanya Admin DSPK2AN)
+   ══════════════════════════════════════════════════════════════════ */
+async function syncPrismoAnnouncementsFromSupabase() {
+  try {
+    let rows = null;
+    // 1. Coba ambil via Nuxt API
+    try {
+      const res = await fetch('/api/prismo-announcements');
+      if (res.ok) {
+        const json = await res.json();
+        if (Array.isArray(json)) rows = json;
+      }
+    } catch (e) {}
+
+    // 2. Fallback langsung ke Supabase REST
+    if (!rows) {
+      try {
+        const sUrl = (SUPABASE_CONFIG && SUPABASE_CONFIG.url) || 'https://imteghfrgddjvgkxarwi.supabase.co';
+        const sKey = (SUPABASE_CONFIG && SUPABASE_CONFIG.anonKey);
+        if (sUrl && sKey) {
+          const res = await fetch(`${sUrl}/rest/v1/prismo_announcements?select=*&order=id.desc`, {
+            headers: { 'apikey': sKey, 'Authorization': `Bearer ${sKey}` }
+          });
+          if (res.ok) {
+            const json = await res.json();
+            if (Array.isArray(json)) rows = json;
+          }
+        }
+      } catch (e) {}
+    }
+
+    if (Array.isArray(rows) && rows.length > 0) {
+      const normalized = rows.map(item => ({
+        id: Number(item.id),
+        title: item.title,
+        desc: item.desc || item.description || '',
+        date: item.date || '',
+        kategori: item.kategori || 'Umum',
+        target_type: item.target_type || item.targetType || 'Semua pengguna',
+        target_value: item.target_value || item.targetValue || '',
+        status: item.status || 'Terbit',
+        start_date: item.start_date || item.startDate || '',
+        end_date: item.end_date || item.endDate || '',
+        attachment_url: item.attachment_url || item.attachmentUrl || '',
+        author: item.author || 'Admin DSPK2AN',
+        author_role: item.author_role || item.authorRole || 'admin_dspk2an'
+      }));
+      localStorage.setItem('prismo_announcements_v1', JSON.stringify(normalized));
+      const curr = getCurrentUser();
+      renderSindisaPengumuman();
+      renderNewAnnouncementNotifBanner(curr);
+      if (typeof renderPublicPriorityActionStrip === 'function') {
+        try { renderPublicPriorityActionStrip(); } catch (e) {}
+      }
+      console.log(`[PRISMO SUPABASE] Sinkronisasi ${normalized.length} pengumuman dari server berhasil.`);
+      return normalized;
+    } else if (Array.isArray(rows) && rows.length === 0) {
+      console.log('[PRISMO SUPABASE] Tabel pengumuman kosong, mengunggah template awal...');
+      await pushPrismoAnnouncementsToSupabase(DEFAULT_PRISMO_PENGUMUMAN);
+    }
+  } catch (err) {
+    console.warn('[PRISMO ANNOUNCEMENTS SYNC ERROR]', err);
+  }
+}
+
+async function pushPrismoAnnouncementsToSupabase(list) {
+  try {
+    const items = Array.isArray(list) ? list : [list];
+    // 1. Coba via API Nuxt
+    try {
+      const res = await fetch('/api/prismo-announcements', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(items)
+      });
+      if (res.ok) {
+        console.log(`[PRISMO API] Berhasil mengunggah ${items.length} pengumuman ke backend.`);
+        return true;
+      }
+    } catch(e) {}
+
+    // 2. Fallback langsung ke Supabase REST
+    const sUrl = (SUPABASE_CONFIG && SUPABASE_CONFIG.url) || 'https://imteghfrgddjvgkxarwi.supabase.co';
+    const sKey = (SUPABASE_CONFIG && SUPABASE_CONFIG.anonKey);
+    if (sUrl && sKey) {
+      const payload = items.map(item => ({
+        id: Number(item.id) || Date.now(),
+        title: item.title,
+        description: item.desc || item.description || '',
+        date: item.date || '',
+        kategori: item.kategori || 'Umum',
+        target_type: item.target_type || item.targetType || 'Semua pengguna',
+        target_value: item.target_value || item.targetValue || '',
+        status: item.status || 'Terbit',
+        start_date: item.start_date || item.startDate || null,
+        end_date: item.end_date || item.endDate || null,
+        attachment_url: item.attachment_url || item.attachmentUrl || '',
+        author: item.author || 'Admin DSPK2AN',
+        author_role: 'admin_dspk2an'
+      }));
+      const res = await fetch(`${sUrl}/rest/v1/prismo_announcements`, {
+        method: 'POST',
+        headers: {
+          'apikey': sKey,
+          'Authorization': `Bearer ${sKey}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'resolution=merge-duplicates'
+        },
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        console.log(`[PRISMO SUPABASE REST] Berhasil menyimpan pengumuman ke Cloud Supabase.`);
+        return true;
+      }
+    }
+    return false;
+  } catch (err) {
+    console.warn('[PRISMO ANNOUNCEMENTS PUSH ERROR]', err);
+    return false;
+  }
+}
+
+
 // Deputi Approval Submissions Store
 function getApprovals() {
   try {
@@ -13659,7 +13784,8 @@ function toggleSindisaSidebar() {
 function canUserManageAnnouncements(user) {
   if (!user || !user.role) return false;
   const r = String(user.role).toLowerCase();
-  return r === 'kepala_lan' || r === 'deputi' || r === 'admin_dspk2an' || r === 'humas' || r === 'superadmin';
+  // Hanya Admin DSPK2AN (dan superadmin) yang memiliki hak mengelola / membuat pengumuman
+  return r === 'admin_dspk2an' || r === 'superadmin';
 }
 
 function canUserSeeAnnouncement(ann, user) {
@@ -13928,7 +14054,7 @@ function submitPrismoPengumuman(forcedStatus) {
   }
 
   const dateStr = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
-  const authorName = normalizeDeputiDisplayLabel((user && user.name) || 'Pimpinan LAN RI');
+  const authorName = (user && user.name) || 'Admin DSPK2AN';
 
   const record = {
     id: existingIdx >= 0 ? list[existingIdx].id : Date.now(),
@@ -13943,7 +14069,7 @@ function submitPrismoPengumuman(forcedStatus) {
     end_date: endDate,
     attachment_url: attachmentUrl,
     author: authorName,
-    author_role: (user && user.role) || 'deputi'
+    author_role: 'admin_dspk2an'
   };
 
   if (existingIdx >= 0) {
@@ -13954,6 +14080,10 @@ function submitPrismoPengumuman(forcedStatus) {
 
   savePrismoAnnouncements(list);
   recordInternalAuditLog(existingIdx >= 0 ? 'ANNOUNCEMENT_UPDATE' : 'ANNOUNCEMENT_CREATE', { id: record.id, status: record.status, target: record.target_type });
+  // Sinkronisasi otomatis ke Cloud Supabase
+  if (typeof pushPrismoAnnouncementsToSupabase === 'function') {
+    pushPrismoAnnouncementsToSupabase(record);
+  }
   closePrismoPengumumanModal();
   renderSindisaPengumuman();
   renderNewAnnouncementNotifBanner(user);
