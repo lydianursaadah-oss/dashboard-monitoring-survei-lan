@@ -3857,6 +3857,87 @@ window.addEventListener('focus', () => {
 
 <!-- ═══════════════════ MODAL TAHAP 2: ADMIN CHECKLIST & VERIFIKASI ═══════════════════ -->
 <!-- ═══════════════════ MODAL KHUSUS REVIEW PUBLIKASI ADMIN DSPK2AN (AWAL & AKHIR) ═══════════════════ -->
+
+<!-- 🌟 MODAL KHUSUS UNIT KERJA: UNGGAH NASKAH PUBLIKASI AWAL & AKHIR 🌟 -->
+<div class="modal-overlay" id="unit-publikasi-modal" onclick="if(event.target===this)closeUnitPublikasiModal()">
+  <div class="modal" style="max-width:640px;padding:24px 28px;">
+    <div class="modal-close" onclick="closeUnitPublikasiModal()"><i class="fa-solid fa-xmark"></i></div>
+    
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
+      <span id="unit-pub-modal-badge" style="background:#eff6ff;color:#1d4ed8;font-size:11px;font-weight:800;padding:3px 10px;border-radius:6px;border:1px solid #bfdbfe;">
+        PUBLIKASI
+      </span>
+      <span id="unit-pub-modal-sub" style="font-size:12px;font-weight:700;color:#64748b;"></span>
+    </div>
+    
+    <h2 id="unit-pub-modal-title" style="font-size:17px;font-weight:800;color:#1e293b;margin:0 0 14px;">
+      Unggah Naskah Publikasi
+    </h2>
+
+    <form id="unit-pub-form" onsubmit="event.preventDefault(); saveUnitPublikasiSubmission();">
+      <input type="hidden" id="unit-pub-mode" value="awal" />
+      <input type="hidden" id="unit-pub-activity-no" value="" />
+      <input type="hidden" id="unit-pub-proposal-id" value="" />
+
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px 14px;margin-bottom:14px;">
+        <label style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;display:block;margin-bottom:4px;">
+          Kegiatan Riset / Survei Terkait:
+        </label>
+        <div id="unit-pub-activity-title" style="font-size:13.5px;font-weight:800;color:#1e293b;line-height:1.4;"></div>
+        <div id="unit-pub-activity-meta" style="font-size:11.5px;color:#64748b;margin-top:4px;"></div>
+      </div>
+
+      <!-- Jika sedang dalam status revisi, tampilkan catatan admin -->
+      <div id="unit-pub-catatan-admin-box" style="display:none;background:#fff7ed;border:1.5px solid #fed7aa;border-radius:10px;padding:12px 14px;margin-bottom:14px;">
+        <div style="font-size:11.5px;font-weight:800;color:#c2410c;display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+          <i class="fa-solid fa-triangle-exclamation"></i> Catatan Perbaikan dari Admin DSPK2AN:
+        </div>
+        <div id="unit-pub-catatan-admin-text" style="font-size:12px;color:#9a3412;line-height:1.4;"></div>
+      </div>
+
+      <div style="margin-bottom:14px;">
+        <label style="font-size:12px;font-weight:700;color:#334155;display:block;margin-bottom:5px;">
+          Bentuk / Format Materi Naskah: <span style="color:#dc2626;">*</span>
+        </label>
+        <select id="unit-pub-format" required style="width:100%;padding:8px 12px;border-radius:8px;border:1px solid #cbd5e1;font-size:12px;font-weight:600;outline:none;background:#fff;">
+          <!-- Dynamically filled based on mode awal vs akhir -->
+        </select>
+      </div>
+
+      <div style="margin-bottom:14px;">
+        <label style="font-size:12px;font-weight:700;color:#334155;display:block;margin-bottom:5px;">
+          <i class="fa-brands fa-google-drive" style="color:#059669;margin-right:4px;"></i> Tautan Naskah (Google Drive / Docs): <span style="color:#dc2626;">*</span>
+        </label>
+        <input type="url" id="unit-pub-url" required placeholder="https://docs.google.com/... atau https://drive.google.com/..." style="width:100%;padding:8px 12px;border-radius:8px;border:1px solid #cbd5e1;font-size:12px;font-family:inherit;outline:none;" />
+        <div style="font-size:11px;color:#64748b;margin-top:4px;">Pastikan hak akses link Google Drive telah disetel ke <em>'Siapa saja yang memiliki link dapat melihat'</em>.</div>
+      </div>
+
+      <div style="margin-bottom:14px;">
+        <label style="font-size:12px;font-weight:700;color:#334155;display:block;margin-bottom:5px;">
+          Tautan Dokumen Pendukung / Infografis (Opsional):
+        </label>
+        <input type="url" id="unit-pub-support-url" placeholder="https://drive.google.com/... (opsional)" style="width:100%;padding:8px 12px;border-radius:8px;border:1px solid #cbd5e1;font-size:12px;font-family:inherit;outline:none;" />
+      </div>
+
+      <div style="margin-bottom:18px;">
+        <label style="font-size:12px;font-weight:700;color:#334155;display:block;margin-bottom:5px;">
+          Ringkasan Substansi / Catatan Pengusul:
+        </label>
+        <textarea id="unit-pub-keterangan" rows="3" placeholder="Jelaskan ringkasan temuan awal, poin rekomendasi utama, atau catatan tambahan bagi Admin DSPK2AN..." style="width:100%;padding:8px 12px;border-radius:8px;border:1px solid #cbd5e1;font-size:12px;font-family:inherit;outline:none;resize:vertical;"></textarea>
+      </div>
+
+      <div style="display:flex;justify-content:flex-end;gap:8px;padding-top:12px;border-top:1px solid #e2e8f0;">
+        <button type="button" onclick="closeUnitPublikasiModal()" style="padding:8px 16px;background:#f8fafc;border:1px solid #cbd5e1;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">
+          Batal
+        </button>
+        <button type="submit" style="padding:8px 20px;background:#2563eb;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;box-shadow:0 1px 3px rgba(37,99,235,0.3);display:flex;align-items:center;gap:6px;">
+          <i class="fa-solid fa-paper-plane"></i> Kirim ke Admin DSPK2AN
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <div class="modal-overlay" id="prismo-admin-pub-modal" onclick="if(event.target===this)closePrismoAdminPubModal()">
   <div class="modal" style="max-width:760px;padding:24px 28px;">
     <div class="modal-close" onclick="closePrismoAdminPubModal()"><i class="fa-solid fa-xmark"></i></div>
@@ -8440,7 +8521,379 @@ function getCurrentUser() {
 function setCurrentUser(user) {
   if(!user) localStorage.removeItem('lan_current_user');
   else localStorage.setItem('lan_current_user', JSON.stringify(user));
-  renderAuthNav();
+  
+/* =========================================================================
+   SISI UNIT KERJA: PUBLIKASI AWAL & PUBLIKASI AKHIR
+   ========================================================================= */
+
+function renderUnitPublikasiAwal(user) {
+  return renderUnitPublikasiPageView(user, 'awal');
+}
+
+function renderUnitPublikasiAkhir(user) {
+  return renderUnitPublikasiPageView(user, 'akhir');
+}
+
+function renderUnitPublikasiPageView(user, mode) {
+  const isAkhir = (mode === 'akhir');
+  const userUnit = user ? (user.unit || '') : '';
+  const myActivities = RAW.filter(d => canAccessUnitData(user, d.unit));
+  const allProposals = getPrismoProposals();
+
+  // Cocokkan kegiatan dengan proposal publikasi
+  const items = myActivities.map(act => {
+    // Cari proposal yang cocok
+    const pubProp = allProposals.find(p => {
+      const matchActivity = (p.activity_no && Number(p.activity_no) === Number(act.no)) || (p.judul && p.judul.trim().toLowerCase() === (act.nama_survei || act.judul || '').trim().toLowerCase());
+      const matchType = isPrismoPublicationProposal(p) && (isAkhir ? String(p.jenis_persetujuan || '').toLowerCase().includes('akhir') : String(p.jenis_persetujuan || '').toLowerCase().includes('awal'));
+      return matchActivity && matchType;
+    });
+
+    let statusKey = 'belum_diajukan';
+    if (pubProp) {
+      if (['disetujui', 'disetujui_catatan'].includes(pubProp.status)) statusKey = 'disetujui';
+      else if (pubProp.status === 'perlu_perbaikan') statusKey = 'perlu_perbaikan';
+      else statusKey = 'diajukan';
+    }
+
+    return {
+      activity: act,
+      proposal: pubProp || null,
+      statusKey: statusKey
+    };
+  });
+
+  // Hitung metrik
+  const totalCount = items.length;
+  const belumCount = items.filter(x => x.statusKey === 'belum_diajukan').length;
+  const diajukanCount = items.filter(x => x.statusKey === 'diajukan').length;
+  const revisiCount = items.filter(x => x.statusKey === 'perlu_perbaikan').length;
+  const disetujuiCount = items.filter(x => x.statusKey === 'disetujui').length;
+
+  return `
+    <div style="margin-bottom:20px;">
+      <!-- Header -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:12px;">
+        <div>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;flex-wrap:wrap;">
+            <h3 style="font-size:19px;font-weight:800;color:#1e293b;margin:0;">
+              <i class="fa-solid ${isAkhir ? 'fa-file-lines' : 'fa-newspaper'}" style="color:#2563eb;margin-right:8px;"></i>
+              ${isAkhir ? 'Publikasi Akhir (Laporan Lengkap &amp; Policy Brief)' : 'Publikasi Awal (Infografis &amp; Rilis Pembuka)'}
+            </h3>
+            <span class="badge" style="background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;font-weight:800;font-size:11px;padding:4px 10px;border-radius:6px;">
+              Unit: ${escapeHtml(userUnit || 'LAN RI')}
+            </span>
+          </div>
+          <p style="font-size:12.5px;color:#64748b;margin:0;">
+            ${isAkhir ? 'Unggah naskah final hasil riset &amp; survei untuk diverifikasi Admin DSPK2AN sebelum dijadwalkan oleh Humas LAN RI.' : 'Unggah draft materi rilis atau infografis awal survei untuk diverifikasi dan disetujui Admin DSPK2AN.'}
+          </p>
+        </div>
+      </div>
+
+      <!-- Kartu Ringkasan Metrik -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));gap:12px;margin-bottom:20px;">
+        <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:14px 16px;">
+          <div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:4px;">Total Kegiatan</div>
+          <div style="font-size:22px;font-weight:900;color:#1e293b;">${totalCount}</div>
+        </div>
+        <div style="background:#fff;border:1px solid #fed7aa;border-radius:12px;padding:14px 16px;">
+          <div style="font-size:11px;font-weight:700;color:#ea580c;text-transform:uppercase;margin-bottom:4px;">Belum Diunggah</div>
+          <div style="font-size:22px;font-weight:900;color:#ea580c;">${belumCount}</div>
+        </div>
+        <div style="background:#fff;border:1px solid #bfdbfe;border-radius:12px;padding:14px 16px;">
+          <div style="font-size:11px;font-weight:700;color:#2563eb;text-transform:uppercase;margin-bottom:4px;">Sedang Ditelaah</div>
+          <div style="font-size:22px;font-weight:900;color:#2563eb;">${diajukanCount}</div>
+        </div>
+        <div style="background:#fff;border:1px solid ${revisiCount > 0 ? '#fca5a5' : '#e2e8f0'};background:${revisiCount > 0 ? '#fef2f2' : '#fff'};border-radius:12px;padding:14px 16px;">
+          <div style="font-size:11px;font-weight:700;color:#dc2626;text-transform:uppercase;margin-bottom:4px;">Perlu Revisi</div>
+          <div style="font-size:22px;font-weight:900;color:#dc2626;">${revisiCount}</div>
+        </div>
+        <div style="background:#fff;border:1px solid #bbf7d0;border-radius:12px;padding:14px 16px;">
+          <div style="font-size:11px;font-weight:700;color:#16a34a;text-transform:uppercase;margin-bottom:4px;">Disetujui Admin</div>
+          <div style="font-size:22px;font-weight:900;color:#16a34a;">${disetujuiCount}</div>
+        </div>
+      </div>
+
+      <!-- Daftar Kegiatan Publikasi Unit -->
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        ${items.length === 0 ? `
+          <div style="padding:40px;text-align:center;background:#fff;border:1px dashed #cbd5e1;border-radius:12px;color:#64748b;">
+            <i class="fa-regular fa-folder-open" style="font-size:32px;color:#94a3b8;margin-bottom:10px;display:block;"></i>
+            Belum ada kegiatan riset/survei yang terdaftar untuk unit kerja ini.
+          </div>
+        ` : items.map(item => {
+          const act = item.activity;
+          const prop = item.proposal;
+          const info = getPrismoScheduleInfo(act);
+
+          // Status Visual Badge
+          let statusBadge = '';
+          if (item.statusKey === 'disetujui') {
+            statusBadge = `<span class="badge" style="background:#ecfdf5;color:#059669;border:1px solid #a7f3d0;font-weight:800;font-size:11px;padding:4px 10px;border-radius:6px;"><i class="fa-solid fa-circle-check"></i> Disetujui Admin DSPK2AN ${isAkhir ? '(Diteruskan ke Humas)' : ''}</span>`;
+          } else if (item.statusKey === 'perlu_perbaikan') {
+            statusBadge = `<span class="badge" style="background:#fef2f2;color:#dc2626;border:1px solid #fecaca;font-weight:800;font-size:11px;padding:4px 10px;border-radius:6px;"><i class="fa-solid fa-triangle-exclamation"></i> Perlu Perbaikan</span>`;
+          } else if (item.statusKey === 'diajukan') {
+            statusBadge = `<span class="badge" style="background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;font-weight:800;font-size:11px;padding:4px 10px;border-radius:6px;"><i class="fa-solid fa-hourglass-half"></i> Sedang Ditelaah Admin DSPK2AN</span>`;
+          } else {
+            statusBadge = `<span class="badge" style="background:#f8fafc;color:#64748b;border:1px solid #cbd5e1;font-weight:700;font-size:11px;padding:4px 10px;border-radius:6px;"><i class="fa-solid fa-clock"></i> Belum Mengunggah Naskah</span>`;
+          }
+
+          // Tombol Aksi
+          let actionBtn = '';
+          if (item.statusKey === 'belum_diajukan') {
+            actionBtn = `
+              <button onclick="openUnitPublikasiModal(${act.no}, '${mode}')" style="padding:8px 14px;background:#2563eb;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;box-shadow:0 1px 3px rgba(37,99,235,0.25);">
+                <i class="fa-solid fa-cloud-arrow-up"></i> Unggah Naskah ${isAkhir ? 'Akhir' : 'Awal'}
+              </button>
+            `;
+          } else if (item.statusKey === 'perlu_perbaikan') {
+            actionBtn = `
+              <button onclick="openUnitPublikasiModal(${act.no}, '${mode}', '${prop ? prop.id : ''}')" style="padding:8px 14px;background:#ea580c;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;box-shadow:0 1px 3px rgba(234,88,12,0.25);">
+                <i class="fa-solid fa-pen-to-square"></i> Perbaiki &amp; Unggah Ulang
+              </button>
+            `;
+          } else {
+            actionBtn = `
+              <button onclick="openUnitPublikasiModal(${act.no}, '${mode}', '${prop ? prop.id : ''}')" style="padding:8px 12px;background:#f8fafc;color:#1e293b;border:1px solid #cbd5e1;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;">
+                <i class="fa-solid fa-eye"></i> Lihat Berkas Diajukan
+              </button>
+            `;
+          }
+
+          return `
+            <article style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:18px 20px;box-shadow:0 1px 3px rgba(0,0,0,0.02);">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:10px;">
+                <div style="flex:1;min-width:280px;">
+                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap;">
+                    <span class="badge" style="background:#f1f5f9;color:#334155;border:1px solid #cbd5e1;font-weight:700;font-size:11px;">
+                      No. ${act.no} &bull; ${escapeHtml(act.unit || userUnit)}
+                    </span>
+                    <span class="badge" style="background:#eff6ff;color:#1d4ed8;font-size:11px;font-weight:600;">
+                      Cluster: ${escapeHtml(resolveClusterName(act.cluster))}
+                    </span>
+                  </div>
+                  <h4 style="font-size:15px;font-weight:800;color:#1e293b;margin:0 0 6px;line-height:1.4;">
+                    ${escapeHtml(act.nama_survei || act.judul)}
+                  </h4>
+                  <div style="font-size:12px;color:#64748b;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                    <span><i class="fa-solid fa-user-tie" style="margin-right:4px;"></i>PIC: <strong>${escapeHtml(info.pic)}</strong></span>
+                    <span><i class="fa-regular fa-calendar" style="margin-right:4px;"></i>Target: <strong>${escapeHtml(info.targetLabel)}</strong></span>
+                    ${prop && prop.tor_jenis ? `<span><i class="fa-solid fa-file-shield" style="margin-right:4px;color:#7c3aed;"></i>Format: <strong>${escapeHtml(prop.tor_jenis)}</strong></span>` : ''}
+                  </div>
+                </div>
+
+                <div style="text-align:right;">
+                  ${statusBadge}
+                  <div style="margin-top:10px;">
+                    ${actionBtn}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Jika ada catatan perbaikan dari admin -->
+              ${(item.statusKey === 'perlu_perbaikan' && prop && prop.catatan_admin) ? `
+                <div style="margin-top:12px;padding:12px 14px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;font-size:12px;color:#991b1b;">
+                  <strong><i class="fa-solid fa-comment-dots" style="margin-right:5px;"></i>Catatan Admin DSPK2AN:</strong>
+                  <div style="margin-top:4px;">${escapeHtml(prop.catatan_admin)}</div>
+                </div>
+              ` : ''}
+
+              <!-- Tautan berkas jika sudah diunggah -->
+              ${prop && prop.dokumen_proposal ? `
+                <div style="margin-top:12px;padding-top:10px;border-top:1px dashed #e2e8f0;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;font-size:11.5px;">
+                  <div style="display:flex;align-items:center;gap:8px;">
+                    <i class="fa-brands fa-google-drive" style="color:#059669;font-size:14px;"></i>
+                    <span style="color:#334155;font-weight:600;">Berkas Naskah:</span>
+                    <a href="${escapeHtml(prop.dokumen_proposal)}" target="_blank" rel="noopener noreferrer" style="color:#2563eb;text-decoration:none;font-weight:700;display:inline-flex;align-items:center;gap:4px;">
+                      ${escapeHtml(prop.tor_nama || 'Buka Dokumen Naskah')} <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:10px;"></i>
+                    </a>
+                  </div>
+                  <div style="color:#94a3b8;font-size:11px;">
+                    Diajukan pada: ${escapeHtml(prop.diajukan_tgl || '-')}
+                  </div>
+                </div>
+              ` : ''}
+            </article>
+          `;
+        }).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function openUnitPublikasiModal(activityNo, mode, proposalId) {
+  const modal = document.getElementById('unit-publikasi-modal');
+  if (!modal) return;
+
+  const isAkhir = (mode === 'akhir');
+  const act = RAW.find(x => x.no === Number(activityNo));
+  if (!act) {
+    alert('Kegiatan riset/survei tidak ditemukan.');
+    return;
+  }
+
+  let prop = null;
+  if (proposalId) {
+    prop = getPrismoProposalById(proposalId);
+  } else {
+    // Cari proposal existing untuk kegiatan ini
+    prop = getPrismoProposals().find(p => {
+      const matchAct = (p.activity_no && Number(p.activity_no) === Number(act.no)) || (p.judul && p.judul.trim().toLowerCase() === (act.nama_survei || act.judul || '').trim().toLowerCase());
+      const matchType = isPrismoPublicationProposal(p) && (isAkhir ? String(p.jenis_persetujuan || '').toLowerCase().includes('akhir') : String(p.jenis_persetujuan || '').toLowerCase().includes('awal'));
+      return matchAct && matchType;
+    });
+  }
+
+  document.getElementById('unit-pub-mode').value = mode;
+  document.getElementById('unit-pub-activity-no').value = act.no;
+  document.getElementById('unit-pub-proposal-id').value = prop ? prop.id : '';
+
+  // Badge & Title
+  const badgeEl = document.getElementById('unit-pub-modal-badge');
+  badgeEl.textContent = isAkhir ? 'PUBLIKASI AKHIR' : 'PUBLIKASI AWAL';
+  badgeEl.style.background = isAkhir ? '#f3e8ff' : '#eff6ff';
+  badgeEl.style.color = isAkhir ? '#7c3aed' : '#1d4ed8';
+  badgeEl.style.borderColor = isAkhir ? '#e9d5ff' : '#bfdbfe';
+
+  document.getElementById('unit-pub-modal-title').textContent = isAkhir ? 'Unggah Naskah Publikasi Akhir (Naskah Final)' : 'Unggah Naskah Publikasi Awal (Infografis/Rilis)';
+  document.getElementById('unit-pub-modal-sub').textContent = `Kegiatan No. ${act.no} &bull; Unit: ${act.unit || 'LAN RI'}`;
+  document.getElementById('unit-pub-activity-title').textContent = act.nama_survei || act.judul;
+  document.getElementById('unit-pub-activity-meta').innerHTML = `PIC: <strong>${escapeHtml(act.pic || '-')}</strong> &bull; Cluster: ${escapeHtml(resolveClusterName(act.cluster))}`;
+
+  // Opsi format naskah
+  const formatSelect = document.getElementById('unit-pub-format');
+  if (isAkhir) {
+    formatSelect.innerHTML = `
+      <option value="Laporan Lengkap & Policy Brief">Laporan Lengkap &amp; Policy Brief</option>
+      <option value="Policy Paper">Policy Paper / Analisis Kebijakan</option>
+      <option value="Executive Summary & Naskah Final">Executive Summary &amp; Naskah Final</option>
+      <option value="Buku Hasil Kajian">Buku Hasil Kajian / Monograf</option>
+    `;
+  } else {
+    formatSelect.innerHTML = `
+      <option value="Infografis & Rilis Pembuka">Infografis &amp; Rilis Pembuka</option>
+      <option value="Ringkasan Eksekutif Awal">Ringkasan Eksekutif Awal</option>
+      <option value="Policy Brief Awal">Policy Brief Awal</option>
+      <option value="Draft Laporan Antara">Draft Laporan Antara</option>
+    `;
+  }
+
+  // Catatan admin jika revisi
+  const catatanBox = document.getElementById('unit-pub-catatan-admin-box');
+  const catatanText = document.getElementById('unit-pub-catatan-admin-text');
+  if (prop && prop.status === 'perlu_perbaikan' && prop.catatan_admin) {
+    catatanBox.style.display = 'block';
+    catatanText.textContent = prop.catatan_admin;
+  } else {
+    catatanBox.style.display = 'none';
+  }
+
+  // Isi data existing jika ada
+  if (prop) {
+    if (prop.tor_jenis) formatSelect.value = prop.tor_jenis;
+    document.getElementById('unit-pub-url').value = prop.dokumen_proposal || '';
+    document.getElementById('unit-pub-support-url').value = prop.dokumen_jadwal || '';
+    document.getElementById('unit-pub-keterangan').value = prop.tor_keterangan || prop.tujuan || '';
+  } else {
+    document.getElementById('unit-pub-url').value = act.jurnal || act.webLAN || '';
+    document.getElementById('unit-pub-support-url').value = '';
+    document.getElementById('unit-pub-keterangan').value = '';
+  }
+
+  modal.classList.add('open');
+}
+
+function closeUnitPublikasiModal() {
+  const modal = document.getElementById('unit-publikasi-modal');
+  if (modal) modal.classList.remove('open');
+}
+
+function saveUnitPublikasiSubmission() {
+  const mode = document.getElementById('unit-pub-mode').value;
+  const isAkhir = (mode === 'akhir');
+  const activityNo = Number(document.getElementById('unit-pub-activity-no').value);
+  const existingProposalId = document.getElementById('unit-pub-proposal-id').value;
+
+  const act = RAW.find(x => x.no === activityNo);
+  if (!act) {
+    alert('Kegiatan tidak ditemukan.');
+    return;
+  }
+
+  const formatNaskah = document.getElementById('unit-pub-format').value;
+  const docUrl = document.getElementById('unit-pub-url').value.trim();
+  const supportUrl = document.getElementById('unit-pub-support-url').value.trim();
+  const keterangan = document.getElementById('unit-pub-keterangan').value.trim();
+
+  if (!docUrl) {
+    alert('Wajib memasukkan tautan dokumen naskah (Google Drive / Docs).');
+    document.getElementById('unit-pub-url').focus();
+    return;
+  }
+
+  const currentUser = getCurrentUser();
+  const proposals = getPrismoProposals();
+  const nowStr = new Date().toISOString().slice(0, 10);
+
+  if (existingProposalId) {
+    // Update existing proposal
+    const idx = proposals.findIndex(p => p.id === existingProposalId);
+    if (idx !== -1) {
+      proposals[idx].dokumen_proposal = docUrl;
+      proposals[idx].dokumen_jadwal = supportUrl;
+      proposals[idx].tor_jenis = formatNaskah;
+      proposals[idx].tor_keterangan = keterangan;
+      proposals[idx].status = 'diajukan';
+      proposals[idx].diajukan_tgl = nowStr;
+      proposals[idx].catatan_admin = ''; // Reset catatan setelah revisi
+    }
+  } else {
+    // Buat proposal baru
+    const newId = `PRISMO-PUB-${mode.toUpperCase()}-${Date.now().toString().slice(-5)}`;
+    const newProp = {
+      id: newId,
+      judul: act.nama_survei || act.judul,
+      unit: act.unit || (currentUser ? currentUser.unit : 'LAN RI'),
+      jenis: act.jenis || 'Survei',
+      jenis_persetujuan: isAkhir ? 'Publikasi Akhir' : 'Publikasi Awal',
+      cluster: act.cluster || '',
+      pic: act.pic || (currentUser ? currentUser.name : ''),
+      target_selesai: act.target || nowStr,
+      jadwal: act.jadwal || '',
+      tahun: 2026,
+      dokumen_proposal: docUrl,
+      dokumen_jadwal: supportUrl,
+      tor_nama: `Naskah ${isAkhir ? 'Publikasi Akhir' : 'Publikasi Awal'} - ${act.nama_survei || act.judul}`,
+      tor_jenis: formatNaskah,
+      tor_keterangan: keterangan,
+      tor_status_akses: 'Dapat diakses',
+      status: 'diajukan',
+      prioritas: 'Normal',
+      diajukan_tgl: nowStr,
+      diverifikasi_tgl: null,
+      disetujui_tgl: null,
+      activity_no: act.no,
+      checklist_admin: {}
+    };
+    proposals.unshift(newProp);
+  }
+
+  savePrismoProposals(proposals, true);
+  closeUnitPublikasiModal();
+  alert(`Naskah ${isAkhir ? 'Publikasi Akhir' : 'Publikasi Awal'} berhasil dikirim ke Admin DSPK2AN untuk diverifikasi!`);
+
+  // Refresh tampilan halaman yang aktif
+  openTab(isAkhir ? 'publikasi_akhir' : 'publikasi_awal');
+}
+
+window.renderUnitPublikasiAwal = renderUnitPublikasiAwal;
+window.renderUnitPublikasiAkhir = renderUnitPublikasiAkhir;
+window.openUnitPublikasiModal = openUnitPublikasiModal;
+window.closeUnitPublikasiModal = closeUnitPublikasiModal;
+window.saveUnitPublikasiSubmission = saveUnitPublikasiSubmission;
+
+
+renderAuthNav();
 }
 
 function openLoginModal() {
@@ -11106,6 +11559,12 @@ function updatePortalBadges() {
       else if (tabId === 'perlu_persetujuan' || tabId === 'keputusan_pengajuan' || tabId === 'inbox_persetujuan') badgeCount = menungguPimpinanCount;
       else if (tabId === 'perbaikan_catatan') badgeCount = perluPerbaikanUnitCount;
       else if (tabId === 'laporan_bukti') badgeCount = laporanUnitCount;
+      else if (tabId === 'review_publikasi_awal') {
+        badgeCount = list.filter(p => isPrismoPublicationProposal(p) && String(p.jenis_persetujuan || '').toLowerCase().includes('awal') && ['diajukan', 'perlu_perbaikan'].includes(p.status)).length;
+      }
+      else if (tabId === 'review_publikasi_akhir') {
+        badgeCount = list.filter(p => isPrismoPublicationProposal(p) && String(p.jenis_persetujuan || '').toLowerCase().includes('akhir') && ['diajukan', 'perlu_perbaikan'].includes(p.status)).length;
+      }
       else if (tabId === 'pengumuman') badgeCount = unreadAnnouncementsCount;
       else if (tabId === 'kalender_media' || tabId === 'antrian_publikasi') {
         try {
@@ -13697,26 +14156,14 @@ function renderDynamicRoleTab(tabName, user) {
       return;
 
     case 'publikasi_awal':
+      container.innerHTML = renderUnitPublikasiAwal(user);
+      if (typeof updatePortalBadges === 'function') updatePortalBadges();
+      return;
+
     case 'publikasi_akhir':
-      const isAkhir = (tabName === 'publikasi_akhir');
-      headerHtml = `
-        <div style="margin-bottom:20px;">
-          <h3 style="font-size:18px;font-weight:800;color:#1e293b;margin-bottom:4px;">
-            <i class="fa-solid ${isAkhir ? 'fa-file-lines' : 'fa-newspaper'}" style="color:#2563eb;margin-right:8px;"></i> 
-            ${isAkhir ? 'Publikasi Akhir (Laporan Lengkap & Ringkasan Eksekutif)' : 'Publikasi Awal (Infografis & Rilis Pembuka)'}
-          </h3>
-          <p style="font-size:12.5px;color:#64748b;">${isAkhir ? 'Dokumen final hasil riset & survei siap serah terima dan pengesahan.' : 'Materi publikasi ringkas survei untuk tayang di kanal komunikasi LAN RI.'}</p>
-        </div>
-      `;
-      const publicationData = relevantData.filter(activity => {
-        const proposal = getProposalForActivity(activity);
-        if (!proposal) return true;
-        if (proposal.laporan_status !== 'disetujui') return false;
-        if (!isAkhir) return true;
-        return [activity.media, activity.webLAN, activity.webUnit, activity.igLAN, activity.igUnit, activity.ytLAN, activity.ytUnit].some(hasLink);
-      });
-      bodyHtml = renderWorkflowTable(publicationData, isAkhir ? 'pub_akhir' : 'pub_awal');
-      break;
+      container.innerHTML = renderUnitPublikasiAkhir(user);
+      if (typeof updatePortalBadges === 'function') updatePortalBadges();
+      return;
 
     case 'riwayat_kegiatan':
       headerHtml = `
