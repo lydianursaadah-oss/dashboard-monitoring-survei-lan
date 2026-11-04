@@ -7058,7 +7058,34 @@ function saveStoredInisiatifLocal(items) {
   } catch(e) { console.warn(e); }
 }
 
-function initiativeLinksHtml(item) {
+function resolveInisiatifYear(item) {
+  if (!item) return '—';
+  if (item.tahun !== null && item.tahun !== undefined && String(item.tahun).trim()) {
+    const raw = String(item.tahun).trim();
+    const match = raw.match(/\b(20\d\d)\b/);
+    if (match) return match[1];
+    if (/^\d{4}$/.test(raw)) return raw;
+  }
+  const rawJadwal = item.jadwalPublikasi || item.jadwal_publikasi || '';
+  if (rawJadwal && String(rawJadwal).trim()) {
+    const match = String(rawJadwal).match(/\b(20\d\d)\b/);
+    if (match) return match[1];
+  }
+  return '—';
+}
+
+function resolveInisiatifJenis(item) {
+  if (!item) return '—';
+  const raw = item.jenis || item.jenis_publikasi || item.jenisPublikasi || '';
+  const clean = String(raw).trim();
+  if (clean && clean !== '-' && clean !== '—') {
+    return `<span class="badge" style="background:#f8fafc;border:1px solid #e2e8f0;color:#334155;font-weight:600;white-space:nowrap;">${planningEscape(clean)}</span>`;
+  }
+  return '—';
+}
+
+function getInitiativeLinksList(item) {
+  if (!item) return [];
   const fields = [
     ['jurnal', 'Jurnal', item.jurnal, '#d97706'],
     ['mediaOnline', 'Media', item.mediaOnline || item.media_online, '#2563eb'],
@@ -7069,15 +7096,124 @@ function initiativeLinksHtml(item) {
     ['youtubeLan', 'YT LAN', item.youtubeLan || item.youtube_lan, '#dc2626'],
     ['youtubeUnit', 'YT Unit', item.youtubeUnit || item.youtube_unit, '#0891b2']
   ];
-  const rendered = fields.map(([field, label, raw, col]) => {
-    if (!raw || !String(raw).trim() || String(raw).trim() === '-') return '';
+  return fields.map(([field, label, raw, col]) => {
+    if (!raw || !String(raw).trim() || String(raw).trim() === '-') return null;
     const val = String(raw).trim();
     const url = (typeof resolveChannelUrl === 'function')
       ? resolveChannelUrl(field, val, item)
       : (val.startsWith('http') ? val : '#');
-    return `<a href="${planningEscape(url)}" target="_blank" rel="noopener noreferrer" class="badge" style="background:#fff;color:${col};border:1px solid #cbd5e1;font-size:10px;text-decoration:none;display:inline-flex;align-items:center;gap:3px;margin:2px;" title="${planningEscape(label)}: ${planningEscape(val)}"><i class="fa-solid fa-arrow-up-right-from-square" style="font-size:9px"></i> ${planningEscape(label)}</a>`;
+    return { field, label, val, url, col };
   }).filter(Boolean);
-  return rendered.length ? `<div style="display:flex;flex-wrap:wrap;gap:2px;">${rendered.join('')}</div>` : '<span style="color:#94a3b8">—</span>';
+}
+
+let activeInitiativePopoverId = null;
+
+function closeInitiativeLinksPopover() {
+  const existing = document.getElementById('initiative-links-popover');
+  if (existing) existing.remove();
+  activeInitiativePopoverId = null;
+}
+
+function toggleInitiativeLinksPopover(event, itemId) {
+  if (event) {
+    event.stopPropagation();
+    event.preventDefault();
+  }
+
+  if (activeInitiativePopoverId === itemId) {
+    closeInitiativeLinksPopover();
+    return;
+  }
+  closeInitiativeLinksPopover();
+
+  const item = (typeof inisiatifAkDosenRows !== 'undefined' ? inisiatifAkDosenRows : []).find(r => Number(r.id) === Number(itemId))
+    || (typeof window.INITIAL_INISIATIF_AK_DOSEN !== 'undefined' ? window.INITIAL_INISIATIF_AK_DOSEN : []).find(r => Number(r.id) === Number(itemId));
+
+  if (!item) return;
+
+  const links = getInitiativeLinksList(item);
+  if (!links.length) return;
+
+  const remainingLinks = links.slice(2);
+  if (!remainingLinks.length) return;
+
+  activeInitiativePopoverId = itemId;
+
+  const popover = document.createElement('div');
+  popover.id = 'initiative-links-popover';
+  popover.style.cssText = 'position:fixed;z-index:999999;width:290px;max-width:92vw;background:#ffffff;border:1px solid #cbd5e1;border-radius:12px;box-shadow:0 10px 25px -5px rgba(0,0,0,0.15),0 8px 10px -6px rgba(0,0,0,0.1);font-family:inherit;font-size:12px;overflow:hidden;';
+
+  popover.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:#f8fafc;border-bottom:1px solid #e2e8f0;">
+      <span style="font-weight:700;font-size:11.5px;color:#1e293b;display:inline-flex;align-items:center;gap:5px;">
+        <i class="fa-solid fa-link" style="color:#2563eb;"></i> Tautan Publikasi Lainnya (+${remainingLinks.length})
+      </span>
+      <button type="button" onclick="closeInitiativeLinksPopover()" style="border:none;background:transparent;color:#94a3b8;font-size:16px;cursor:pointer;padding:0 4px;line-height:1;display:flex;align-items:center;" title="Tutup">&times;</button>
+    </div>
+    <div style="padding:8px;max-height:240px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;">
+      ${remainingLinks.map(link => `
+        <a href="${planningEscape(link.url)}" target="_blank" rel="noopener noreferrer" style="display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:8px;background:#fff;border:1px solid #e2e8f0;text-decoration:none;transition:all .15s;box-shadow:0 1px 2px rgba(0,0,0,0.02);" onmouseover="this.style.background='#f8fafc';this.style.borderColor='#cbd5e1';" onmouseout="this.style.background='#fff';this.style.borderColor='#e2e8f0';">
+          <span class="badge" style="background:#fff;color:${link.col};border:1px solid #cbd5e1;font-size:9.5px;padding:2px 7px;border-radius:12px;white-space:nowrap;">
+            <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:8px;"></i> ${planningEscape(link.label)}
+          </span>
+          <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;color:#334155;" title="${planningEscape(link.val)}">
+            ${planningEscape(link.val)}
+          </span>
+        </a>
+      `).join('')}
+    </div>
+  `;
+
+  document.body.appendChild(popover);
+
+  const btn = event.currentTarget || event.target;
+  const rect = btn.getBoundingClientRect();
+  const popoverWidth = 290;
+  let left = rect.left;
+  if (left + popoverWidth > window.innerWidth - 10) {
+    left = Math.max(10, window.innerWidth - popoverWidth - 10);
+  }
+  let top = rect.bottom + 6;
+  if (top + 220 > window.innerHeight) {
+    top = Math.max(10, rect.top - 220);
+  }
+
+  popover.style.left = `${left}px`;
+  popover.style.top = `${top}px`;
+}
+
+if (!window._initiativePopoverListenerAdded) {
+  document.addEventListener('click', (e) => {
+    const popover = document.getElementById('initiative-links-popover');
+    if (popover && !popover.contains(e.target)) {
+      closeInitiativeLinksPopover();
+    }
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeInitiativeLinksPopover();
+  });
+  window._initiativePopoverListenerAdded = true;
+}
+
+function initiativeLinksHtml(item) {
+  const links = getInitiativeLinksList(item);
+  if (!links.length) return '<span style="color:#94a3b8;">—</span>';
+
+  const maxVisible = 2;
+  const visible = links.slice(0, maxVisible);
+  const remainingCount = links.length - maxVisible;
+
+  const renderedVisible = visible.map(link => {
+    return `<a href="${planningEscape(link.url)}" target="_blank" rel="noopener noreferrer" class="badge" style="background:#fff;color:${link.col};border:1px solid #cbd5e1;font-size:10px;text-decoration:none;display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:12px;white-space:nowrap;" title="${planningEscape(link.label)}: ${planningEscape(link.val)}"><i class="fa-solid fa-arrow-up-right-from-square" style="font-size:8.5px"></i> ${planningEscape(link.label)}</a>`;
+  });
+
+  if (remainingCount > 0) {
+    renderedVisible.push(
+      `<button type="button" class="badge" onclick="toggleInitiativeLinksPopover(event, ${Number(item.id)})" style="background:#f1f5f9;color:#334155;border:1px solid #cbd5e1;font-size:10px;font-weight:700;padding:2px 7px;border-radius:12px;white-space:nowrap;cursor:pointer;display:inline-flex;align-items:center;gap:3px;box-shadow:0 1px 2px rgba(0,0,0,0.04);transition:all .15s;" title="Klik untuk melihat ${remainingCount} tautan publikasi lainnya"><i class="fa-solid fa-ellipsis" style="font-size:9px;color:#64748b;"></i> +${remainingCount}</button>`
+    );
+  }
+
+  return `<div style="display:inline-flex;align-items:center;gap:4px;flex-wrap:nowrap;white-space:nowrap;">${renderedVisible.join('')}</div>`;
 }
 
 async function renderInisiatifAkDosenRows() {
@@ -7136,15 +7272,19 @@ function filterInisiatifTable(page = 1) {
 
   inisiatifFilteredRows = inisiatifAkDosenRows.filter(item => {
     if (selectedUnit && !String(item.unit || item.sourceSheet || '').toUpperCase().includes(selectedUnit.toUpperCase())) return false;
-    if (yearVal && String(item.tahun || '') !== yearVal) return false;
+    if (yearVal) {
+      const yr = resolveInisiatifYear(item);
+      if (yr !== yearVal) return false;
+    }
     if (searchVal) {
-      const text = `${item.judul || ''} ${item.jenis || ''} ${item.cluster1 || ''} ${item.cluster2 || ''} ${item.catatan || ''} ${item.unit || ''}`.toLowerCase();
+      const yr = resolveInisiatifYear(item);
+      const text = `${item.judul || ''} ${item.jenis || ''} ${yr !== '—' ? yr : ''} ${item.cluster1 || ''} ${item.cluster2 || ''} ${item.catatan || ''} ${item.unit || ''}`.toLowerCase();
       if (!text.includes(searchVal)) return false;
     }
     return true;
   });
 
-  if (count) count.textContent = `${inisiatifFilteredRows.length} publikasi terdaftar`;
+  if (count) count.textContent = '';
 
   if (!inisiatifFilteredRows.length) {
     tbody.innerHTML = '';
@@ -7165,30 +7305,33 @@ function filterInisiatifTable(page = 1) {
     const isDeputiUser = currentUser && (currentUser.role === 'deputi' || currentUser.role === 'kepala_lan');
     const canEdit = !isDeputiUser && (!isUnit || (item.unit && currentUser.unit && String(item.unit).toUpperCase().includes(String(currentUser.unit).toUpperCase())));
     const unitBadge = `<span class="badge" style="background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe;font-weight:700;">${planningEscape(item.unit || item.sourceSheet || '—')}</span>`;
-    const jenisBadge = item.jenis ? `<span class="badge" style="background:#f8fafc;border:1px solid #e2e8f0;color:#334155;">${planningEscape(item.jenis)}</span>` : '—';
+    const jenisBadge = resolveInisiatifJenis(item);
+    const displayYear = resolveInisiatifYear(item);
     const clusterText = [item.cluster1, item.cluster2].filter(Boolean).map(planningEscape).join(' · ') || '—';
 
     return `<tr>
       <td style="font-weight:700;color:#64748b;text-align:center;">${rowNo}</td>
-      ${!isUnit ? `<td>${unitBadge}</td>` : ''}
-      <td style="max-width:320px;">
+      ${!isUnit ? `<td style="white-space:nowrap;">${unitBadge}</td>` : ''}
+      <td style="max-width:320px;word-break:break-word;">
         <div style="font-weight:700;color:#1e293b;line-height:1.4;">${planningEscape(item.judul)}</div>
       </td>
-      <td>${jenisBadge}</td>
-      <td style="font-weight:700;color:#475569;text-align:center;">${planningEscape(item.tahun ?? '—')}</td>
-      <td style="font-size:11.5px;color:#475569;">${clusterText}</td>
-      <td>${initiativeLinksHtml(item)}</td>
-      <td style="font-size:11px;color:#64748b;max-width:180px;">${planningEscape(item.catatan || '—')}</td>
-      <td style="white-space:nowrap;">
-        ${canEdit ? `
-          <button class="planning-button" type="button" onclick="openInisiatifEditor(${Number(item.id)})" style="padding:4px 9px;font-size:11px;" title="Edit data ini">
-            <i class="fa-solid fa-pen"></i> Edit
-          </button>
-          <button class="planning-delete" type="button" onclick="deleteInisiatifRow(${Number(item.id)})" style="padding:4px 7px;font-size:11px;margin-left:4px;" title="Hapus data ini">
-            <i class="fa-solid fa-trash"></i>
-          </button>
-        ` : '<span style="color:#94a3b8;font-size:11px;">Hanya baca</span>'}
-      </td>
+      <td style="white-space:nowrap;">${jenisBadge}</td>
+      <td style="font-weight:700;color:#475569;text-align:center;white-space:nowrap;">${displayYear}</td>
+      <td style="font-size:11.5px;color:#475569;word-break:break-word;">${clusterText}</td>
+      <td style="white-space:nowrap;width:180px;">${initiativeLinksHtml(item)}</td>
+      <td style="font-size:11px;color:#64748b;max-width:180px;word-break:break-word;">${planningEscape(item.catatan || '—')}</td>
+      ${!isDeputiUser ? `
+        <td style="white-space:nowrap;">
+          ${canEdit ? `
+            <button class="planning-button" type="button" onclick="openInisiatifEditor(${Number(item.id)})" style="padding:4px 9px;font-size:11px;" title="Edit data ini">
+              <i class="fa-solid fa-pen"></i> Edit
+            </button>
+            <button class="planning-delete" type="button" onclick="deleteInisiatifRow(${Number(item.id)})" style="padding:4px 7px;font-size:11px;margin-left:4px;" title="Hapus data ini">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          ` : '<span style="color:#94a3b8;font-size:11px;">Hanya baca</span>'}
+        </td>
+      ` : ''}
     </tr>`;
   }).join('');
 
@@ -7850,11 +7993,7 @@ function renderPlanningUnitPage(kind, user) {
     <div class="card" style="margin-bottom:16px;">
       <div class="card-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
         <span class="card-title"><i class="fa-solid fa-lightbulb" style="color:#eab308;margin-right:6px;"></i> Inisiatif AK / Dosen</span>
-        ${(user && (user.role === 'deputi' || user.role === 'kepala_lan')) ? `
-          <span class="badge" style="background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe;font-weight:700;font-size:11.5px;padding:6px 12px;border-radius:6px;">
-            <i class="fa-solid fa-eye" style="margin-right:4px;"></i> Mode Baca (Pimpinan)
-          </span>
-        ` : `
+        ${(user && (user.role === 'deputi' || user.role === 'kepala_lan')) ? '' : `
           <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
             <button class="planning-button" type="button" onclick="openImportScholarModal()" style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:#059669;color:#fff;border-radius:6px;border:none;font-weight:700;font-size:12px;cursor:pointer;" title="Tarik publikasi dosen/peneliti dari Google Scholar">
               <i class="fa-solid fa-graduation-cap"></i> Impor dari Google Scholar
@@ -7867,7 +8006,7 @@ function renderPlanningUnitPage(kind, user) {
       </div>
       <div class="card-body">
         <p style="margin:0 0 12px;color:#64748b;font-size:12px;">
-          Data publikasi dan riset inisiatif Analis Kebijakan (AK) dan Dosen se-LAN RI (total 700 publikasi dari 9 sheet unit kerja). Setiap unit dapat mengelola <strong>Judul, Jenis, Tahun, Cluster 1 &amp; 2, Tautan Publikasi</strong> (Jurnal, Media Online, Website LAN/Unit, Instagram, YouTube), serta <strong>Catatan</strong>.
+          Setiap unit dapat mengelola Judul, Jenis, Tahun, Cluster, Tautan Publikasi dan catatan
         </p>
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#f8fafc;padding:10px 14px;border-radius:8px;border:1px solid #e2e8f0;">
           ${isUnit ? `
@@ -7879,7 +8018,7 @@ function renderPlanningUnitPage(kind, user) {
             <div style="display:flex;align-items:center;gap:6px;">
               <label for="inisiatif-unit-filter" style="font-size:12px;font-weight:700;color:#334155;"><i class="fa-solid fa-building"></i> Filter Unit:</label>
               <select id="inisiatif-unit-filter" onchange="renderInisiatifAkDosenRows()" style="padding:7px 10px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;background:#fff;font-weight:700;color:#1e40af;">
-                <option value="">Semua Unit Kerja (700 Publikasi)</option>
+                <option value="">Semua Unit Kerja</option>
                 ${allUnitList.map(u => `<option value="${u}">${u}</option>`).join('')}
               </select>
             </div>
@@ -7906,22 +8045,22 @@ function renderPlanningUnitPage(kind, user) {
     <div class="card">
       <div class="card-header" style="display:flex;align-items:center;justify-content:space-between;">
         <span class="card-title">Daftar Publikasi Inisiatif AK/Dosen ${isUnit ? unitLabel : ''}</span>
-        <span id="inisiatif-count" class="planning-count">Memuat…</span>
+        <span id="inisiatif-count" class="planning-count"></span>
       </div>
       <div class="card-body">
         <div class="planning-table-wrap">
-          <table class="planning-table">
+          <table class="planning-table" style="width:100%;table-layout:fixed;">
             <thead>
               <tr>
                 <th style="width:45px;text-align:center;">No</th>
-                ${!isUnit ? '<th style="width:90px;">Unit</th>' : ''}
-                <th>Judul Kegiatan / Publikasi</th>
-                <th style="width:110px;">Jenis</th>
-                <th style="width:65px;text-align:center;">Tahun</th>
-                <th style="width:130px;">Cluster</th>
-                <th style="width:200px;">Link Publikasi</th>
-                <th style="width:140px;">Catatan</th>
-                <th style="width:110px;text-align:center;">${(user && (user.role === 'deputi' || user.role === 'kepala_lan')) ? 'Status Akses' : 'Aksi'}</th>
+                ${!isUnit ? '<th style="width:90px;white-space:nowrap;">Unit</th>' : ''}
+                <th style="width:320px;">Judul Kegiatan / Publikasi</th>
+                <th style="width:120px;white-space:nowrap;">Jenis</th>
+                <th style="width:70px;text-align:center;white-space:nowrap;">Tahun</th>
+                <th style="width:140px;">Cluster</th>
+                <th style="width:180px;white-space:nowrap;">Link Publikasi</th>
+                <th style="min-width:140px;">Catatan</th>
+                ${!(user && (user.role === 'deputi' || user.role === 'kepala_lan')) ? '<th style="width:95px;text-align:center;white-space:nowrap;">Aksi</th>' : ''}
               </tr>
             </thead>
             <tbody id="inisiatif-rows"></tbody>
