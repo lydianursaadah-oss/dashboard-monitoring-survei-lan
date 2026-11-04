@@ -9559,7 +9559,7 @@ const LEADERSHIP_MENUS = [
   { id: "dashboard", icon: "fa-chart-pie", label: "Dashboard Pimpinan", action: "openTab('dashboard')" },
   { id: "perlu_persetujuan", icon: "fa-clipboard-check", label: "Perlu Persetujuan", badge: true, action: "openTab('perlu_persetujuan')" },
   { id: "monitoring_kegiatan", icon: "fa-chart-line", label: "Monitoring Kegiatan", action: "openTab('monitoring_kegiatan')" },
-  { id: "inisiatif_ak_dosen", icon: "fa-lightbulb", label: "Inisiatif AK/Dosen", action: "openTab('inisiatif_ak_dosen')" },
+  { id: "inisiatif_ak_dosen", icon: "fa-lightbulb", label: "Publikasi AK/Dosen", action: "openTab('inisiatif_ak_dosen')" },
   { id: "pengumuman", icon: "fa-bullhorn", label: "Pengumuman", badge: true, action: "openTab('pengumuman')" },
   { id: "profil_akun", icon: "fa-user-shield", label: "Profil/Akun", action: "openTab('profil_akun')" },
   { id: "logout", icon: "fa-right-from-bracket", label: "Logout", action: "handleUserLogout()" }
@@ -9569,7 +9569,7 @@ const DEPUTI_MENUS = [
   { id: "dashboard", icon: "fa-chart-pie", label: "Dashboard Pimpinan", action: "openTab('dashboard')" },
   { id: "perlu_persetujuan", icon: "fa-clipboard-check", label: "Perlu Persetujuan", badge: true, action: "openTab('perlu_persetujuan')" },
   { id: "monitoring_kegiatan", icon: "fa-chart-line", label: "Monitoring Kegiatan", action: "openTab('monitoring_kegiatan')" },
-  { id: "inisiatif_ak_dosen", icon: "fa-lightbulb", label: "Inisiatif AK/Dosen", action: "openTab('inisiatif_ak_dosen')" },
+  { id: "inisiatif_ak_dosen", icon: "fa-lightbulb", label: "Publikasi AK/Dosen", action: "openTab('inisiatif_ak_dosen')" },
   { id: "pengumuman", icon: "fa-bullhorn", label: "Pengumuman", badge: true, action: "openTab('pengumuman')" },
   { id: "profil_akun", icon: "fa-user-shield", label: "Profil/Akun", action: "openTab('profil_akun')" },
   { id: "logout", icon: "fa-right-from-bracket", label: "Logout", action: "handleUserLogout()" }
@@ -9586,7 +9586,7 @@ const ROLE_CONFIGS = {
       { id: "pengumuman", icon: "fa-bullhorn", label: "Pengumuman", badge: true, action: "openTab('pengumuman')" },
       { section: "PERENCANAAN" },
       { id: "agenda_tahunan", icon: "fa-calendar-days", label: "Agenda Analisis/Survei", action: "openTab('agenda_tahunan')" },
-      { id: "inisiatif_ak_dosen", icon: "fa-lightbulb", label: "Inisiatif AK/Dosen", action: "openTab('inisiatif_ak_dosen')" },
+      { id: "inisiatif_ak_dosen", icon: "fa-lightbulb", label: "Publikasi AK/Dosen", action: "openTab('inisiatif_ak_dosen')" },
       { section: "KEGIATAN" },
       { id: "pengajuan_kegiatan", icon: "fa-file-circle-plus", label: "Pengajuan Kegiatan", action: "openTab('pengajuan_kegiatan')" },
       { id: "perbaikan_catatan", icon: "fa-clipboard-check", label: "Revisi Usulan", badge: true, action: "openTab('perbaikan_catatan')" },
@@ -9614,7 +9614,7 @@ const ROLE_CONFIGS = {
       { id: "data_publikasi_awal", icon: "fa-newspaper", label: "Data Publikasi Awal", action: "openTab('data_publikasi_awal')" },
       { id: "data_publikasi_akhir", icon: "fa-file-lines", label: "Data Publikasi Akhir", action: "openTab('data_publikasi_akhir')" },
       { id: "kalender_publikasi", icon: "fa-calendar-days", label: "Kalender Publikasi", action: "openTab('kalender_publikasi')" },
-      { id: "inisiatif_ak_dosen", icon: "fa-lightbulb", label: "Inisiatif AK/Dosen", action: "openTab('inisiatif_ak_dosen')" },
+      { id: "inisiatif_ak_dosen", icon: "fa-lightbulb", label: "Publikasi AK/Dosen", action: "openTab('inisiatif_ak_dosen')" },
       { section: "SISTEM" },
       { id: "master_data", icon: "fa-database", label: "Master Data & Cluster", action: "openTab('master_data')" }
     ],
@@ -13178,6 +13178,9 @@ function renderPrismoPersetujuanPimpinanAdmin() {
 /* ── Renderer View: Perlu Persetujuan Terpadu (Revisi #1, #6, #8, #9, #10: Kepala LAN & Deputi Setara) ── */
 function renderPrismoKeputusanPimpinan(user, pimpinanRole) {
   const roleLabel = (user && user.role === 'kepala_lan') ? 'Kepala LAN RI' : 'Deputi';
+  const reviewActionHeader = user && (user.role === 'deputi' || user.role === 'kepala_lan')
+    ? 'Action'
+    : 'Tombol Review/ACC';
   const allProposals = getPrismoProposals();
   // Revisi #6 & #10: Kepala LAN dan Deputi memiliki akses penuh melihat & menyetujui seluruh jenis persetujuan
   const list = allProposals.filter(p =>
@@ -13266,7 +13269,7 @@ function renderPrismoKeputusanPimpinan(user, pimpinanRole) {
             <th style="padding:10px 12px;font-size:11px;font-weight:700;color:#64748b;width:120px;">Tanggal Pengajuan</th>
             <th style="padding:10px 12px;font-size:11px;font-weight:700;color:#64748b;width:90px;">Prioritas</th>
             <th style="padding:10px 12px;font-size:11px;font-weight:700;color:#64748b;width:160px;">Status</th>
-            <th style="padding:10px 12px;font-size:11px;font-weight:700;color:#64748b;text-align:right;width:180px;">Tombol Review/ACC</th>
+            <th style="padding:10px 12px;font-size:11px;font-weight:700;color:#64748b;text-align:right;width:180px;">${reviewActionHeader}</th>
           </tr>
         </thead>
         <tbody>
