@@ -9561,7 +9561,6 @@ const LEADERSHIP_MENUS = [
   { id: "perlu_persetujuan", icon: "fa-clipboard-check", label: "Perlu Persetujuan", badge: true, action: "openTab('perlu_persetujuan')" },
   { id: "monitoring_kegiatan", icon: "fa-chart-line", label: "Monitoring Kegiatan", action: "openTab('monitoring_kegiatan')" },
   { id: "inisiatif_ak_dosen", icon: "fa-lightbulb", label: "Inisiatif AK/Dosen", action: "openTab('inisiatif_ak_dosen')" },
-  { id: "kegiatan_terlambat", icon: "fa-triangle-exclamation", label: "Kegiatan Terlambat", action: "openTab('kegiatan_terlambat')" },
   { id: "pengumuman", icon: "fa-bullhorn", label: "Pengumuman", badge: true, action: "openTab('pengumuman')" },
   { id: "profil_akun", icon: "fa-user-shield", label: "Profil/Akun", action: "openTab('profil_akun')" },
   { id: "logout", icon: "fa-right-from-bracket", label: "Logout", action: "handleUserLogout()" }
@@ -16523,7 +16522,7 @@ function openDeputiPortal(targetTab) {
       : 'PRISMO: Publication Review, Insights & Strategic Monitoring LAN RI';
   }
   if(btnAcc) {
-    btnAcc.style.display = unitLocked ? 'none' : '';
+    btnAcc.style.display = unitLocked || String(user?.role || '').toLowerCase() === 'kepala_lan' ? 'none' : '';
     btnAcc.onclick = function() {
       if (hasExecutiveAccess(user && user.role)) {
         openTab('perlu_persetujuan');
