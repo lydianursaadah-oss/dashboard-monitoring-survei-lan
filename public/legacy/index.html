@@ -6116,10 +6116,9 @@ function populateDropdowns(){
   if(navUnit){
     navUnit.innerHTML = `<option value="">Semua Unit Kerja</option>`;
     units.forEach(u=>{
-      const cnt = RAW.filter(d => getAllUnits(d.unit).includes(u)).length;
       const opt = document.createElement('option');
       opt.value = u;
-      opt.textContent = `${u} (${cnt})`;
+      opt.textContent = u;
       navUnit.appendChild(opt);
     });
   }
