@@ -372,6 +372,8 @@ function handleUsernameInput(val) {
       font-size: 12px; cursor: pointer; transition: all .18s; font-family: inherit;
     }
     .filter-reset:hover { color: var(--text1); border-color: var(--accent); background: var(--accent-bg); }
+    .filter-actions { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+    .filter-actions .filter-reset { margin-left: 0; }
 
     /* ═══════════════════ KPI CARDS (4 CARDS ONLY) ═══════════════════ */
     .kpi-grid {
@@ -852,6 +854,8 @@ function handleUsernameInput(val) {
       .filter-bar select, .filter-bar input { font-size: 11px; padding: 5px 8px; width: 100%; }
       .filter-divider { display: none; }
       .filter-reset { margin-left: 0; width: 100%; text-align: center; }
+      .filter-actions { margin-left: 0; width: 100%; }
+      .filter-actions .filter-reset { flex: 1; }
 
       /* KPI grid — 2 col on mobile */
       .kpi-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
@@ -2289,8 +2293,10 @@ window.addEventListener('focus', () => {
           <option value="tahap:Publikasi">Tahap 6: Publikasi</option>
         </optgroup>
       </select>
-      <button class="filter-reset" onclick="resetFilters()"><i class="fa-solid fa-rotate-left"></i> Reset</button>
-      <button class="filter-reset" onclick="exportPrismoOverdueReportCSV()" style="background:#fef2f2;color:#b91c1c;border-color:#fecaca;font-weight:700" title="Ekspor Laporan Kegiatan Terlambat"><i class="fa-solid fa-file-csv"></i> Ekspor Terlambat</button>
+      <div class="filter-actions">
+        <button class="filter-reset" onclick="resetFilters()"><i class="fa-solid fa-rotate-left"></i> Reset</button>
+        <button class="filter-reset" onclick="exportPrismoOverdueReportPDF()" style="background:#fef2f2;color:#b91c1c;border-color:#fecaca;font-weight:700" title="Ekspor Laporan Kegiatan Terlambat sebagai PDF"><i class="fa-solid fa-file-pdf"></i> Ekspor Terlambat</button>
+      </div>
     </div>
 
     <!-- KPI Cards -->
@@ -2306,7 +2312,6 @@ window.addEventListener('focus', () => {
             <i class="fa-solid fa-bell-exclamation fa-shake" style="color:#dc2626;margin-right:6px"></i>
             Reminder Publikasi Melewati Jadwal (Perlu Tindak Lanjut)
           </span>
-          <span class="badge badge-red" id="reminder-overdue-count">0 Terlambat</span>
         </div>
         <div class="card-body" style="padding:14px;max-height:280px;overflow-y:auto" id="reminder-overdue-list"></div>
       </div>
@@ -2586,7 +2591,7 @@ window.addEventListener('focus', () => {
         </select>
       </div>
       <button class="filter-reset" onclick="resetTableFilters()"><i class="fa-solid fa-rotate-left"></i> Reset</button>
-      <button class="filter-reset" onclick="exportPrismoOverdueReportCSV()" style="background:#fef2f2;color:#b91c1c;border-color:#fecaca;font-weight:700" title="Ekspor Laporan Kegiatan Terlambat"><i class="fa-solid fa-file-csv"></i> Ekspor Terlambat</button>
+      <button class="filter-reset" onclick="exportPrismoOverdueReportPDF()" style="background:#fef2f2;color:#b91c1c;border-color:#fecaca;font-weight:700" title="Ekspor Laporan Kegiatan Terlambat sebagai PDF"><i class="fa-solid fa-file-pdf"></i> Ekspor Terlambat</button>
       <span style="margin-left:auto;font-size:11px;color:var(--text3)" id="table-count-label">— records</span>
     </div>
     <div class="card">
@@ -5917,6 +5922,7 @@ function renderScheduleStatusBadges(d) {
 
 function renderOverdueReminderBanner(dataList, containerId, contextLabel) {
   const el = document.getElementById(containerId);
+  const exportFn = containerId === 'public-table-overdue-reminder' ? 'exportPrismoOverdueReportPDF' : 'exportPrismoOverdueReportCSV';
   if (!el) return;
   const items = (dataList || []).filter(d => isOverdue(d));
   const approaching = (dataList || []).filter(d => getPrismoScheduleInfo(d).isApproachingDeadline);
@@ -5945,8 +5951,8 @@ function renderOverdueReminderBanner(dataList, containerId, contextLabel) {
           ` : ''}
         </div>
         <div style="display:flex;gap:8px;align-items:center;">
-          <button type="button" onclick="exportPrismoOverdueReportCSV()" style="padding:5px 11px;background:#fff;color:#dc2626;border:1px solid #fca5a5;border-radius:6px;font-size:11.5px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:5px;">
-            <i class="fa-solid fa-file-csv"></i> Ekspor Laporan Terlambat
+          <button type="button" onclick="${exportFn}()" style="padding:5px 11px;background:#fff;color:#dc2626;border:1px solid #fca5a5;border-radius:6px;font-size:11.5px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:5px;">
+            <i class="fa-solid ${exportFn === 'exportPrismoOverdueReportPDF' ? 'fa-file-pdf' : 'fa-file-csv'}"></i> Ekspor ${exportFn === 'exportPrismoOverdueReportPDF' ? 'PDF' : 'Laporan Terlambat'}
           </button>
         </div>
       </div>
@@ -6028,6 +6034,36 @@ function exportPrismoOverdueReportCSV() {
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
   recordInternalAuditLog('EXPORT_OVERDUE_REPORT', 'publikasi', { count: overdueList.length });
+}
+
+function exportPrismoOverdueReportPDF() {
+  const curr = (typeof getCurrentUser === 'function') ? getCurrentUser() : null;
+  const overdueList = RAW.filter(d => canAccessUnitData(curr, d.unit)).filter(d => {
+    const info = getPrismoScheduleInfo(d);
+    return info.isOverdue || info.isApproachingDeadline || info.isAtRisk;
+  });
+  if (!overdueList.length) {
+    alert('Tidak ada kegiatan terlambat atau mendekati deadline untuk diekspor saat ini.');
+    return;
+  }
+
+  const reportWindow = window.open('', '_blank');
+  if (!reportWindow) {
+    alert('Popup diblokir browser. Izinkan popup untuk menyimpan laporan PDF.');
+    return;
+  }
+  const rows = overdueList.map((d, i) => {
+    const info = getPrismoScheduleInfo(d);
+    const status = info.isOverdue ? `Terlambat (${info.daysOverdue} hari)` : (info.isApproachingDeadline ? `Mendekati deadline (H-${info.daysRemaining})` : 'Berisiko');
+    return `<tr><td>${i + 1}</td><td>${escapeHtml(info.unit)}</td><td>${escapeHtml(d.judul || '-')}</td><td>${escapeHtml(resolveClusterName(d.cluster) || '-')}</td><td>${escapeHtml(status)}</td><td>${escapeHtml(info.targetLabel)}</td><td>${escapeHtml(info.stage.name)}</td><td>${escapeHtml(info.pic)}</td><td>${escapeHtml(info.alasan || d.ket || '-')}</td></tr>`;
+  }).join('');
+  const date = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
+  reportWindow.document.open();
+  reportWindow.document.write(`<!doctype html><html lang="id"><head><meta charset="utf-8"><title>Laporan Kegiatan Terlambat PRISMO</title><style>
+    @page{size:A4 landscape;margin:14mm}body{font:12px Arial,sans-serif;color:#172033}h1{font-size:20px;margin:0 0 6px;color:#173ea5}p{margin:0 0 16px;color:#52627a}table{width:100%;border-collapse:collapse}th,td{border:1px solid #d8e0eb;padding:7px;text-align:left;vertical-align:top}th{background:#eef3fb;color:#1e3a70;font-size:10px;text-transform:uppercase}tr:nth-child(even){background:#f8fafc}td:first-child{width:28px;text-align:center}footer{margin-top:12px;color:#64748b;font-size:10px}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}
+  </style></head><body><h1>PRISMO — Laporan Kegiatan Terlambat</h1><p>Dicetak ${date} · ${overdueList.length} kegiatan</p><table><thead><tr><th>No</th><th>Unit Kerja</th><th>Judul Kegiatan</th><th>Cluster</th><th>Status Jadwal</th><th>Target</th><th>Tahapan</th><th>PIC</th><th>Alasan / Progres</th></tr></thead><tbody>${rows}</tbody></table><footer>PRISMO — Monitoring Publikasi LAN RI</footer><script>window.onload=()=>setTimeout(()=>window.print(),250);window.onafterprint=()=>window.close();${'</scr' + 'ipt>'}</body></html>`);
+  reportWindow.document.close();
+  recordInternalAuditLog('EXPORT_OVERDUE_REPORT_PDF', 'publikasi', { count: overdueList.length });
 }
 
 function renderPublicPriorityActionStrip(dataList) {
@@ -6448,11 +6484,6 @@ function renderReminderAndPerformance(data) {
   const overdueItems = data.filter(d => isOverdue(d));
   const approachingItems = data.filter(d => getPrismoScheduleInfo(d).isApproachingDeadline);
   const reminderList = document.getElementById('reminder-overdue-list');
-  const countBadge = document.getElementById('reminder-overdue-count');
-  if(countBadge) {
-    countBadge.textContent = overdueItems.length + ' Terlambat' + (approachingItems.length ? ` · ${approachingItems.length} H-14` : '');
-  }
-
   if(reminderList) {
     if(!overdueItems.length && !approachingItems.length) {
       reminderList.innerHTML = '<div style="padding:24px;text-align:center;color:#16a34a;font-size:12.5px;font-weight:600"><i class="fa-solid fa-circle-check" style="font-size:24px;display:block;margin-bottom:6px"></i>Seluruh publikasi saat ini tepat waktu sesuai jadwal!</div>';
@@ -6463,7 +6494,7 @@ function renderReminderAndPerformance(data) {
         const uc = UNIT_COLORS[getPrimaryUnit(d.unit)] || UNIT_COLORS['MULTI'];
         const idx = RAW.findIndex(x => x.no === d.no);
         return `
-          <div style="padding:11px 13px;border-radius:10px;border:1.5px solid ${info.isOverdue ? '#fecaca' : '#fde68a'};background:${info.isOverdue ? '#fff5f5' : '#fffbeb'};margin-bottom:8px;cursor:pointer;transition:all .18s" onclick="openModal(${idx})">
+          <div style="padding:12px 14px;border-radius:10px;border:1px solid #e2e8f0;background:#fff;margin-bottom:8px;cursor:pointer;transition:all .18s" onclick="openModal(${idx})">
             <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap">
               <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
                 <span class="badge" style="background:${uc.bg};color:${uc.text};font-weight:700">${escapeHtml(d.unit)}</span>
@@ -6475,10 +6506,6 @@ function renderReminderAndPerformance(data) {
               <span style="font-size:11px;font-weight:700;color:${info.isOverdue ? '#b91c1c' : '#b45309'}"><i class="fa-solid fa-calendar-day"></i> Target: ${escapeHtml(info.targetLabel)}</span>
             </div>
             <div style="font-size:12.5px;font-weight:700;color:#1e293b;margin:5px 0">${escapeHtml(d.judul)}</div>
-            <div style="font-size:11px;color:#475569;margin-bottom:6px;">
-              <strong>PIC:</strong> ${escapeHtml(info.pic)}
-              ${info.alasan ? ` &bull; <strong>Keterangan/Alasan:</strong> ${escapeHtml(info.alasan.slice(0, 90))}` : ''}
-            </div>
             <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;flex-wrap:wrap;gap:6px">
               <div style="display:flex;align-items:center;gap:6px">
                 <span style="font-size:11px;color:#64748b;font-weight:600">Tahapan berjalan:</span>
