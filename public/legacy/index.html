@@ -10203,6 +10203,8 @@ function removeUnitSwitchersForUnitUser(user) {
 function initPortalDropdowns() {
   const user = getCurrentUser();
   const unitLocked = isUnitUser(user);
+  const role = String(user?.role || '').toLowerCase();
+  const useFocusUnitOnly = ['deputi', 'kepala_lan', 'admin_dspk2an'].includes(role);
   const units = [...new Set(RAW.flatMap(d=>getAllUnits(d.unit)))].filter(u => u && !u.includes(',') && !u.includes('|') && u !== 'MULTI' && u !== 'Unknown').sort();
 
   const uSelect = document.getElementById('p-unit');
@@ -10218,8 +10220,8 @@ function initPortalDropdowns() {
     if(unitLocked && user.unit) {
       uSelect.value = user.unit;
     }
-    uSelect.style.display = '';
-    if(uDivider) uDivider.style.display = '';
+    uSelect.style.display = useFocusUnitOnly ? 'none' : '';
+    if(uDivider) uDivider.style.display = useFocusUnitOnly ? 'none' : '';
     if(allUnitsCard) allUnitsCard.style.display = unitLocked ? 'none' : '';
   }
 
@@ -16530,7 +16532,8 @@ function openDeputiPortal(targetTab) {
       : 'PRISMO: Publication Review, Insights & Strategic Monitoring LAN RI';
   }
   if(btnAcc) {
-    btnAcc.style.display = unitLocked || String(user?.role || '').toLowerCase() === 'kepala_lan' ? 'none' : '';
+    const role = String(user?.role || '').toLowerCase();
+    btnAcc.style.display = unitLocked || ['kepala_lan', 'deputi', 'admin_dspk2an'].includes(role) ? 'none' : '';
     btnAcc.onclick = function() {
       if (hasExecutiveAccess(user && user.role)) {
         openTab('perlu_persetujuan');
