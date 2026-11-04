@@ -17406,8 +17406,6 @@ renderTable();
 
 // Initial check: Auto-restore portal jika user sedang aktif bekerja di portal saat refresh
 (function initLandingState(){
-  hideLandingLogin();
-
   const currentUser = getCurrentUser();
   const sessionActive = sessionStorage.getItem('lan_portal_session_active') === 'true';
   const savedTab = sessionStorage.getItem('lan_portal_active_tab');
@@ -17423,6 +17421,8 @@ renderTable();
     if (typeof syncPrismoAnnouncementsFromSupabase === 'function') syncPrismoAnnouncementsFromSupabase();
     return;
   }
+
+  hideLandingLogin();
 
   const view = document.getElementById('deputi-portal-view');
   if (view) {
