@@ -7390,7 +7390,7 @@ function resolveInisiatifJenis(item) {
   const raw = item.jenis || item.jenis_publikasi || item.jenisPublikasi || '';
   const clean = String(raw).trim();
   if (clean && clean !== '-' && clean !== '—') {
-    return `<span class="badge" style="background:#f8fafc;border:1px solid #e2e8f0;color:#334155;font-weight:600;white-space:nowrap;">${planningEscape(clean)}</span>`;
+    return `<span class="badge" style="display:inline-block;box-sizing:border-box;max-width:100%;background:#f8fafc;border:1px solid #e2e8f0;color:#334155;font-weight:600;white-space:normal;overflow-wrap:anywhere;line-height:1.35;vertical-align:top;">${planningEscape(clean)}</span>`;
   }
   return '—';
 }
@@ -7626,7 +7626,7 @@ function filterInisiatifTable(page = 1) {
       <td style="max-width:320px;word-break:break-word;">
         <div style="font-weight:700;color:#1e293b;line-height:1.4;">${planningEscape(item.judul)}</div>
       </td>
-      <td style="white-space:nowrap;">${jenisBadge}</td>
+      <td style="width:120px;min-width:0;white-space:normal;overflow-wrap:anywhere;">${jenisBadge}</td>
       <td style="font-weight:700;color:#475569;text-align:center;white-space:nowrap;">${displayYear}</td>
       <td style="font-size:11.5px;color:#475569;word-break:break-word;">${clusterText}</td>
       <td style="white-space:nowrap;width:180px;">${initiativeLinksHtml(item)}</td>
