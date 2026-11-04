@@ -2267,8 +2267,8 @@ window.addEventListener('focus', () => {
           <option value="2028">Tahun 2028</option>
         </select>
       </div>
-      <div class="filter-divider"></div>
-      <select id="f-unit" onchange="applyFilters()"><option value="">Semua Unit</option></select>
+      <div class="filter-divider" style="display:none"></div>
+      <select id="f-unit" onchange="applyFilters()" style="display:none"><option value="">Semua Unit</option></select>
       <div class="filter-divider"></div>
       <select id="f-cluster" onchange="applyFilters()"><option value="">Semua Cluster</option></select>
       <div class="filter-divider"></div>
@@ -6090,6 +6090,8 @@ function applyFilters(){
   if (typeof renderRoadmap === 'function') renderRoadmap(filteredData, year || activeRoadmapYear);
 }
 function resetFilters(){
+  const navUnit = document.getElementById('nav-unit-select');
+  if (navUnit) navUnit.value='';
   ['f-year','f-unit','f-cluster','f-status'].forEach(id=>document.getElementById(id).value='');
   filteredData=[...RAW]; renderKPIs(); renderCharts(); renderReminderAndPerformance(filteredData);
   if (typeof renderRoadmap === 'function') renderRoadmap(filteredData, activeRoadmapYear);
