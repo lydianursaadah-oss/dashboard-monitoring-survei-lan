@@ -9176,7 +9176,7 @@ function getPrismoAnnouncements() {
     const raw = localStorage.getItem('prismo_announcements_v1');
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) {
+      if (Array.isArray(parsed)) {
         return parsed.map(item => ({
           ...item,
           desc: String(item.desc || '').replace(/Kepala Deputi/g, 'Deputi'),
@@ -9263,8 +9263,16 @@ async function syncPrismoAnnouncementsFromSupabase() {
       console.log(`[PRISMO SUPABASE] Sinkronisasi ${normalized.length} pengumuman dari server berhasil.`);
       return normalized;
     } else if (Array.isArray(rows) && rows.length === 0) {
-      console.log('[PRISMO SUPABASE] Tabel pengumuman kosong, mengunggah template awal...');
-      await pushPrismoAnnouncementsToSupabase(DEFAULT_PRISMO_PENGUMUMAN);
+      savePrismoAnnouncements([]);
+      const curr = getCurrentUser();
+      renderSindisaPengumuman();
+      renderNewAnnouncementNotifBanner(curr);
+      if (typeof updatePortalBadges === 'function') updatePortalBadges();
+      if (typeof renderPublicPriorityActionStrip === 'function') {
+        try { renderPublicPriorityActionStrip(); } catch (e) {}
+      }
+      console.log('[PRISMO SUPABASE] Tidak ada pengumuman tersimpan.');
+      return [];
     }
   } catch (err) {
     console.warn('[PRISMO ANNOUNCEMENTS SYNC ERROR]', err);
@@ -9401,7 +9409,6 @@ const ROLE_CONFIGS = {
       { id: "pengajuan_kegiatan", icon: "fa-file-circle-plus", label: "Pengajuan Kegiatan", action: "openTab('pengajuan_kegiatan')" },
       { id: "perbaikan_catatan", icon: "fa-clipboard-check", label: "Revisi Usulan", badge: true, action: "openTab('perbaikan_catatan')" },
       { id: "progress_kegiatan", icon: "fa-bars-progress", label: "Update Progress", action: "openTab('progress_kegiatan')" },
-      { id: "laporan_bukti", icon: "fa-file-circle-check", label: "Laporan & Bukti", action: "openTab('laporan_bukti')" },
       { section: "PUBLIKASI" },
       { id: "publikasi_awal", icon: "fa-newspaper", label: "Publikasi Awal", action: "openTab('publikasi_awal')" },
       { id: "publikasi_akhir", icon: "fa-file-lines", label: "Publikasi Akhir", action: "openTab('publikasi_akhir')" }
@@ -16503,6 +16510,7 @@ function renderSindisaPengumuman() {
   if(!container) return;
   const user = getCurrentUser();
   const canManage = canUserManageAnnouncements(user);
+  const canDelete = String(user?.role || '').toLowerCase() === 'admin_dspk2an';
 
   const btnAdd = document.getElementById('btn-tambah-memo') || document.getElementById('btn-create-pengumuman-panel');
   if (btnAdd) btnAdd.style.display = canManage ? 'inline-flex' : 'none';
@@ -16553,10 +16561,53 @@ function renderSindisaPengumuman() {
               <i class="fa-solid fa-pen-to-square"></i> Edit
             </button>
           ` : ''}
+          ${canDelete ? `
+            <button type="button" onclick="deletePrismoAnnouncement(${Number(p.id)})" aria-label="Hapus pengumuman" title="Hapus pengumuman" style="width:31px;height:31px;display:inline-flex;align-items:center;justify-content:center;border:1px solid #fecaca;border-radius:6px;background:#fef2f2;color:#dc2626;font-size:12px;cursor:pointer;">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          ` : ''}
         </div>
       </div>
     `;
   }).join('');
+}
+
+async function deletePrismoAnnouncement(id) {
+  const user = getCurrentUser();
+  if (String(user?.role || '').toLowerCase() !== 'admin_dspk2an') {
+    alert('Hanya Admin DSPK2AN yang dapat menghapus pengumuman.');
+    return;
+  }
+
+  const list = getPrismoAnnouncements();
+  const item = list.find(p => String(p.id) === String(id));
+  if (!item) return;
+  if (!confirm(`Hapus pengumuman "${item.title}" dari database? Tindakan ini tidak dapat dibatalkan.`)) return;
+
+  try {
+    const response = await fetch(`/api/prismo-announcements/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+      headers: { 'x-prismo-role': String(user.role) }
+    });
+    if (!response.ok) {
+      const result = await response.json().catch(() => ({}));
+      throw new Error(result.statusMessage || 'Gagal menghapus pengumuman dari database.');
+    }
+
+    savePrismoAnnouncements(list.filter(p => String(p.id) !== String(id)));
+    renderSindisaPengumuman();
+    renderNewAnnouncementNotifBanner(user);
+    if (typeof updatePortalBadges === 'function') updatePortalBadges();
+    if (typeof renderPublicPriorityActionStrip === 'function') {
+      try { renderPublicPriorityActionStrip(); } catch (e) {}
+    }
+    if (typeof showNotificationToast === 'function') {
+      showNotificationToast('Pengumuman berhasil dihapus dari database.', 'success');
+    }
+  } catch (error) {
+    console.error('[PRISMO ANNOUNCEMENT DELETE ERROR]', error);
+    alert(error.message || 'Gagal menghapus pengumuman. Data lokal tidak diubah.');
+  }
 }
 
 function onPrismoAnnTargetChange() {

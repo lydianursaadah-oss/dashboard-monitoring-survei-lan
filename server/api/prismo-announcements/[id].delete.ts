@@ -3,6 +3,11 @@ import { getDb } from '../../db'
 import { prismoAnnouncements } from '../../db/schema'
 
 export default defineEventHandler(async (event) => {
+  const role = String(getHeader(event, 'x-prismo-role') || '').toLowerCase()
+  if (role !== 'admin_dspk2an') {
+    throw createError({ statusCode: 403, statusMessage: 'Hanya Admin DSPK2AN yang dapat menghapus pengumuman.' })
+  }
+
   const idParam = getRouterParam(event, 'id')
   const numId = Number(idParam)
   if (!numId) {
