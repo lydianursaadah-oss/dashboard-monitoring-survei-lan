@@ -13098,12 +13098,18 @@ function filterPrismoAdminTable() {
   const q = (document.getElementById('prismo-admin-search')?.value || '').toLowerCase();
   const st = document.getElementById('prismo-admin-status-filter')?.value || 'perlu_tindakan';
   const rows = document.querySelectorAll('#prismo-admin-table tbody tr');
+  let visibleRowNumber = 0;
   rows.forEach(tr => {
     const text = tr.innerText.toLowerCase();
     const matchQ = !q || text.includes(q);
     const rowStatus = tr.dataset.status || '';
     const matchSt = st === 'semua' || (st === 'perlu_tindakan' ? ['diajukan', 'perlu_perbaikan'].includes(rowStatus) : rowStatus === st);
-    tr.style.display = (matchQ && matchSt) ? '' : 'none';
+    const isVisible = matchQ && matchSt;
+    tr.style.display = isVisible ? '' : 'none';
+    if (isVisible) {
+      visibleRowNumber++;
+      if (tr.cells[0]) tr.cells[0].textContent = visibleRowNumber;
+    }
   });
 }
 
