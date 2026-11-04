@@ -131,3 +131,24 @@ export const prismoAnnouncements = pgTable('prismo_announcements', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
 })
 
+
+export const prismoPublicationCalendar = pgTable('prismo_publication_calendar', {
+  id: text('id').primaryKey(),
+  sourceType: text('source_type').default('raw'),
+  sourceId: text('source_id').notNull(),
+  judul: text('judul').notNull(),
+  unit: text('unit').notNull(),
+  cluster: text('cluster').default(''),
+  pic: text('pic').default(''),
+  bentukNaskah: text('bentuk_naskah').default('Laporan Lengkap & Policy Brief'),
+  dokumenUrl: text('dokumen_url').default(''),
+  publishDate: text('publish_date').default(''),
+  channels: jsonb('channels').$type<string[]>().default([]),
+  channelLinks: jsonb('channel_links').$type<Record<string, string>>().default({}),
+  statusTayang: text('status_tayang').default('terjadwal'),
+  catatanHumas: text('catatan_humas').default(''),
+  updatedBy: text('updated_by').default('Humas LAN RI'),
+  updatedRole: text('updated_role').default('humas'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+})
