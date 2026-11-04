@@ -13462,37 +13462,25 @@ function renderDynamicRoleTab(tabName, user) {
       break;
 
     case 'review_publikasi_awal':
-    case 'review_publikasi_akhir':
     case 'review_substansi':
     case 'review_desain':
-      headerHtml = `
-        <div style="margin-bottom:20px;">
-          <h3 style="font-size:18px;font-weight:800;color:#1e293b;margin-bottom:4px;">
-            <i class="fa-solid fa-glasses" style="color:#7c3aed;margin-right:8px;"></i> Review Substansi, Redaksi &amp; Desain
-          </h3>
-          <p style="font-size:12.5px;color:#64748b;">Pengecekan kualitas naskah, kesesuaian template, dan standar publikasi LAN RI</p>
-        </div>
-      `;
-      bodyHtml = renderWorkflowTable(RAW, 'review');
-      break;
+      container.innerHTML = renderAdminReviewPublikasiAwal(user);
+      filterAdminReviewPubAwalTable();
+      if (typeof updatePortalBadges === 'function') updatePortalBadges();
+      return;
+
+    case 'review_publikasi_akhir':
+      container.innerHTML = renderAdminReviewPublikasiAkhir(user);
+      filterAdminReviewPubAkhirTable();
+      if (typeof updatePortalBadges === 'function') updatePortalBadges();
+      return;
 
     case 'kalender_publikasi':
     case 'kalender_media':
-      headerHtml = `
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
-          <div>
-            <h3 style="font-size:18px;font-weight:800;color:#1e293b;margin-bottom:4px;">
-              <i class="fa-solid fa-calendar-days" style="color:#2563eb;margin-right:8px;"></i> Kalender &amp; Roadmap Publikasi 2026
-            </h3>
-            <p style="font-size:12.5px;color:#64748b;">Jadwal tayang rilis hasil riset dan publikasi survei per bulan</p>
-          </div>
-          <button onclick="navigateToJadwalRilis2026()" style="padding:8px 16px;background:#eff6ff;color:#1e40af;border:1.5px solid #bfdbfe;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">
-            <i class="fa-solid fa-timeline"></i> Buka Roadmap Interaktif
-          </button>
-        </div>
-      `;
-      bodyHtml = renderWorkflowTable(RAW, 'kalender');
-      break;
+      container.innerHTML = renderAdminKalenderPublikasi(user);
+      initAdminKalenderPublikasi();
+      if (typeof updatePortalBadges === 'function') updatePortalBadges();
+      return;
 
     case 'manajemen_kanal':
       headerHtml = `
@@ -13550,6 +13538,838 @@ function renderDynamicRoleTab(tabName, user) {
 
   container.innerHTML = headerHtml + bodyHtml;
 }
+
+/* ══════════════════════════════════════════════════════════════════
+   REVISI MENU PUBLIKASI ADMIN DSPK2AN:
+   1. REVIEW PUBLIKASI AWAL (Infografis, Draft Siaran Pers & Teaser Medsos)
+   2. REVIEW PUBLIKASI AKHIR (Naskah Laporan Lengkap, Policy Brief & Executive Summary)
+   3. KALENDER PUBLIKASI (Editorial Calendar & Linimasa Rilis Per Bulan 2026)
+   ══════════════════════════════════════════════════════════════════ */
+
+/* ── 1. REVIEW PUBLIKASI AWAL ── */
+function renderAdminReviewPublikasiAwal(user) {
+  const allProposals = getPrismoProposals();
+  const pubAwalProposals = allProposals.filter(p =>
+    isPrismoPublicationProposal(p) && String(p.jenis_persetujuan || '').toLowerCase().includes('awal')
+  );
+
+  // Dapatkan juga kegiatan dari RAW yang sudah tahap publikasi awal / memiliki materi rilis pembuka
+  const rawPubAwal = RAW.filter(d => {
+    const k = ((d.ket || '') + ' ' + (d.tahapan || '')).toLowerCase();
+    const hasMediaLink = [d.webLAN, d.webUnit, d.igLAN, d.igUnit, d.ytLAN, d.ytUnit, d.media].some(hasLink);
+    return hasMediaLink || k.includes('infografis') || k.includes('publikasi') || k.includes('podcast') || k.includes('webinar');
+  });
+
+  const totalItems = pubAwalProposals.length + rawPubAwal.length;
+  const needActionCnt = pubAwalProposals.filter(p => ['diajukan', 'perlu_perbaikan'].includes(p.status)).length;
+  const approvedCnt = pubAwalProposals.filter(p => ['disetujui', 'disetujui_catatan'].includes(p.status)).length + rawPubAwal.filter(d => getStatus(d) === 'selesai').length;
+  const revisiCnt = pubAwalProposals.filter(p => p.status === 'perlu_perbaikan').length;
+
+  return `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+      <div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
+          <h3 style="font-size:19px;font-weight:800;color:#1e293b;margin:0;">
+            <i class="fa-solid fa-magnifying-glass-chart" style="color:#0284c7;margin-right:8px;"></i> Review Publikasi Awal
+          </h3>
+          <span class="badge" style="background:#e0f2fe;color:#0369a1;border:1px solid #bae6fd;font-weight:700;">Infografis &amp; Rilis Pembuka</span>
+        </div>
+        <p style="font-size:12.5px;color:#64748b;margin:0;">Kurasi dan verifikasi kelayakan materi rilis cepat (infografis survei, draft siaran pers, dan konten medsos) sebelum tayang di kanal LAN RI.</p>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button onclick="openTab('kalender_publikasi')" style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:#f0fdf4;color:#15803d;border:1.5px solid #bbf7d0;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">
+          <i class="fa-solid fa-calendar-days"></i> Lihat Kalender Rilis
+        </button>
+      </div>
+    </div>
+
+    <!-- Summary KPI Cards -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));gap:12px;margin-bottom:20px;">
+      <div style="background:#fff;border:1px solid #e2e8f0;border-left:4px solid #0284c7;border-radius:10px;padding:12px 16px;">
+        <div style="font-size:10.5px;font-weight:700;color:#64748b;text-transform:uppercase;">Total Materi Awal</div>
+        <div style="font-size:22px;font-weight:800;color:#0f172a;margin-top:3px;">${totalItems}</div>
+      </div>
+      <div style="background:#fff;border:1px solid #fef08a;border-left:4px solid #eab308;border-radius:10px;padding:12px 16px;">
+        <div style="font-size:10.5px;font-weight:700;color:#854d0e;text-transform:uppercase;">Perlu Tindakan Kurasi</div>
+        <div style="font-size:22px;font-weight:800;color:#ca8a04;margin-top:3px;">${needActionCnt}</div>
+      </div>
+      <div style="background:#fff;border:1px solid #bbf7d0;border-left:4px solid #16a34a;border-radius:10px;padding:12px 16px;">
+        <div style="font-size:10.5px;font-weight:700;color:#166534;text-transform:uppercase;">Disetujui / Siap Rilis</div>
+        <div style="font-size:22px;font-weight:800;color:#16a34a;margin-top:3px;">${approvedCnt}</div>
+      </div>
+      <div style="background:#fff;border:1px solid #fed7aa;border-left:4px solid #ea580c;border-radius:10px;padding:12px 16px;">
+        <div style="font-size:10.5px;font-weight:700;color:#9a3412;text-transform:uppercase;">Perlu Perbaikan Desain</div>
+        <div style="font-size:22px;font-weight:800;color:#ea580c;margin-top:3px;">${revisiCnt}</div>
+      </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px;background:#f8fafc;padding:10px 14px;border-radius:10px;border:1px solid #e2e8f0;">
+      <div style="position:relative;flex:1;min-width:220px;">
+        <i class="fa-solid fa-magnifying-glass" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#94a3b8;font-size:12px;"></i>
+        <input type="text" id="rev-pubawal-search" placeholder="Cari judul survei, format materi, nomor ID, unit kerja..." oninput="filterAdminReviewPubAwalTable()" style="width:100%;padding:7px 10px 7px 30px;border-radius:6px;border:1px solid #cbd5e1;font-size:12px;background:#fff;" />
+      </div>
+      <select id="rev-pubawal-status" onchange="filterAdminReviewPubAwalTable()" style="padding:7px 12px;border-radius:6px;border:1px solid #cbd5e1;font-size:12px;background:#fff;font-weight:600;">
+        <option value="semua">Semua Status</option>
+        <option value="perlu_tindakan" selected>⚠️ Perlu Tindakan Admin</option>
+        <option value="diajukan">Pengajuan Baru</option>
+        <option value="menunggu_pimpinan">Menunggu Persetujuan Pimpinan</option>
+        <option value="disetujui">✅ Disetujui / Siap Rilis</option>
+        <option value="perlu_perbaikan">🔄 Perlu Perbaikan Desain</option>
+      </select>
+      <select id="rev-pubawal-unit" onchange="filterAdminReviewPubAwalTable()" style="padding:7px 12px;border-radius:6px;border:1px solid #cbd5e1;font-size:12px;background:#fff;font-weight:600;">
+        <option value="semua" selected>Semua Unit Kerja</option>
+        <option value="SKPP">SKPP</option>
+        <option value="DAPKK">DAPKK</option>
+        <option value="SKMP">SKMP</option>
+        <option value="SKTAN">SKTAN</option>
+        <option value="SKMK">SKMK</option>
+        <option value="STIA JKT">STIA JKT</option>
+        <option value="STIA MKS">STIA MKS</option>
+        <option value="STIA BDG">STIA BDG</option>
+        <option value="DSPK2AN">DSPK2AN</option>
+      </select>
+    </div>
+
+    <!-- Tabel Daftar Review Publikasi Awal -->
+    <div style="overflow-x:auto;border:1px solid #e2e8f0;border-radius:10px;background:#fff;">
+      <table style="width:100%;border-collapse:collapse;text-align:left;font-family:inherit;" id="rev-pubawal-table">
+        <thead style="background:#f8fafc;border-bottom:1px solid #e2e8f0;">
+          <tr>
+            <th style="padding:10px 12px;font-size:11.5px;font-weight:700;color:#475569;width:40px;">No</th>
+            <th style="padding:10px 12px;font-size:11.5px;font-weight:700;color:#475569;width:130px;">Format Materi</th>
+            <th style="padding:10px 12px;font-size:11.5px;font-weight:700;color:#475569;">Judul Survei &amp; Unit Kerja</th>
+            <th style="padding:10px 12px;font-size:11.5px;font-weight:700;color:#475569;width:150px;">Target Kanal</th>
+            <th style="padding:10px 12px;font-size:11.5px;font-weight:700;color:#475569;width:160px;">Draft Materi / Link</th>
+            <th style="padding:10px 12px;font-size:11.5px;font-weight:700;color:#475569;width:130px;">Status Kurasi</th>
+            <th style="padding:10px 12px;font-size:11.5px;font-weight:700;color:#475569;text-align:right;width:130px;">Aksi Admin</th>
+          </tr>
+        </thead>
+        <tbody id="rev-pubawal-tbody">
+          <!-- Rows will be injected by filterAdminReviewPubAwalTable -->
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function filterAdminReviewPubAwalTable() {
+  const q = (document.getElementById('rev-pubawal-search')?.value || '').toLowerCase().trim();
+  const stFilter = document.getElementById('rev-pubawal-status')?.value || 'perlu_tindakan';
+  const unitFilter = (document.getElementById('rev-pubawal-unit')?.value || 'semua').toUpperCase();
+
+  const allProposals = getPrismoProposals();
+  const pubAwalProposals = allProposals.filter(p =>
+    isPrismoPublicationProposal(p) && String(p.jenis_persetujuan || '').toLowerCase().includes('awal')
+  );
+
+  const rawPubAwal = RAW.filter(d => {
+    const k = ((d.ket || '') + ' ' + (d.tahapan || '')).toLowerCase();
+    const hasMediaLink = [d.webLAN, d.webUnit, d.igLAN, d.igUnit, d.ytLAN, d.ytUnit, d.media].some(hasLink);
+    return hasMediaLink || k.includes('infografis') || k.includes('publikasi') || k.includes('podcast') || k.includes('webinar');
+  });
+
+  // Gabungkan ke model baris terpadu
+  const rowsData = [];
+
+  pubAwalProposals.forEach(p => {
+    rowsData.push({
+      type: 'proposal',
+      id: p.id,
+      judul: p.judul,
+      unit: p.unit,
+      cluster: p.cluster,
+      formatMateri: p.tor_jenis || 'Infografis & Rilis Berita',
+      formatIcon: 'fa-image',
+      targetKanal: ['Web LAN', 'Instagram', 'Media Online'],
+      docLink: p.dokumen_proposal || '',
+      docName: p.tor_nama || 'Materi Desain Infografis',
+      status: p.status,
+      statusLabel: getPrismoStatusBadge(p.status, p),
+      pic: p.pic || '-',
+      proposalObj: p
+    });
+  });
+
+  rawPubAwal.forEach(d => {
+    // Cek apakah judul sudah ada di proposal agar tidak duplikat
+    if (rowsData.some(r => r.judul.toLowerCase() === (d.nama_survei || d.judul || '').toLowerCase())) return;
+    const isDone = getStatus(d) === 'selesai';
+    const kanals = [];
+    if (hasLink(d.webLAN) || hasLink(d.webUnit)) kanals.push('Website');
+    if (hasLink(d.igLAN) || hasLink(d.igUnit)) kanals.push('Instagram');
+    if (hasLink(d.ytLAN) || hasLink(d.ytUnit)) kanals.push('YouTube');
+    if (hasLink(d.media)) kanals.push('Media Online');
+    if (kanals.length === 0) kanals.push('Kanal Komunikasi LAN');
+
+    rowsData.push({
+      type: 'raw',
+      rawNo: d.no,
+      judul: d.nama_survei || d.judul || '-',
+      unit: d.unit || '-',
+      cluster: d.cluster || '-',
+      formatMateri: 'Infografis & Siaran Pers',
+      formatIcon: 'fa-newspaper',
+      targetKanal: kanals,
+      docLink: d.webLAN || d.media || d.igLAN || '',
+      docName: 'Link Kanal Publikasi',
+      status: isDone ? 'disetujui' : 'diajukan',
+      statusLabel: isDone ? { text: 'Sudah Tayang', bg: '#f0fdf4', color: '#16a34a', border: '#bbf7d0', icon: 'fa-check' } : { text: 'Draft Kurasi', bg: '#eff6ff', color: '#2563eb', border: '#bfdbfe', icon: 'fa-clock' },
+      pic: d.pic || 'Tim Publikasi Unit',
+      rawItem: d
+    });
+  });
+
+  // Filter
+  const filtered = rowsData.filter(item => {
+    if (unitFilter !== 'SEMUA' && !String(item.unit).toUpperCase().includes(unitFilter)) return false;
+    if (stFilter === 'perlu_tindakan') {
+      if (!['diajukan', 'perlu_perbaikan'].includes(item.status)) return false;
+    } else if (stFilter === 'diajukan') {
+      if (item.status !== 'diajukan') return false;
+    } else if (stFilter === 'menunggu_pimpinan') {
+      if (!['menunggu_kepala', 'menunggu_deputi'].includes(item.status)) return false;
+    } else if (stFilter === 'disetujui') {
+      if (!['disetujui', 'disetujui_catatan'].includes(item.status)) return false;
+    } else if (stFilter === 'perlu_perbaikan') {
+      if (item.status !== 'perlu_perbaikan') return false;
+    }
+
+    if (q) {
+      const hay = `${item.judul} ${item.unit} ${item.formatMateri} ${item.cluster} ${item.id || ''} ${item.pic}`.toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+
+  const tbody = document.getElementById('rev-pubawal-tbody');
+  if (!tbody) return;
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="7" style="padding:32px;text-align:center;color:#64748b;">
+          <i class="fa-solid fa-images" style="font-size:24px;color:#94a3b8;display:block;margin-bottom:8px;"></i>
+          Tidak ada usulan materi publikasi awal yang sesuai dengan filter.
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map((item, idx) => {
+    const kanalsBadge = item.targetKanal.map(k => `<span class="badge" style="background:#f1f5f9;color:#334155;border:1px solid #e2e8f0;font-size:10px;padding:2px 6px;margin:2px;">${escapeHtml(k)}</span>`).join('');
+    const rawIdx = item.rawNo ? RAW.findIndex(x => x.no === item.rawNo) : -1;
+    const isNeedAction = ['diajukan', 'perlu_perbaikan'].includes(item.status);
+
+    return `
+      <tr style="border-bottom:1px solid #f1f5f9;background:${isNeedAction ? '#faf5ff' : 'transparent'};">
+        <td style="padding:11px 12px;font-size:12px;color:#94a3b8;font-weight:700;">${idx + 1}</td>
+        <td style="padding:11px 12px;">
+          <span class="badge" style="background:#e0f2fe;color:#0369a1;border:1px solid #bae6fd;font-weight:700;font-size:11px;">
+            <i class="fa-solid ${item.formatIcon}" style="margin-right:4px;"></i> ${escapeHtml(item.formatMateri)}
+          </span>
+        </td>
+        <td style="padding:11px 12px;">
+          <div style="font-weight:700;color:#1e293b;font-size:13px;line-height:1.4;">${escapeHtml(item.judul)}</div>
+          <div style="font-size:11.5px;color:#64748b;margin-top:3px;">
+            <span class="badge" style="background:#eff6ff;color:#1e40af;font-weight:700;font-size:10.5px;">${escapeHtml(item.unit)}</span>
+            &bull; <span>PIC: <strong>${escapeHtml(item.pic)}</strong></span>
+            &bull; <span>Cluster: ${escapeHtml(resolveClusterName(item.cluster))}</span>
+          </div>
+        </td>
+        <td style="padding:11px 12px;">
+          <div style="display:flex;flex-wrap:wrap;gap:2px;">${kanalsBadge}</div>
+        </td>
+        <td style="padding:11px 12px;">
+          ${item.docLink ? `
+            <a href="${escapeHtml(item.docLink)}" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:5px;font-size:11.5px;color:#0284c7;font-weight:700;text-decoration:none;">
+              <i class="fa-solid fa-arrow-up-right-from-square"></i> ${escapeHtml(item.docName)}
+            </a>
+          ` : `<span style="font-size:11.5px;color:#94a3b8;">Draft file internal</span>`}
+        </td>
+        <td style="padding:11px 12px;">
+          <span class="badge" style="background:${item.statusLabel.bg};color:${item.statusLabel.color};border:1px solid ${item.statusLabel.border};font-weight:700;">
+            <i class="fa-solid ${item.statusLabel.icon}"></i> ${item.statusLabel.text}
+          </span>
+        </td>
+        <td style="padding:11px 12px;text-align:right;">
+          ${item.type === 'proposal' ? (
+            isNeedAction ? `
+              <button onclick="openPrismoAdminModal('${item.id}')" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;background:#0284c7;color:#fff;border:none;border-radius:6px;font-size:11.5px;font-weight:700;cursor:pointer;box-shadow:0 1px 3px rgba(2,132,199,0.3);">
+                <i class="fa-solid fa-list-check"></i> Kurasi
+              </button>
+            ` : `
+              <button onclick="openPrismoDetailModal('${item.id}')" style="padding:6px 12px;background:#f8fafc;color:#1e293b;border:1px solid #cbd5e1;border-radius:6px;font-size:11.5px;font-weight:700;cursor:pointer;">
+                <i class="fa-solid fa-eye"></i> Detail
+              </button>
+            `
+          ) : `
+            <button onclick="openModal(${rawIdx >= 0 ? rawIdx : 0})" style="padding:6px 12px;background:#f8fafc;color:#1e293b;border:1px solid #cbd5e1;border-radius:6px;font-size:11.5px;font-weight:700;cursor:pointer;">
+              <i class="fa-solid fa-eye"></i> Detail
+            </button>
+          `}
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+
+/* ── 2. REVIEW PUBLIKASI AKHIR ── */
+function renderAdminReviewPublikasiAkhir(user) {
+  const allProposals = getPrismoProposals();
+  const pubAkhirProposals = allProposals.filter(p =>
+    isPrismoPublicationProposal(p) && String(p.jenis_persetujuan || '').toLowerCase().includes('akhir')
+  );
+
+  // Dapatkan juga kegiatan dari RAW yang sudah tahap 6/7 atau berstatus Selesai (Naskah Laporan Akhir)
+  const rawPubAkhir = RAW.filter(d => {
+    const k = ((d.ket || '') + ' ' + (d.tahapan || '')).toLowerCase();
+    const isDone = getStatus(d) === 'selesai';
+    return isDone || k.includes('laporan') || k.includes('policy brief') || k.includes('policy paper') || k.includes('selesai');
+  });
+
+  const totalItems = pubAkhirProposals.length + rawPubAkhir.length;
+  const needActionCnt = pubAkhirProposals.filter(p => ['diajukan', 'perlu_perbaikan'].includes(p.status)).length;
+  const approvedCnt = pubAkhirProposals.filter(p => ['disetujui', 'disetujui_catatan'].includes(p.status)).length + rawPubAkhir.filter(d => getStatus(d) === 'selesai').length;
+  const revisiCnt = pubAkhirProposals.filter(p => p.status === 'perlu_perbaikan').length;
+
+  return `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+      <div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
+          <h3 style="font-size:19px;font-weight:800;color:#1e293b;margin:0;">
+            <i class="fa-solid fa-file-circle-check" style="color:#7c3aed;margin-right:8px;"></i> Review Publikasi Akhir
+          </h3>
+          <span class="badge" style="background:#f3e8ff;color:#6b21a8;border:1px solid #e9d5ff;font-weight:700;">Naskah Lengkap &amp; Policy Brief</span>
+        </div>
+        <p style="font-size:12.5px;color:#64748b;margin:0;">Telaah mutu substansi akademik, metodologi survei, ketepatan rekomendasi kebijakan, kaidah redaksional naskah, dan kelengkapan dokumen pengesahan.</p>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button onclick="openTab('kalender_publikasi')" style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:#eff6ff;color:#1d4ed8;border:1.5px solid #bfdbfe;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">
+          <i class="fa-solid fa-calendar-days"></i> Kalender Publikasi
+        </button>
+      </div>
+    </div>
+
+    <!-- Summary KPI Cards -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));gap:12px;margin-bottom:20px;">
+      <div style="background:#fff;border:1px solid #e2e8f0;border-left:4px solid #7c3aed;border-radius:10px;padding:12px 16px;">
+        <div style="font-size:10.5px;font-weight:700;color:#64748b;text-transform:uppercase;">Total Naskah Masuk</div>
+        <div style="font-size:22px;font-weight:800;color:#0f172a;margin-top:3px;">${totalItems}</div>
+      </div>
+      <div style="background:#fff;border:1px solid #fef08a;border-left:4px solid #eab308;border-radius:10px;padding:12px 16px;">
+        <div style="font-size:10.5px;font-weight:700;color:#854d0e;text-transform:uppercase;">Menunggu Telaah Admin</div>
+        <div style="font-size:22px;font-weight:800;color:#ca8a04;margin-top:3px;">${needActionCnt}</div>
+      </div>
+      <div style="background:#fff;border:1px solid #bbf7d0;border-left:4px solid #16a34a;border-radius:10px;padding:12px 16px;">
+        <div style="font-size:10.5px;font-weight:700;color:#166534;text-transform:uppercase;">Disahkan / Siap Terbit</div>
+        <div style="font-size:22px;font-weight:800;color:#166534;margin-top:3px;">${approvedCnt}</div>
+      </div>
+      <div style="background:#fff;border:1px solid #fed7aa;border-left:4px solid #ea580c;border-radius:10px;padding:12px 16px;">
+        <div style="font-size:10.5px;font-weight:700;color:#9a3412;text-transform:uppercase;">Perlu Revisi Dokumen</div>
+        <div style="font-size:22px;font-weight:800;color:#ea580c;margin-top:3px;">${revisiCnt}</div>
+      </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px;background:#f8fafc;padding:10px 14px;border-radius:10px;border:1px solid #e2e8f0;">
+      <div style="position:relative;flex:1;min-width:220px;">
+        <i class="fa-solid fa-magnifying-glass" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#94a3b8;font-size:12px;"></i>
+        <input type="text" id="rev-pubakhir-search" placeholder="Cari judul naskah, policy brief, PIC, unit kerja..." oninput="filterAdminReviewPubAkhirTable()" style="width:100%;padding:7px 10px 7px 30px;border-radius:6px;border:1px solid #cbd5e1;font-size:12px;background:#fff;" />
+      </div>
+      <select id="rev-pubakhir-status" onchange="filterAdminReviewPubAkhirTable()" style="padding:7px 12px;border-radius:6px;border:1px solid #cbd5e1;font-size:12px;background:#fff;font-weight:600;">
+        <option value="semua">Semua Status</option>
+        <option value="perlu_tindakan" selected>⚠️ Perlu Tindakan Telaah</option>
+        <option value="diajukan">Naskah Baru Masuk</option>
+        <option value="menunggu_pimpinan">Menunggu Disposisi Pimpinan</option>
+        <option value="disetujui">✅ Disahkan / Disetujui</option>
+        <option value="perlu_perbaikan">🔄 Perlu Revisi Naskah</option>
+      </select>
+      <select id="rev-pubakhir-unit" onchange="filterAdminReviewPubAkhirTable()" style="padding:7px 12px;border-radius:6px;border:1px solid #cbd5e1;font-size:12px;background:#fff;font-weight:600;">
+        <option value="semua" selected>Semua Unit Kerja</option>
+        <option value="SKPP">SKPP</option>
+        <option value="DAPKK">DAPKK</option>
+        <option value="SKMP">SKMP</option>
+        <option value="SKTAN">SKTAN</option>
+        <option value="SKMK">SKMK</option>
+        <option value="STIA JKT">STIA JKT</option>
+        <option value="STIA MKS">STIA MKS</option>
+        <option value="STIA BDG">STIA BDG</option>
+        <option value="DSPK2AN">DSPK2AN</option>
+      </select>
+    </div>
+
+    <!-- Tabel Daftar Review Publikasi Akhir -->
+    <div style="overflow-x:auto;border:1px solid #e2e8f0;border-radius:10px;background:#fff;">
+      <table style="width:100%;border-collapse:collapse;text-align:left;font-family:inherit;" id="rev-pubakhir-table">
+        <thead style="background:#f8fafc;border-bottom:1px solid #e2e8f0;">
+          <tr>
+            <th style="padding:10px 12px;font-size:11.5px;font-weight:700;color:#475569;width:40px;">No</th>
+            <th style="padding:10px 12px;font-size:11.5px;font-weight:700;color:#475569;width:150px;">Bentuk Naskah</th>
+            <th style="padding:10px 12px;font-size:11.5px;font-weight:700;color:#475569;">Judul Naskah &amp; Unit Kerja</th>
+            <th style="padding:10px 12px;font-size:11.5px;font-weight:700;color:#475569;width:160px;">PIC &amp; Target Pengesahan</th>
+            <th style="padding:10px 12px;font-size:11.5px;font-weight:700;color:#475569;width:160px;">Berkas Naskah Final</th>
+            <th style="padding:10px 12px;font-size:11.5px;font-weight:700;color:#475569;width:130px;">Status Telaah</th>
+            <th style="padding:10px 12px;font-size:11.5px;font-weight:700;color:#475569;text-align:right;width:130px;">Aksi Admin</th>
+          </tr>
+        </thead>
+        <tbody id="rev-pubakhir-tbody">
+          <!-- Injected by filterAdminReviewPubAkhirTable -->
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function filterAdminReviewPubAkhirTable() {
+  const q = (document.getElementById('rev-pubakhir-search')?.value || '').toLowerCase().trim();
+  const stFilter = document.getElementById('rev-pubakhir-status')?.value || 'perlu_tindakan';
+  const unitFilter = (document.getElementById('rev-pubakhir-unit')?.value || 'semua').toUpperCase();
+
+  const allProposals = getPrismoProposals();
+  const pubAkhirProposals = allProposals.filter(p =>
+    isPrismoPublicationProposal(p) && String(p.jenis_persetujuan || '').toLowerCase().includes('akhir')
+  );
+
+  const rawPubAkhir = RAW.filter(d => {
+    const k = ((d.ket || '') + ' ' + (d.tahapan || '')).toLowerCase();
+    const isDone = getStatus(d) === 'selesai';
+    return isDone || k.includes('laporan') || k.includes('policy brief') || k.includes('policy paper') || k.includes('selesai');
+  });
+
+  const rowsData = [];
+
+  pubAkhirProposals.forEach(p => {
+    rowsData.push({
+      type: 'proposal',
+      id: p.id,
+      judul: p.judul,
+      unit: p.unit,
+      cluster: p.cluster,
+      bentukNaskah: p.tor_jenis || 'Laporan Lengkap & Policy Brief',
+      docLink: p.dokumen_proposal || '',
+      docName: p.tor_nama || 'Naskah Publikasi Akhir',
+      status: p.status,
+      statusLabel: getPrismoStatusBadge(p.status, p),
+      pic: p.pic || '-',
+      target: p.target_selesai || p.jadwal || '2026',
+      proposalObj: p
+    });
+  });
+
+  rawPubAkhir.forEach(d => {
+    if (rowsData.some(r => r.judul.toLowerCase() === (d.nama_survei || d.judul || '').toLowerCase())) return;
+    const isDone = getStatus(d) === 'selesai';
+    const info = getPrismoScheduleInfo(d);
+
+    rowsData.push({
+      type: 'raw',
+      rawNo: d.no,
+      judul: d.nama_survei || d.judul || '-',
+      unit: d.unit || '-',
+      cluster: d.cluster || '-',
+      bentukNaskah: 'Laporan Lengkap & Executive Summary',
+      docLink: d.jurnal || d.webLAN || '',
+      docName: 'Naskah Hasil Kajian',
+      status: isDone ? 'disetujui' : 'diajukan',
+      statusLabel: isDone ? { text: 'Naskah Disahkan', bg: '#f0fdf4', color: '#16a34a', border: '#bbf7d0', icon: 'fa-stamp' } : { text: 'Draft Telaah', bg: '#eff6ff', color: '#2563eb', border: '#bfdbfe', icon: 'fa-hourglass' },
+      pic: info.pic || 'Koordinator Peneliti',
+      target: info.targetLabel || '2026',
+      rawItem: d
+    });
+  });
+
+  const filtered = rowsData.filter(item => {
+    if (unitFilter !== 'SEMUA' && !String(item.unit).toUpperCase().includes(unitFilter)) return false;
+    if (stFilter === 'perlu_tindakan') {
+      if (!['diajukan', 'perlu_perbaikan'].includes(item.status)) return false;
+    } else if (stFilter === 'diajukan') {
+      if (item.status !== 'diajukan') return false;
+    } else if (stFilter === 'menunggu_pimpinan') {
+      if (!['menunggu_kepala', 'menunggu_deputi'].includes(item.status)) return false;
+    } else if (stFilter === 'disetujui') {
+      if (!['disetujui', 'disetujui_catatan'].includes(item.status)) return false;
+    } else if (stFilter === 'perlu_perbaikan') {
+      if (item.status !== 'perlu_perbaikan') return false;
+    }
+
+    if (q) {
+      const hay = `${item.judul} ${item.unit} ${item.bentukNaskah} ${item.cluster} ${item.id || ''} ${item.pic}`.toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+
+  const tbody = document.getElementById('rev-pubakhir-tbody');
+  if (!tbody) return;
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="7" style="padding:32px;text-align:center;color:#64748b;">
+          <i class="fa-solid fa-file-shield" style="font-size:24px;color:#94a3b8;display:block;margin-bottom:8px;"></i>
+          Tidak ada naskah publikasi akhir yang sesuai dengan filter.
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map((item, idx) => {
+    const rawIdx = item.rawNo ? RAW.findIndex(x => x.no === item.rawNo) : -1;
+    const isNeedAction = ['diajukan', 'perlu_perbaikan'].includes(item.status);
+
+    return `
+      <tr style="border-bottom:1px solid #f1f5f9;background:${isNeedAction ? '#faf5ff' : 'transparent'};">
+        <td style="padding:11px 12px;font-size:12px;color:#94a3b8;font-weight:700;">${idx + 1}</td>
+        <td style="padding:11px 12px;">
+          <span class="badge" style="background:#f3e8ff;color:#6b21a8;border:1px solid #e9d5ff;font-weight:700;font-size:11px;">
+            <i class="fa-solid fa-book-bookmark" style="margin-right:4px;"></i> ${escapeHtml(item.bentukNaskah)}
+          </span>
+        </td>
+        <td style="padding:11px 12px;">
+          <div style="font-weight:700;color:#1e293b;font-size:13px;line-height:1.4;">${escapeHtml(item.judul)}</div>
+          <div style="font-size:11.5px;color:#64748b;margin-top:3px;">
+            <span class="badge" style="background:#eff6ff;color:#1e40af;font-weight:700;font-size:10.5px;">${escapeHtml(item.unit)}</span>
+            &bull; <span>Cluster: ${escapeHtml(resolveClusterName(item.cluster))}</span>
+          </div>
+        </td>
+        <td style="padding:11px 12px;font-size:12px;color:#334155;">
+          <div><strong>${escapeHtml(item.pic)}</strong></div>
+          <div style="font-size:11px;color:#64748b;margin-top:2px;"><i class="fa-regular fa-calendar-check"></i> ${escapeHtml(item.target)}</div>
+        </td>
+        <td style="padding:11px 12px;">
+          ${item.docLink ? `
+            <a href="${escapeHtml(item.docLink)}" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:5px;font-size:11.5px;color:#7c3aed;font-weight:700;text-decoration:none;">
+              <i class="fa-solid fa-file-pdf"></i> ${escapeHtml(item.docName)}
+            </a>
+          ` : `<span style="font-size:11.5px;color:#94a3b8;">Draft naskah internal</span>`}
+        </td>
+        <td style="padding:11px 12px;">
+          <span class="badge" style="background:${item.statusLabel.bg};color:${item.statusLabel.color};border:1px solid ${item.statusLabel.border};font-weight:700;">
+            <i class="fa-solid ${item.statusLabel.icon}"></i> ${item.statusLabel.text}
+          </span>
+        </td>
+        <td style="padding:11px 12px;text-align:right;">
+          ${item.type === 'proposal' ? (
+            isNeedAction ? `
+              <button onclick="openPrismoAdminModal('${item.id}')" style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;background:#7c3aed;color:#fff;border:none;border-radius:6px;font-size:11.5px;font-weight:700;cursor:pointer;box-shadow:0 1px 3px rgba(124,58,237,0.3);">
+                <i class="fa-solid fa-glasses"></i> Telaah
+              </button>
+            ` : `
+              <button onclick="openPrismoDetailModal('${item.id}')" style="padding:6px 12px;background:#f8fafc;color:#1e293b;border:1px solid #cbd5e1;border-radius:6px;font-size:11.5px;font-weight:700;cursor:pointer;">
+                <i class="fa-solid fa-eye"></i> Detail
+              </button>
+            `
+          ) : `
+            <button onclick="openModal(${rawIdx >= 0 ? rawIdx : 0})" style="padding:6px 12px;background:#f8fafc;color:#1e293b;border:1px solid #cbd5e1;border-radius:6px;font-size:11.5px;font-weight:700;cursor:pointer;">
+              <i class="fa-solid fa-eye"></i> Detail
+            </button>
+          `}
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+
+/* ── 3. KALENDER PUBLIKASI ── */
+let currentKalenderMonthFilter = 'semua';
+
+function renderAdminKalenderPublikasi(user) {
+  return `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+      <div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
+          <h3 style="font-size:19px;font-weight:800;color:#1e293b;margin:0;">
+            <i class="fa-solid fa-calendar-days" style="color:#2563eb;margin-right:8px;"></i> Kalender &amp; Roadmap Publikasi 2026
+          </h3>
+          <span class="badge" style="background:#eff6ff;color:#1e40af;border:1.5px solid #bfdbfe;font-weight:700;">Editorial Calendar Terpadu</span>
+        </div>
+        <p style="font-size:12.5px;color:#64748b;margin:0;">Pemetaan linimasa jadwal rilis survei per bulan, kesiapan materi tayang, serta monitoring antrian kanal komunikasi LAN RI.</p>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button onclick="navigateToJadwalRilis2026()" style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:#eff6ff;color:#1e40af;border:1.5px solid #bfdbfe;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;box-shadow:0 1px 2px rgba(37,99,235,0.1);">
+          <i class="fa-solid fa-timeline"></i> Buka Roadmap Interaktif
+        </button>
+      </div>
+    </div>
+
+    <!-- Filter Bar Kalender -->
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px;background:#f8fafc;padding:10px 14px;border-radius:10px;border:1px solid #e2e8f0;">
+      <div style="position:relative;flex:1;min-width:200px;">
+        <i class="fa-solid fa-magnifying-glass" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#94a3b8;font-size:12px;"></i>
+        <input type="text" id="kalender-search" placeholder="Cari judul survei, unit, PIC, kanal..." oninput="filterAdminKalenderTable()" style="width:100%;padding:7px 10px 7px 30px;border-radius:6px;border:1px solid #cbd5e1;font-size:12px;background:#fff;" />
+      </div>
+      <select id="kalender-periode" onchange="selectKalenderPeriode(this.value)" style="padding:7px 12px;border-radius:6px;border:1px solid #cbd5e1;font-size:12px;background:#fff;font-weight:600;">
+        <option value="semua" selected>Semua Bulan (2026)</option>
+        <option value="q1">Triwulan 1 (Jan - Mar)</option>
+        <option value="q2">Triwulan 2 (Apr - Jun)</option>
+        <option value="q3">Triwulan 3 (Jul - Sep)</option>
+        <option value="q4">Triwulan 4 (Okt - Des)</option>
+        <option disabled>──────────</option>
+        ${MONTH_ORDER.map((m, idx) => `<option value="${idx}">${m}</option>`).join('')}
+      </select>
+      <select id="kalender-kanal" onchange="filterAdminKalenderTable()" style="padding:7px 12px;border-radius:6px;border:1px solid #cbd5e1;font-size:12px;background:#fff;font-weight:600;">
+        <option value="semua" selected>Semua Kanal Publikasi</option>
+        <option value="web">Website Resmi (LAN/Unit)</option>
+        <option value="ig">Instagram Resmi (LAN/Unit)</option>
+        <option value="yt">YouTube LAN RI</option>
+        <option value="media">Media Massa Online</option>
+      </select>
+      <select id="kalender-status" onchange="filterAdminKalenderTable()" style="padding:7px 12px;border-radius:6px;border:1px solid #cbd5e1;font-size:12px;background:#fff;font-weight:600;">
+        <option value="semua" selected>Semua Status Rilis</option>
+        <option value="selesai">✅ Sudah Rilis / Tayang</option>
+        <option value="terjadwal">⏳ Terjadwal Tepat Waktu</option>
+        <option value="terlambat">⚠️ Melewati Jadwal Rilis</option>
+      </select>
+      <select id="kalender-unit" onchange="filterAdminKalenderTable()" style="padding:7px 12px;border-radius:6px;border:1px solid #cbd5e1;font-size:12px;background:#fff;font-weight:600;">
+        <option value="semua" selected>Semua Unit Kerja</option>
+        <option value="SKPP">SKPP</option>
+        <option value="DAPKK">DAPKK</option>
+        <option value="SKMP">SKMP</option>
+        <option value="SKTAN">SKTAN</option>
+        <option value="SKMK">SKMK</option>
+        <option value="STIA JKT">STIA JKT</option>
+        <option value="STIA MKS">STIA MKS</option>
+        <option value="STIA BDG">STIA BDG</option>
+        <option value="DSPK2AN">DSPK2AN</option>
+      </select>
+    </div>
+
+    <!-- 12-Month Interactive Grid Cards -->
+    <div style="margin-bottom:20px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <div style="font-size:13px;font-weight:800;color:#1e293b;">
+          <i class="fa-solid fa-chart-gantt" style="color:#2563eb;margin-right:6px;"></i> Linimasa Rilis per Bulan Tahun 2026
+        </div>
+        <div style="font-size:11.5px;color:#64748b;">Klik bulan untuk menyaring tabel secara cepat</div>
+      </div>
+      <div id="kalender-month-grid" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(130px, 1fr));gap:8px;">
+        <!-- Injected by renderKalenderMonthGrid -->
+      </div>
+    </div>
+
+    <!-- Tabel Detail Jadwal Rilis Publikasi -->
+    <div style="border:1px solid #e2e8f0;border-radius:10px;background:#fff;overflow:hidden;">
+      <div style="padding:12px 16px;background:#f8fafc;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+        <div style="font-size:13px;font-weight:800;color:#1e293b;" id="kalender-table-title">
+          <i class="fa-solid fa-table-list" style="color:#64748b;margin-right:6px;"></i> Daftar Kegiatan &amp; Kesiapan Kanal Rilis
+        </div>
+        <span class="badge" style="background:#eff6ff;color:#1d4ed8;font-weight:700;" id="kalender-count-badge">0 Kegiatan</span>
+      </div>
+      <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;text-align:left;font-family:inherit;" id="kalender-table">
+          <thead style="background:#f8fafc;border-bottom:1px solid #e2e8f0;">
+            <tr>
+              <th style="padding:10px 12px;font-size:11.5px;font-weight:700;color:#475569;width:40px;">No</th>
+              <th style="padding:10px 12px;font-size:11.5px;font-weight:700;color:#475569;width:120px;">Target Rilis</th>
+              <th style="padding:10px 12px;font-size:11.5px;font-weight:700;color:#475569;">Judul Survei &amp; Unit Kerja</th>
+              <th style="padding:10px 12px;font-size:11.5px;font-weight:700;color:#475569;width:140px;">Status Rilis</th>
+              <th style="padding:10px 12px;font-size:11.5px;font-weight:700;color:#475569;width:180px;">Kanal Komunikasi</th>
+              <th style="padding:10px 12px;font-size:11.5px;font-weight:700;color:#475569;width:130px;">PIC Kegiatan</th>
+              <th style="padding:10px 12px;font-size:11.5px;font-weight:700;color:#475569;text-align:right;width:90px;">Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="kalender-tbody">
+            <!-- Injected by filterAdminKalenderTable -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+function initAdminKalenderPublikasi() {
+  currentKalenderMonthFilter = 'semua';
+  renderKalenderMonthGrid();
+  filterAdminKalenderTable();
+}
+
+function renderKalenderMonthGrid() {
+  const container = document.getElementById('kalender-month-grid');
+  if (!container) return;
+
+  const monthCounts = new Array(12).fill(0);
+  const monthDoneCounts = new Array(12).fill(0);
+  const monthOverdueCounts = new Array(12).fill(0);
+
+  RAW.forEach(d => {
+    const mNum = getMonthNum(d.jadwal);
+    if (mNum >= 0 && mNum < 12) {
+      monthCounts[mNum]++;
+      if (getStatus(d) === 'selesai') monthDoneCounts[mNum]++;
+      else if (isOverdue(d)) monthOverdueCounts[mNum]++;
+    }
+  });
+
+  container.innerHTML = MONTH_ORDER.map((monthName, idx) => {
+    const total = monthCounts[idx];
+    const done = monthDoneCounts[idx];
+    const overdue = monthOverdueCounts[idx];
+    const isSelected = String(currentKalenderMonthFilter) === String(idx);
+
+    return `
+      <div onclick="selectKalenderMonth(${idx})" style="padding:10px;border-radius:8px;background:${isSelected ? '#eff6ff' : '#fff'};border:1.5px solid ${isSelected ? '#2563eb' : '#e2e8f0'};cursor:pointer;transition:all .15s;text-align:center;box-shadow:${isSelected ? '0 2px 6px rgba(37,99,235,0.2)' : 'none'};">
+        <div style="font-size:11.5px;font-weight:800;color:${isSelected ? '#1d4ed8' : '#1e293b'};">${monthName.slice(0, 3)}</div>
+        <div style="font-size:16px;font-weight:900;color:${total > 0 ? (isSelected ? '#1d4ed8' : '#0f172a') : '#94a3b8'};margin-top:2px;">${total}</div>
+        <div style="display:flex;justify-content:center;gap:4px;margin-top:4px;font-size:9.5px;">
+          ${done > 0 ? `<span style="color:#16a34a;font-weight:700;"><i class="fa-solid fa-check"></i> ${done}</span>` : ''}
+          ${overdue > 0 ? `<span style="color:#dc2626;font-weight:700;"><i class="fa-solid fa-triangle-exclamation"></i> ${overdue}</span>` : ''}
+          ${total === 0 ? `<span style="color:#cbd5e1;">—</span>` : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function selectKalenderMonth(mIdx) {
+  currentKalenderMonthFilter = String(mIdx);
+  const pSelect = document.getElementById('kalender-periode');
+  if (pSelect) pSelect.value = String(mIdx);
+  renderKalenderMonthGrid();
+  filterAdminKalenderTable();
+}
+
+function selectKalenderPeriode(val) {
+  if (['q1', 'q2', 'q3', 'q4', 'semua'].includes(val)) {
+    currentKalenderMonthFilter = val;
+  } else {
+    currentKalenderMonthFilter = String(val);
+  }
+  renderKalenderMonthGrid();
+  filterAdminKalenderTable();
+}
+
+function filterAdminKalenderTable() {
+  const q = (document.getElementById('kalender-search')?.value || '').toLowerCase().trim();
+  const kanalFilter = document.getElementById('kalender-kanal')?.value || 'semua';
+  const statusFilter = document.getElementById('kalender-status')?.value || 'semua';
+  const unitFilter = (document.getElementById('kalender-unit')?.value || 'semua').toUpperCase();
+
+  const filtered = RAW.filter(d => {
+    const mNum = getMonthNum(d.jadwal);
+
+    // Filter periode / bulan
+    if (currentKalenderMonthFilter !== 'semua') {
+      if (currentKalenderMonthFilter === 'q1') {
+        if (mNum < 0 || mNum > 2) return false;
+      } else if (currentKalenderMonthFilter === 'q2') {
+        if (mNum < 3 || mNum > 5) return false;
+      } else if (currentKalenderMonthFilter === 'q3') {
+        if (mNum < 6 || mNum > 8) return false;
+      } else if (currentKalenderMonthFilter === 'q4') {
+        if (mNum < 9 || mNum > 11) return false;
+      } else {
+        if (mNum !== parseInt(currentKalenderMonthFilter, 10)) return false;
+      }
+    }
+
+    // Filter unit
+    if (unitFilter !== 'SEMUA' && !String(d.unit).toUpperCase().includes(unitFilter)) return false;
+
+    // Filter status
+    const isDone = getStatus(d) === 'selesai';
+    const isLate = isOverdue(d);
+    if (statusFilter === 'selesai' && !isDone) return false;
+    if (statusFilter === 'terlambat' && !isLate) return false;
+    if (statusFilter === 'terjadwal' && (isDone || isLate)) return false;
+
+    // Filter kanal
+    if (kanalFilter === 'web' && !(hasLink(d.webLAN) || hasLink(d.webUnit))) return false;
+    if (kanalFilter === 'ig' && !(hasLink(d.igLAN) || hasLink(d.igUnit))) return false;
+    if (kanalFilter === 'yt' && !(hasLink(d.ytLAN) || hasLink(d.ytUnit))) return false;
+    if (kanalFilter === 'media' && !hasLink(d.media)) return false;
+
+    // Search query
+    if (q) {
+      const info = getPrismoScheduleInfo(d);
+      const hay = `${d.nama_survei || d.judul || ''} ${d.unit || ''} ${d.cluster || ''} ${d.jadwal || ''} ${info.pic || ''}`.toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+
+    return true;
+  });
+
+  const countBadge = document.getElementById('kalender-count-badge');
+  if (countBadge) countBadge.textContent = `${filtered.length} Kegiatan`;
+
+  const tbody = document.getElementById('kalender-tbody');
+  if (!tbody) return;
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="7" style="padding:32px;text-align:center;color:#64748b;">
+          <i class="fa-solid fa-calendar-xmark" style="font-size:24px;color:#94a3b8;display:block;margin-bottom:8px;"></i>
+          Tidak ada kegiatan survei/publikasi yang sesuai dengan kriteria kalender.
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map((d, idx) => {
+    const rawIdx = RAW.findIndex(x => x.no === d.no);
+    const modalIdx = rawIdx >= 0 ? rawIdx : idx;
+    const info = getPrismoScheduleInfo(d);
+    const isDone = getStatus(d) === 'selesai';
+    const isLate = isOverdue(d);
+
+    // Kanal badges
+    const kanalBadges = [];
+    if (hasLink(d.webLAN) || hasLink(d.webUnit)) kanalBadges.push(`<a href="${escapeHtml(resolveChannelUrl('webLAN', d.webLAN || d.webUnit, d))}" target="_blank" rel="noopener noreferrer" class="badge" style="background:#ecfdf5;color:#059669;border:1px solid #a7f3d0;text-decoration:none;"><i class="fa-solid fa-globe"></i> Web</a>`);
+    if (hasLink(d.igLAN) || hasLink(d.igUnit)) kanalBadges.push(`<a href="${escapeHtml(resolveChannelUrl('igLAN', d.igLAN || d.igUnit, d))}" target="_blank" rel="noopener noreferrer" class="badge" style="background:#fdf2f8;color:#db2777;border:1px solid #fbcfe8;text-decoration:none;"><i class="fa-brands fa-instagram"></i> IG</a>`);
+    if (hasLink(d.ytLAN) || hasLink(d.ytUnit)) kanalBadges.push(`<a href="${escapeHtml(resolveChannelUrl('ytLAN', d.ytLAN || d.ytUnit, d))}" target="_blank" rel="noopener noreferrer" class="badge" style="background:#fef2f2;color:#dc2626;border:1px solid #fecaca;text-decoration:none;"><i class="fa-brands fa-youtube"></i> YT</a>`);
+    if (hasLink(d.media)) kanalBadges.push(`<a href="${escapeHtml(resolveChannelUrl('media', d.media, d))}" target="_blank" rel="noopener noreferrer" class="badge" style="background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;text-decoration:none;"><i class="fa-solid fa-newspaper"></i> Media</a>`);
+
+    if (kanalBadges.length === 0) {
+      kanalBadges.push(`<span style="font-size:11px;color:#94a3b8;"><i class="fa-solid fa-clock-rotate-left"></i> Belum ada link</span>`);
+    }
+
+    return `
+      <tr style="border-bottom:1px solid #f1f5f9;background:${isLate ? '#fff5f5' : (isDone ? '#f0fdf4' : 'transparent')};">
+        <td style="padding:11px 12px;font-size:12px;color:#94a3b8;font-weight:700;">${idx + 1}</td>
+        <td style="padding:11px 12px;font-size:12px;font-weight:700;color:#1e293b;">
+          <div style="display:flex;align-items:center;gap:6px;">
+            <i class="fa-regular fa-calendar" style="color:#2563eb;"></i>
+            <span>${escapeHtml(d.jadwal || d.target_selesai || d.tahun || '2026')}</span>
+          </div>
+        </td>
+        <td style="padding:11px 12px;">
+          <div style="font-weight:700;color:#1e293b;font-size:13px;line-height:1.4;">${escapeHtml(d.nama_survei || d.judul || '-')}</div>
+          <div style="font-size:11.5px;color:#64748b;margin-top:3px;">
+            <span class="badge" style="background:#eff6ff;color:#1e40af;font-weight:700;font-size:10.5px;">${escapeHtml(d.unit || '-')}</span>
+            &bull; <span>Cluster: ${escapeHtml(resolveClusterName(d.cluster))}</span>
+          </div>
+        </td>
+        <td style="padding:11px 12px;">
+          ${isDone ? `
+            <span class="badge" style="background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;font-weight:700;"><i class="fa-solid fa-check"></i> Sudah Rilis</span>
+          ` : (isLate ? `
+            <span class="badge" style="background:#fef2f2;color:#dc2626;border:1px solid #fecaca;font-weight:700;"><i class="fa-solid fa-triangle-exclamation"></i> Melewati Jadwal</span>
+          ` : `
+            <span class="badge" style="background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;font-weight:700;"><i class="fa-solid fa-hourglass-half"></i> Terjadwal</span>
+          `)}
+        </td>
+        <td style="padding:11px 12px;">
+          <div style="display:flex;flex-wrap:wrap;gap:4px;">${kanalBadges.join('')}</div>
+        </td>
+        <td style="padding:11px 12px;font-size:12px;color:#334155;">
+          ${escapeHtml(info.pic || 'Tim Unit')}
+        </td>
+        <td style="padding:11px 12px;text-align:right;">
+          <button onclick="openModal(${modalIdx})" style="padding:6px 12px;background:#f8fafc;color:#1e293b;border:1px solid #cbd5e1;border-radius:6px;font-size:11.5px;font-weight:700;cursor:pointer;">
+            <i class="fa-solid fa-eye"></i> Detail
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
 
 function renderHumasPublicationQueue() {
   const queue = getPrismoProposals().filter(item =>
