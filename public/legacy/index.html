@@ -3997,8 +3997,18 @@ window.addEventListener('focus', () => {
     </div>
     
     <h2 style="font-size:17px;font-weight:800;color:#1e293b;margin:0 0 14px;">
-      Atur Tanggal Rilis &amp; Kanal Publikasi
+      Atur Jadwal Rilis &amp; Kanal Publikasi
     </h2>
+
+    <!-- Dropdown Pemilihan Naskah Publikasi Akhir -->
+    <div style="margin-bottom:14px;" id="humas-sched-select-wrap">
+      <label style="font-size:12px;font-weight:700;color:#334155;display:block;margin-bottom:5px;">
+        <i class="fa-solid fa-file-circle-check" style="color:#7c3aed;margin-right:4px;"></i> Pilih Naskah Publikasi Akhir: <span style="color:#dc2626;">*</span>
+      </label>
+      <select id="humas-sched-select-item" onchange="onHumasSelectPublicationItem(this.value)" style="width:100%;padding:8px 12px;border-radius:8px;border:1px solid #cbd5e1;font-size:12.5px;font-weight:600;outline:none;background:#fff;">
+        <!-- Injected dynamically -->
+      </select>
+    </div>
 
     <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:14px;margin-bottom:16px;">
       <div style="font-weight:800;color:#1e293b;font-size:13.5px;line-height:1.4;" id="humas-sched-view-title">-</div>
@@ -14724,7 +14734,13 @@ function renderAdminKalenderPublikasi(user) {
           ${isHumas ? '<strong>Humas memiliki kewenangan penuh mengatur tanggal tayang dan kanal rilis media.</strong>' : 'Admin DSPK2AN dapat memantau jadwal yang telah diset oleh Humas.'}
         </p>
       </div>
+
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        ${isHumas ? `
+          <button type="button" onclick="openHumasScheduleModal(null, '')" style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;background:#2563eb;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;box-shadow:0 1px 3px rgba(37,99,235,0.3);">
+            <i class="fa-solid fa-plus"></i> Tambah Jadwal Publikasi
+          </button>
+        ` : ''}
         <button onclick="navigateToJadwalRilis2026()" style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:#f8fafc;color:#1e293b;border:1px solid #cbd5e1;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;">
           <i class="fa-solid fa-timeline"></i> Roadmap Interaktif
         </button>
@@ -14736,11 +14752,11 @@ function renderAdminKalenderPublikasi(user) {
       
       <!-- Calendar Header Bar (Month & Controls) -->
       <div style="padding:14px 18px;border-bottom:1px solid #e2e8f0;background:#f8fafc;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
-        <div style="display:flex;align-items:center;gap:10px;">
-          <button onclick="navigateGoogleCalendarMonth(-1)" style="padding:6px 12px;background:#fff;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;cursor:pointer;color:#334155;" title="Bulan Sebelumnya">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <button onclick="navigateGoogleCalendarMonth(-1)" style="padding:6px 12px;background:#fff;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;cursor:pointer;color:#334155;" title="Bulan Sebelumnya">
             <i class="fa-solid fa-chevron-left"></i>
           </button>
-          <button onclick="navigateGoogleCalendarMonth(1)" style="padding:6px 12px;background:#fff;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;cursor:pointer;color:#334155;" title="Bulan Berikutnya">
+          <button onclick="navigateGoogleCalendarMonth(1)" style="padding:6px 12px;background:#fff;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;cursor:pointer;color:#334155;" title="Bulan Berikutnya">
             <i class="fa-solid fa-chevron-right"></i>
           </button>
           <button onclick="setGoogleCalendarToday()" style="padding:6px 14px;background:#fff;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;color:#1e293b;">
@@ -14751,33 +14767,31 @@ function renderAdminKalenderPublikasi(user) {
           </h2>
         </div>
 
-        <!-- Legend / Filter mini -->
+        <!-- Legend -->
         <div style="display:flex;align-items:center;gap:12px;font-size:11.5px;color:#475569;flex-wrap:wrap;">
           <span style="display:inline-flex;align-items:center;gap:5px;">
             <span style="width:10px;height:10px;border-radius:3px;background:#16a34a;display:inline-block;"></span> Sudah Tayang
           </span>
           <span style="display:inline-flex;align-items:center;gap:5px;">
-            <span style="width:10px;height:10px;border-radius:3px;background:#2563eb;display:inline-block;"></span> Terjadwal
+            <span style="width:10px;height:10px;border-radius:3px;background:#0284c7;display:inline-block;"></span> Terjadwal
           </span>
-          <span style="display:inline-flex;align-items:center;gap:5px;">
-            <span style="width:10px;height:10px;border-radius:3px;background:#ea580c;display:inline-block;"></span> Melewati Jadwal
-          </span>
+          ${isHumas ? '<span style="font-size:11px;color:#64748b;font-style:italic;">(Klik kotak tanggal untuk menjadwalkan)</span>' : ''}
         </div>
       </div>
 
       <!-- Calendar Days of Week Header -->
-      <div style="display:grid;grid-template-columns:repeat(7, 1fr);background:#f1f5f9;border-bottom:1px solid #cbd5e1;text-align:center;font-size:11.5px;font-weight:800;color:#475569;">
-        <div style="padding:10px 4px;color:#dc2626;">MINGGU</div>
-        <div style="padding:10px 4px;">SENIN</div>
-        <div style="padding:10px 4px;">SELASA</div>
-        <div style="padding:10px 4px;">RABU</div>
-        <div style="padding:10px 4px;">KAMIS</div>
-        <div style="padding:10px 4px;">JUMAT</div>
-        <div style="padding:10px 4px;">SABTU</div>
+      <div style="display:grid;grid-template-columns:repeat(7, minmax(0, 1fr));background:#f8fafc;border-bottom:1px solid #e2e8f0;text-align:center;font-size:11px;font-weight:800;color:#64748b;letter-spacing:0.5px;">
+        <div style="padding:9px 4px;color:#dc2626;">MIN</div>
+        <div style="padding:9px 4px;">SEN</div>
+        <div style="padding:9px 4px;">SEL</div>
+        <div style="padding:9px 4px;">RAB</div>
+        <div style="padding:9px 4px;">KAM</div>
+        <div style="padding:9px 4px;">JUM</div>
+        <div style="padding:9px 4px;">SAB</div>
       </div>
 
       <!-- Calendar Days Grid -->
-      <div id="google-cal-grid" style="display:grid;grid-template-columns:repeat(7, 1fr);background:#e2e8f0;gap:1px;">
+      <div id="google-cal-grid" style="display:grid;grid-template-columns:repeat(7, minmax(0, 1fr));background:#e2e8f0;gap:1px;">
         <!-- Injected by renderGoogleCalendarMonthlyView -->
       </div>
     </div>
@@ -14811,7 +14825,6 @@ function initAdminKalenderPublikasi() {
 
 function setGoogleCalendarToday() {
   const d = new Date();
-  // Jika tahun sistem 2026 atau lebih, pakai tahun sistem, else 2026
   currentCalYear = (d.getFullYear() >= 2026) ? d.getFullYear() : 2026;
   currentCalMonth = d.getMonth();
   renderGoogleCalendarMonthlyView();
@@ -14827,6 +14840,15 @@ function navigateGoogleCalendarMonth(delta) {
     currentCalYear++;
   }
   renderGoogleCalendarMonthlyView();
+}
+
+function handleCalendarCellClick(event, dateStr) {
+  // Cegah jika klik tepat pada event chip
+  if (event.target.closest('.cal-event-chip')) return;
+  const currentUser = getCurrentUser();
+  if (currentUser && currentUser.role === 'humas') {
+    openHumasScheduleModal(null, dateStr);
+  }
 }
 
 function renderGoogleCalendarMonthlyView() {
@@ -14870,42 +14892,69 @@ function renderGoogleCalendarMonthlyView() {
       dateStr = `${currentCalYear}-${String(currentCalMonth + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
     }
 
-    // Ambil publikasi yang dijadwalkan pada tanggal ini
     const dayItems = calItems.filter(item => item.publish_date === dateStr);
 
-    // Tandai hari ini
     const now = new Date();
     const isToday = isCurrentMonth && (now.getDate() === dayNum && now.getMonth() === currentCalMonth && now.getFullYear() === currentCalYear);
 
+    // Render Event Chips (Google Calendar Style: Ramping, 1 Baris, Tidak Memanjang / Merusak Sel)
+    const MAX_VISIBLE_CHIPS = 2;
+    const visibleChips = dayItems.slice(0, MAX_VISIBLE_CHIPS);
+    const hiddenCount = dayItems.length - visibleChips.length;
+
+    const chipsHtml = visibleChips.map(item => {
+      const isTayang = (item.status_tayang === 'tayang');
+      const bg = isTayang ? '#dcfce7' : '#e0f2fe';
+      const borderLeft = isTayang ? '#16a34a' : '#0284c7';
+      const color = isTayang ? '#166534' : '#075985';
+      const badgeBg = isTayang ? '#bbf7d0' : '#bae6fd';
+      const badgeColor = isTayang ? '#14532d' : '#0369a1';
+      const icon = isTayang ? 'fa-circle-check' : 'fa-clock';
+
+      const channelsStr = (item.channels || []).join(', ') || 'Website';
+      const tooltipText = `${escapeHtml(item.judul)}
+Unit: ${escapeHtml(item.unit)}
+Status: ${isTayang ? 'Sudah Tayang' : 'Terjadwal'}
+Kanal: ${escapeHtml(channelsStr)}`;
+
+      return `
+        <div class="cal-event-chip" onclick="event.stopPropagation();${isHumas ? `openHumasScheduleModal('${item.id}')` : `openCalendarItemDetail('${item.id}')`}" style="background:${bg};border-left:3px solid ${borderLeft};color:${color};height:22px;border-radius:4px;padding:2px 6px;display:flex;align-items:center;gap:4px;overflow:hidden;white-space:nowrap;cursor:pointer;margin-bottom:3px;box-shadow:0 1px 2px rgba(0,0,0,0.03);transition:all .15s;" title="${tooltipText}">
+          <i class="fa-solid ${icon}" style="font-size:9.5px;flex-shrink:0;"></i>
+          <span style="font-weight:800;font-size:9px;background:${badgeBg};color:${badgeColor};padding:1px 4px;border-radius:3px;flex-shrink:0;">${escapeHtml(item.unit)}</span>
+          <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10.5px;font-weight:600;flex:1;">${escapeHtml(item.judul)}</span>
+        </div>
+      `;
+    }).join('');
+
+    const moreChipHtml = hiddenCount > 0 ? `
+      <div style="font-size:10px;font-weight:700;color:#2563eb;padding:1px 4px;cursor:pointer;" onclick="event.stopPropagation();${isHumas ? `openHumasScheduleModal(null, '${dateStr}')` : ''}">
+        +${hiddenCount} lainnya...
+      </div>
+    ` : '';
+
     cellsHtml += `
-      <div style="background:${isCurrentMonth ? '#fff' : '#f8fafc'};min-height:105px;padding:6px;display:flex;flex-direction:column;position:relative;">
+      <div onclick="handleCalendarCellClick(event, '${dateStr}')" style="background:${isCurrentMonth ? '#fff' : '#f8fafc'};min-height:92px;padding:6px;display:flex;flex-direction:column;position:relative;overflow:hidden;cursor:${isHumas ? 'pointer' : 'default'};transition:background .15s;" title="${isHumas ? `Klik untuk menjadwalkan publikasi pada ${dateStr}` : dateStr}">
+        
+        <!-- Cell Day Number Header -->
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-          <span style="font-size:12px;font-weight:${isCurrentMonth ? '800' : '500'};color:${isCurrentMonth ? (isToday ? '#2563eb' : '#1e293b') : '#94a3b8'};${isToday ? 'background:#eff6ff;padding:1px 6px;border-radius:12px;border:1px solid #bfdbfe;' : ''}">
-            ${dayNum} ${isToday ? '<strong style="font-size:9.5px;">(HARI INI)</strong>' : ''}
-          </span>
-          ${dayItems.length > 0 ? `<span style="font-size:10px;font-weight:800;color:#2563eb;background:#eff6ff;padding:1px 5px;border-radius:4px;">${dayItems.length}</span>` : ''}
+          ${isToday ? `
+            <div style="width:22px;height:22px;border-radius:50%;background:#2563eb;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:11px;">
+              ${dayNum}
+            </div>
+          ` : `
+            <span style="font-size:11.5px;font-weight:${isCurrentMonth ? '700' : '500'};color:${isCurrentMonth ? '#475569' : '#cbd5e1'};padding:1px 3px;">
+              ${dayNum}
+            </span>
+          `}
+          ${isHumas && isCurrentMonth ? `
+            <span style="font-size:9.5px;color:#94a3b8;opacity:0.6;" title="Tambah Jadwal"><i class="fa-solid fa-plus"></i></span>
+          ` : ''}
         </div>
 
-        <div style="display:flex;flex-direction:column;gap:4px;flex:1;overflow-y:auto;">
-          ${dayItems.map(item => {
-            const isTayang = (item.status_tayang === 'tayang');
-            const bg = isTayang ? '#f0fdf4' : '#eff6ff';
-            const color = isTayang ? '#15803d' : '#1d4ed8';
-            const border = isTayang ? '#bbf7d0' : '#bfdbfe';
-
-            return `
-              <div onclick="${isHumas ? `openHumasScheduleModal('${item.id}')` : `openCalendarItemDetail('${item.id}')`}" style="background:${bg};border:1px solid ${border};border-radius:5px;padding:4px 6px;cursor:pointer;font-size:10.5px;color:${color};line-height:1.2;transition:all .15s;" title="${escapeHtml(item.judul)} · ${escapeHtml(item.unit)}">
-                <div style="font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-                  ${isTayang ? '<i class="fa-solid fa-check"></i> ' : '<i class="fa-regular fa-clock"></i> '}
-                  ${escapeHtml(item.judul)}
-                </div>
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-top:2px;font-size:9.5px;">
-                  <span style="font-weight:700;">${escapeHtml(item.unit)}</span>
-                  <span>${(item.channels || []).slice(0, 2).map(c => c.replace('Website ', 'Web ').replace('Instagram ', 'IG ')).join(', ')}</span>
-                </div>
-              </div>
-            `;
-          }).join('')}
+        <!-- Chips Container -->
+        <div style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
+          ${chipsHtml}
+          ${moreChipHtml}
         </div>
       </div>
     `;
@@ -14923,7 +14972,6 @@ function renderAntreanBahanKalender() {
   const currentUser = getCurrentUser();
   const isHumas = (currentUser && currentUser.role === 'humas');
 
-  // Filter publikasi yang belum punya tanggal rilis (atau statusnya siap_dijadwalkan)
   const unscheduled = calItems.filter(item => !item.publish_date || item.status_tayang === 'siap_dijadwalkan');
 
   if (countBadge) countBadge.textContent = `${unscheduled.length} Naskah Siap`;
@@ -14971,21 +15019,79 @@ function renderAntreanBahanKalender() {
 }
 
 /* ── MODAL SCHEDULER HUMAS ── */
-function openHumasScheduleModal(calId) {
+function openHumasScheduleModal(calId, prefillDate) {
   const currentUser = getCurrentUser();
   if (!currentUser || currentUser.role !== 'humas') {
-    openCalendarItemDetail(calId);
+    if (calId) openCalendarItemDetail(calId);
     return;
   }
 
+  const calItems = getPrismoCalendarItems();
+  const modal = document.getElementById('prismo-humas-schedule-modal');
+  if (!modal) return;
+
+  const selectWrap = document.getElementById('humas-sched-select-wrap');
+  const selectItemEl = document.getElementById('humas-sched-select-item');
+
+  // Isi dropdown opsi naskah Publikasi Akhir
+  if (selectItemEl) {
+    selectItemEl.innerHTML = `
+      <option value="" disabled ${!calId ? 'selected' : ''}>-- Pilih Naskah Publikasi Akhir --</option>
+      ${calItems.map(item => {
+        const schedStatus = item.publish_date ? `(Jadwal: ${item.publish_date})` : '(Belum Dijadwalkan)';
+        const isSel = (calId && item.id === calId);
+        return `<option value="${escapeHtml(item.id)}" ${isSel ? 'selected' : ''}>[${escapeHtml(item.unit)}] ${escapeHtml(item.judul)} ${schedStatus}</option>`;
+      }).join('')}
+    `;
+  }
+
+  if (calId) {
+    activeHumasScheduleId = calId;
+    loadHumasScheduleItemToForm(calId, prefillDate);
+  } else {
+    // Mode tambah baru dari tombol header atau klik tanggal
+    activeHumasScheduleId = null;
+    const defaultDate = prefillDate || new Date().toISOString().slice(0, 10);
+    document.getElementById('humas-sched-id').textContent = 'Jadwal Baru';
+    document.getElementById('humas-sched-item-id').value = '';
+    document.getElementById('humas-sched-view-title').textContent = 'Silakan pilih naskah publikasi akhir dari dropdown di atas.';
+    document.getElementById('humas-sched-view-meta').textContent = '-';
+    document.getElementById('humas-sched-view-doc').innerHTML = '';
+    document.getElementById('humas-sched-date').value = defaultDate;
+    document.getElementById('humas-sched-status').value = 'terjadwal';
+    document.getElementById('humas-sched-link').value = '';
+    document.getElementById('humas-sched-catatan').value = '';
+
+    // Default channels
+    document.getElementById('chk-kanal-weblan').checked = true;
+    document.getElementById('chk-kanal-iglan').checked = true;
+    document.getElementById('chk-kanal-ytlan').checked = false;
+    document.getElementById('chk-kanal-media').checked = false;
+    document.getElementById('chk-kanal-webunit').checked = false;
+
+    // Pilih item pertama yang belum terjadwal jika ada
+    const firstUnscheduled = calItems.find(x => !x.publish_date || x.status_tayang === 'siap_dijadwalkan');
+    if (firstUnscheduled) {
+      if (selectItemEl) selectItemEl.value = firstUnscheduled.id;
+      loadHumasScheduleItemToForm(firstUnscheduled.id, defaultDate);
+    }
+  }
+
+  modal.classList.add('open');
+}
+
+function onHumasSelectPublicationItem(calId) {
+  if (!calId) return;
+  const currDate = document.getElementById('humas-sched-date').value;
+  loadHumasScheduleItemToForm(calId, currDate);
+}
+
+function loadHumasScheduleItemToForm(calId, overrideDate) {
   const calItems = getPrismoCalendarItems();
   const item = calItems.find(x => x.id === calId);
   if (!item) return;
 
   activeHumasScheduleId = calId;
-  const modal = document.getElementById('prismo-humas-schedule-modal');
-  if (!modal) return;
-
   document.getElementById('humas-sched-id').textContent = item.id;
   document.getElementById('humas-sched-item-id').value = item.id;
   document.getElementById('humas-sched-view-title').textContent = item.judul;
@@ -15000,20 +15106,18 @@ function openHumasScheduleModal(calId) {
       : `<span style="font-size:11.5px;color:#94a3b8;">Berkas disimpan di sistem internal</span>`;
   }
 
-  document.getElementById('humas-sched-date').value = item.publish_date || new Date().toISOString().slice(0, 10);
+  const finalDate = overrideDate || item.publish_date || new Date().toISOString().slice(0, 10);
+  document.getElementById('humas-sched-date').value = finalDate;
   document.getElementById('humas-sched-status').value = item.status_tayang === 'tayang' ? 'tayang' : 'terjadwal';
   document.getElementById('humas-sched-link').value = (item.channel_links && (item.channel_links['Website LAN'] || item.channel_links['Media Online'])) || '';
   document.getElementById('humas-sched-catatan').value = item.catatan_humas || '';
 
-  // Checkboxes kanal
-  const chs = item.channels || [];
+  const chs = item.channels || ['Website LAN', 'Instagram LAN'];
   document.getElementById('chk-kanal-weblan').checked = chs.includes('Website LAN');
   document.getElementById('chk-kanal-iglan').checked = chs.includes('Instagram LAN');
   document.getElementById('chk-kanal-ytlan').checked = chs.includes('YouTube LAN');
   document.getElementById('chk-kanal-media').checked = chs.includes('Media Online');
   document.getElementById('chk-kanal-webunit').checked = chs.includes('Website Unit');
-
-  modal.classList.add('open');
 }
 
 function closeHumasScheduleModal() {
@@ -15022,10 +15126,18 @@ function closeHumasScheduleModal() {
 }
 
 function saveHumasPublicationSchedule() {
-  if (!activeHumasScheduleId) return;
+  const selItemId = document.getElementById('humas-sched-select-item')?.value || activeHumasScheduleId;
+  if (!selItemId) {
+    alert('Wajib memilih Naskah Publikasi Akhir yang akan dijadwalkan.');
+    return;
+  }
+
   const list = getPrismoCalendarItems();
-  const idx = list.findIndex(x => x.id === activeHumasScheduleId);
-  if (idx === -1) return;
+  const idx = list.findIndex(x => x.id === selItemId);
+  if (idx === -1) {
+    alert('Naskah tidak ditemukan dalam database.');
+    return;
+  }
 
   const dateVal = document.getElementById('humas-sched-date').value.trim();
   if (!dateVal) {
