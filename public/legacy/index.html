@@ -13054,7 +13054,6 @@ function renderPrismoInboxAdmin() {
         <thead style="background:#f8fafc;border-bottom:1px solid #e2e8f0;">
           <tr>
             <th style="padding:10px 12px;font-size:11px;font-weight:700;color:#64748b;width:40px;">No</th>
-            <th style="padding:10px 12px;font-size:11px;font-weight:700;color:#64748b;width:80px;">Prioritas</th>
             <th style="padding:10px 12px;font-size:11px;font-weight:700;color:#64748b;">Kegiatan Usulan</th>
             <th style="padding:10px 12px;font-size:11px;font-weight:700;color:#64748b;width:100px;">Unit</th>
             <th style="padding:10px 12px;font-size:11px;font-weight:700;color:#64748b;width:100px;">Diterima</th>
@@ -13065,15 +13064,9 @@ function renderPrismoInboxAdmin() {
         <tbody>
           ${list.map((item, idx) => {
             const badge = getPrismoStatusBadge(item.status);
-            const isHigh = item.prioritas === 'Tinggi';
             return `
               <tr data-status="${escapeHtml(item.status || '')}" style="border-bottom:1px solid #f1f5f9;">
                 <td style="padding:11px 12px;font-size:12px;color:#94a3b8;font-weight:700;">${idx + 1}</td>
-                <td style="padding:11px 12px;">
-                  <span class="badge" style="background:${isHigh ? '#fee2e2' : '#f1f5f9'};color:${isHigh ? '#dc2626' : '#475569'};font-weight:700;font-size:11px;">
-                    ${item.prioritas || 'Normal'}
-                  </span>
-                </td>
                 <td style="padding:11px 12px;">
                   <div style="font-weight:700;color:#1e293b;font-size:13px;line-height:1.4;">${escapeHtml(item.judul)}</div>
                   <div style="font-size:11.5px;color:#64748b;margin-top:2px;">${item.id} &bull; Cluster: ${escapeHtml(item.cluster || '-')}</div>
