@@ -9007,12 +9007,9 @@ const ROLE_CONFIGS = {
       { id: "dashboard", icon: "fa-chart-pie", label: "Dashboard Publikasi", action: "openTab('dashboard')" },
       { id: "pengumuman", icon: "fa-bullhorn", label: "Pengumuman", badge: true, action: "openTab('pengumuman')" },
       { section: "ANTRIAN PUBLIKASI" },
-      { id: "antrian_publikasi", icon: "fa-layer-group", label: "Antrian Siap Terbit", badge: true, action: "openTab('antrian_publikasi')" },
-      { id: "review_desain", icon: "fa-palette", label: "Review Desain & Redaksi", action: "openTab('review_desain')" },
-      { section: "PUBLIKASI & MEDIA" },
-      { id: "manajemen_kanal", icon: "fa-share-nodes", label: "Manajemen Kanal Publikasi", action: "openTab('manajemen_kanal')" },
-      { id: "kalender_media", icon: "fa-calendar-days", label: "Kalender Rilis Media", action: "openTab('kalender_media')" },
-      { id: "arsip_publikasi", icon: "fa-box-archive", label: "Arsip Publikasi", action: "openTab('arsip_publikasi')" }
+      { id: "kalender_media", icon: "fa-calendar-days", label: "Antrian & Kalender Publikasi", badge: true, action: "openTab('kalender_media')" },
+      { section: "DATA PUBLIKASI" },
+      { id: "monitoring_publikasi", icon: "fa-clipboard-check", label: "Monitoring Naskah Selesai", action: "openTab('monitoring_publikasi')" }
     ],
     defaultTab: "dashboard"
   }
@@ -11113,6 +11110,14 @@ function updatePortalBadges() {
       else if (tabId === 'perbaikan_catatan') badgeCount = perluPerbaikanUnitCount;
       else if (tabId === 'laporan_bukti') badgeCount = laporanUnitCount;
       else if (tabId === 'pengumuman') badgeCount = unreadAnnouncementsCount;
+      else if (tabId === 'kalender_media' || tabId === 'antrian_publikasi') {
+        try {
+          if (typeof getPrismoCalendarItems === 'function') {
+            const calItems = getPrismoCalendarItems();
+            badgeCount = calItems.filter(x => !x.publish_date || x.status_tayang === 'siap_dijadwalkan').length;
+          }
+        } catch(e) {}
+      }
 
       let badgeEl = m.querySelector('.sindisa-badge');
       if (badgeCount > 0) {
@@ -13857,8 +13862,16 @@ function renderDynamicRoleTab(tabName, user) {
 
     case 'kalender_publikasi':
     case 'kalender_media':
+    case 'antrian_publikasi':
       container.innerHTML = renderAdminKalenderPublikasi(user);
       initAdminKalenderPublikasi();
+      if (typeof updatePortalBadges === 'function') updatePortalBadges();
+      return;
+
+    case 'monitoring_publikasi':
+    case 'monitoring_naskah_selesai':
+      container.innerHTML = renderHumasMonitoringNaskahSelesai(user);
+      initHumasMonitoringNaskahSelesai();
       if (typeof updatePortalBadges === 'function') updatePortalBadges();
       return;
 
@@ -14861,7 +14874,7 @@ function renderAdminKalenderPublikasi(user) {
       <div>
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;flex-wrap:wrap;">
           <h3 style="font-size:19px;font-weight:800;color:#1e293b;margin:0;">
-            <i class="fa-solid fa-calendar-days" style="color:#2563eb;margin-right:8px;"></i> Kalender Publikasi LAN RI
+            <i class="fa-solid fa-calendar-days" style="color:#2563eb;margin-right:8px;"></i> ${isHumas ? 'Antrian &amp; Kalender Publikasi LAN RI' : 'Kalender Publikasi LAN RI'}
           </h3>
           ${roleBadgeHtml}
         </div>
@@ -15312,6 +15325,8 @@ function saveHumasPublicationSchedule() {
   closeHumasScheduleModal();
   renderGoogleCalendarMonthlyView();
   renderAntreanBahanKalender();
+  if (typeof renderHumasMonitoringTableBody === 'function') renderHumasMonitoringTableBody();
+  if (typeof updatePortalBadges === 'function') updatePortalBadges();
   alert(`Jadwal publikasi "${list[idx].judul}" berhasil disimpan pada kalender dan disinkronkan ke Supabase!`);
 }
 
@@ -16767,7 +16782,357 @@ renderTable();
   }
   document.body.style.overflow = '';
 
-  renderAuthNav();
+  /* =========================================================================
+   PORTAL HUMAS: MONITORING NASKAH SELESAI (SIAP & SUDAH DIRILIS)
+   ========================================================================= */
+
+function formatHumasDate(str) {
+  if (!str) return '-';
+  const parts = str.split('-');
+  if (parts.length === 3) {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+    const mIdx = parseInt(parts[1], 10) - 1;
+    return `${parseInt(parts[2], 10)} ${months[mIdx] || parts[1]} ${parts[0]}`;
+  }
+  return str;
+}
+
+function renderHumasMonitoringNaskahSelesai(user) {
+  const isHumas = (user && user.role === 'humas');
+  return `
+    <div style="margin-bottom:20px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:12px;">
+        <div>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;flex-wrap:wrap;">
+            <h3 style="font-size:19px;font-weight:800;color:#1e293b;margin:0;">
+              <i class="fa-solid fa-clipboard-check" style="color:#059669;margin-right:8px;"></i> Monitoring Naskah Selesai
+            </h3>
+            <span class="badge" style="background:#ecfdf5;color:#059669;border:1px solid #a7f3d0;font-weight:800;font-size:11px;padding:4px 10px;border-radius:6px;">
+              <i class="fa-solid fa-bullhorn"></i> Publikasi Siap &amp; Sudah Dirilis
+            </span>
+          </div>
+          <p style="font-size:12.5px;color:#64748b;margin:0;">
+            Daftar naskah riset &amp; survei yang telah selesai direview (Publikasi Akhir) untuk pemantauan rilis media dan publikasi Humas LAN RI.
+          </p>
+        </div>
+        <button onclick="openTab('kalender_media')" style="padding:9px 16px;background:#2563eb;color:#fff;border:none;border-radius:8px;font-size:12.5px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;box-shadow:0 1px 3px rgba(37,99,235,0.3);">
+          <i class="fa-solid fa-calendar-days"></i> Buka Kalender Publikasi
+        </button>
+      </div>
+
+      <!-- Ringkasan Statistik Metrik -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:14px;margin-bottom:20px;">
+        <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,0.03);">
+          <div style="font-size:11.5px;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:6px;display:flex;align-items:center;gap:6px;">
+            <i class="fa-solid fa-file-lines" style="color:#64748b;"></i> Total Naskah Selesai
+          </div>
+          <div id="humas-mon-total-count" style="font-size:24px;font-weight:900;color:#1e293b;">0</div>
+          <div style="font-size:11px;color:#94a3b8;margin-top:2px;">Naskah publikasi akhir</div>
+        </div>
+
+        <div style="background:#fff;border:1px solid #fed7aa;border-radius:12px;padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,0.03);">
+          <div style="font-size:11.5px;font-weight:700;color:#c2410c;text-transform:uppercase;margin-bottom:6px;display:flex;align-items:center;gap:6px;">
+            <i class="fa-solid fa-clock" style="color:#ea580c;"></i> Belum Terjadwal
+          </div>
+          <div id="humas-mon-unscheduled-count" style="font-size:24px;font-weight:900;color:#ea580c;">0</div>
+          <div style="font-size:11px;color:#c2410c;margin-top:2px;">Perlu diatur tanggal tayang</div>
+        </div>
+
+        <div style="background:#fff;border:1px solid #bfdbfe;border-radius:12px;padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,0.03);">
+          <div style="font-size:11.5px;font-weight:700;color:#1d4ed8;text-transform:uppercase;margin-bottom:6px;display:flex;align-items:center;gap:6px;">
+            <i class="fa-solid fa-calendar-check" style="color:#2563eb;"></i> Terjadwal
+          </div>
+          <div id="humas-mon-scheduled-count" style="font-size:24px;font-weight:900;color:#2563eb;">0</div>
+          <div style="font-size:11px;color:#1d4ed8;margin-top:2px;">Menunggu tanggal tayang</div>
+        </div>
+
+        <div style="background:#fff;border:1px solid #bbf7d0;border-radius:12px;padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,0.03);">
+          <div style="font-size:11.5px;font-weight:700;color:#15803d;text-transform:uppercase;margin-bottom:6px;display:flex;align-items:center;gap:6px;">
+            <i class="fa-solid fa-circle-check" style="color:#16a34a;"></i> Sudah Tayang
+          </div>
+          <div id="humas-mon-published-count" style="font-size:24px;font-weight:900;color:#16a34a;">0</div>
+          <div style="font-size:11px;color:#15803d;margin-top:2px;">Telah rilis di kanal media</div>
+        </div>
+      </div>
+
+      <!-- Toolbar Filter & Pencarian -->
+      <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:14px 16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+        <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:260px;">
+          <div style="position:relative;flex:1;">
+            <i class="fa-solid fa-magnifying-glass" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#94a3b8;font-size:12px;"></i>
+            <input type="text" id="humas-mon-search" oninput="filterHumasMonitoringTable()" placeholder="Cari judul naskah, PIC, atau kata kunci..." style="width:100%;padding:8px 12px 8px 34px;border-radius:8px;border:1px solid #cbd5e1;font-size:12px;outline:none;" />
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span style="font-size:11.5px;font-weight:700;color:#475569;">Unit:</span>
+            <select id="humas-mon-filter-unit" onchange="filterHumasMonitoringTable()" style="padding:7px 10px;border-radius:8px;border:1px solid #cbd5e1;font-size:12px;font-weight:600;background:#fff;outline:none;">
+              <option value="">Semua Unit</option>
+              <option value="SKPP">SKPP</option>
+              <option value="DAPKK">DAPKK</option>
+              <option value="SKMP">SKMP</option>
+              <option value="SKTAN">SKTAN</option>
+              <option value="SKMK">SKMK</option>
+              <option value="STIA">STIA LAN</option>
+              <option value="Puslatbang KHAN">Puslatbang KHAN</option>
+              <option value="Puslatbang PKASN">Puslatbang PKASN</option>
+              <option value="Puslatbang CSDA">Puslatbang CSDA</option>
+              <option value="Puslatbang KMP">Puslatbang KMP</option>
+            </select>
+          </div>
+
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span style="font-size:11.5px;font-weight:700;color:#475569;">Status:</span>
+            <select id="humas-mon-filter-status" onchange="filterHumasMonitoringTable()" style="padding:7px 10px;border-radius:8px;border:1px solid #cbd5e1;font-size:12px;font-weight:600;background:#fff;outline:none;">
+              <option value="">Semua Status</option>
+              <option value="siap_dijadwalkan">🔘 Belum Terjadwal</option>
+              <option value="terjadwal">🔵 Terjadwal</option>
+              <option value="tayang">🟢 Sudah Tayang</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabel Naskah Selesai -->
+      <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.03);">
+        <div style="overflow-x:auto;">
+          <table style="width:100%;border-collapse:collapse;text-align:left;font-family:inherit;font-size:12.5px;">
+            <thead>
+              <tr style="background:#f8fafc;border-bottom:1px solid #e2e8f0;color:#475569;font-size:11.5px;text-transform:uppercase;font-weight:800;letter-spacing:0.3px;">
+                <th style="padding:12px 14px;width:48px;">No</th>
+                <th style="padding:12px 14px;">Judul Naskah &amp; Informasi</th>
+                <th style="padding:12px 14px;width:120px;">Unit Kerja</th>
+                <th style="padding:12px 14px;width:170px;">Status Jadwal</th>
+                <th style="padding:12px 14px;width:220px;">Target Kanal &amp; Tautan</th>
+                <th style="padding:12px 14px;width:150px;text-align:right;">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="humas-mon-table-body">
+              <!-- Baris tabel di-generate via renderHumasMonitoringTableBody() -->
+            </tbody>
+          </table>
+        </div>
+        <div id="humas-mon-empty" style="display:none;padding:36px 20px;text-align:center;color:#64748b;font-size:13px;">
+          <i class="fa-regular fa-folder-open" style="font-size:28px;color:#94a3b8;display:block;margin-bottom:8px;"></i>
+          Tidak ditemukan naskah yang sesuai dengan pencarian atau filter.
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function initHumasMonitoringNaskahSelesai() {
+  renderHumasMonitoringTableBody();
+}
+
+function renderHumasMonitoringTableBody() {
+  const tbody = document.getElementById('humas-mon-table-body');
+  const emptyEl = document.getElementById('humas-mon-empty');
+  if (!tbody) return;
+
+  const calItems = (typeof getPrismoCalendarItems === 'function') ? getPrismoCalendarItems() : [];
+  
+  // Hitung metrik
+  let totalCount = calItems.length;
+  let unscheduledCount = 0;
+  let scheduledCount = 0;
+  let publishedCount = 0;
+
+  calItems.forEach(item => {
+    if (item.status_tayang === 'tayang') {
+      publishedCount++;
+    } else if (item.status_tayang === 'terjadwal' && item.publish_date) {
+      scheduledCount++;
+    } else {
+      unscheduledCount++;
+    }
+  });
+
+  const totEl = document.getElementById('humas-mon-total-count');
+  const unschedEl = document.getElementById('humas-mon-unscheduled-count');
+  const schedEl = document.getElementById('humas-mon-scheduled-count');
+  const pubEl = document.getElementById('humas-mon-published-count');
+  if (totEl) totEl.textContent = totalCount;
+  if (unschedEl) unschedEl.textContent = unscheduledCount;
+  if (schedEl) schedEl.textContent = scheduledCount;
+  if (pubEl) pubEl.textContent = publishedCount;
+
+  if (calItems.length === 0) {
+    tbody.innerHTML = '';
+    if (emptyEl) emptyEl.style.display = 'block';
+    return;
+  }
+  if (emptyEl) emptyEl.style.display = 'none';
+
+  const currentUser = getCurrentUser();
+  const isHumas = (currentUser && currentUser.role === 'humas');
+
+  tbody.innerHTML = calItems.map((item, idx) => {
+    const isTayang = (item.status_tayang === 'tayang');
+    const isTerjadwal = (item.status_tayang === 'terjadwal' && item.publish_date);
+    const isBelum = !isTayang && !isTerjadwal;
+
+    // Status Badge
+    let statusBadgeHtml = '';
+    let filterStatusKey = 'siap_dijadwalkan';
+    if (isTayang) {
+      filterStatusKey = 'tayang';
+      statusBadgeHtml = `
+        <span class="badge" style="background:#ecfdf5;color:#059669;border:1px solid #a7f3d0;font-weight:700;padding:3px 8px;border-radius:6px;font-size:11px;display:inline-flex;align-items:center;gap:4px;">
+          <i class="fa-solid fa-circle-check"></i> Sudah Tayang
+        </span>
+        <div style="font-size:11px;color:#059669;font-weight:600;margin-top:3px;">
+          ${formatHumasDate(item.publish_date)}
+        </div>
+      `;
+    } else if (isTerjadwal) {
+      filterStatusKey = 'terjadwal';
+      statusBadgeHtml = `
+        <span class="badge" style="background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;font-weight:700;padding:3px 8px;border-radius:6px;font-size:11px;display:inline-flex;align-items:center;gap:4px;">
+          <i class="fa-solid fa-calendar-check"></i> Terjadwal
+        </span>
+        <div style="font-size:11px;color:#2563eb;font-weight:600;margin-top:3px;">
+          ${formatHumasDate(item.publish_date)}
+        </div>
+      `;
+    } else {
+      filterStatusKey = 'siap_dijadwalkan';
+      statusBadgeHtml = `
+        <span class="badge" style="background:#fefce8;color:#a16207;border:1px solid #fef08a;font-weight:700;padding:3px 8px;border-radius:6px;font-size:11px;display:inline-flex;align-items:center;gap:4px;">
+          <i class="fa-solid fa-clock"></i> Belum Terjadwal
+        </span>
+        <div style="font-size:11px;color:#94a3b8;margin-top:3px;">Menunggu Humas</div>
+      `;
+    }
+
+    // Kanal & Link
+    const channels = (item.channels && Array.isArray(item.channels) && item.channels.length) ? item.channels : [];
+    const channelLinks = item.channel_links || {};
+    let channelsHtml = '';
+    if (channels.length > 0) {
+      channelsHtml = `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:3px;">` +
+        channels.map(ch => `<span class="badge" style="background:#f1f5f9;color:#334155;border:1px solid #e2e8f0;font-size:10.5px;padding:2px 6px;border-radius:4px;">${escapeHtml(ch)}</span>`).join('') +
+        `</div>`;
+    } else {
+      channelsHtml = `<span style="font-size:11.5px;color:#94a3b8;font-style:italic;">Belum ditentukan</span>`;
+    }
+
+    // Tautan publikasi jika ada
+    let linkPills = '';
+    for (const [chKey, linkUrl] of Object.entries(channelLinks)) {
+      if (linkUrl && String(linkUrl).trim()) {
+        linkPills += `
+          <a href="${escapeHtml(linkUrl)}" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:#2563eb;text-decoration:none;font-weight:600;margin-right:6px;margin-top:2px;" title="${escapeHtml(chKey)}: ${escapeHtml(linkUrl)}">
+            <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:10px;"></i> ${escapeHtml(chKey)}
+          </a>
+        `;
+      }
+    }
+    if (linkPills) {
+      channelsHtml += `<div style="margin-top:2px;">${linkPills}</div>`;
+    }
+
+    // Action button
+    let actionBtnHtml = '';
+    if (isHumas) {
+      if (isBelum) {
+        actionBtnHtml = `
+          <button onclick="openHumasScheduleModal('${escapeHtml(item.id)}')" style="padding:6px 11px;background:#2563eb;color:#fff;border:none;border-radius:6px;font-size:11.5px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:5px;box-shadow:0 1px 2px rgba(37,99,235,0.25);">
+            <i class="fa-solid fa-calendar-plus"></i> Atur Jadwal
+          </button>
+        `;
+      } else {
+        actionBtnHtml = `
+          <button onclick="openHumasScheduleModal('${escapeHtml(item.id)}')" style="padding:6px 10px;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;border-radius:6px;font-size:11.5px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:5px;">
+            <i class="fa-solid fa-pen-to-square"></i> Edit
+          </button>
+        `;
+      }
+    }
+    actionBtnHtml += `
+      <button onclick="openCalendarItemDetail('${escapeHtml(item.id)}')" title="Lihat Ringkasan" style="padding:6px 9px;background:#f8fafc;color:#475569;border:1px solid #cbd5e1;border-radius:6px;font-size:11.5px;cursor:pointer;margin-left:4px;">
+        <i class="fa-solid fa-eye"></i>
+      </button>
+    `;
+
+    return `
+      <tr class="humas-mon-row" data-id="${escapeHtml(item.id)}" data-unit="${escapeHtml(item.unit || '')}" data-status="${filterStatusKey}" data-search="${escapeHtml((item.judul + ' ' + (item.unit || '') + ' ' + (item.pic || '')).toLowerCase())}" style="border-bottom:1px solid #f1f5f9;transition:background 0.15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
+        <td style="padding:12px 14px;color:#94a3b8;font-weight:700;font-size:11.5px;">${idx + 1}</td>
+        <td style="padding:12px 14px;">
+          <div style="font-weight:800;color:#1e293b;font-size:13px;line-height:1.4;margin-bottom:3px;">
+            ${escapeHtml(item.judul)}
+          </div>
+          <div style="font-size:11px;color:#64748b;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <span><i class="fa-solid fa-user-tie" style="color:#94a3b8;margin-right:4px;"></i>PIC: <strong>${escapeHtml(item.pic || '-')}</strong></span>
+            <span>•</span>
+            <span><i class="fa-solid fa-tag" style="color:#94a3b8;margin-right:4px;"></i>${escapeHtml(item.bentuk_naskah || 'Policy Brief')}</span>
+            ${item.catatan_humas ? `<span style="color:#0284c7;font-style:italic;" title="${escapeHtml(item.catatan_humas)}">• <i class="fa-solid fa-comment-dots"></i> Ada arahan Humas</span>` : ''}
+          </div>
+        </td>
+        <td style="padding:12px 14px;">
+          <span class="badge" style="background:#f1f5f9;color:#1e293b;border:1px solid #cbd5e1;font-weight:700;padding:3px 8px;border-radius:6px;font-size:11px;">
+            ${escapeHtml(item.unit || '-')}
+          </span>
+        </td>
+        <td style="padding:12px 14px;">
+          ${statusBadgeHtml}
+        </td>
+        <td style="padding:12px 14px;">
+          ${channelsHtml}
+        </td>
+        <td style="padding:12px 14px;text-align:right;white-space:nowrap;">
+          ${actionBtnHtml}
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  filterHumasMonitoringTable();
+}
+
+function filterHumasMonitoringTable() {
+  const searchInput = document.getElementById('humas-mon-search');
+  const unitSelect = document.getElementById('humas-mon-filter-unit');
+  const statusSelect = document.getElementById('humas-mon-filter-status');
+  const emptyEl = document.getElementById('humas-mon-empty');
+
+  const q = searchInput ? searchInput.value.trim().toLowerCase() : '';
+  const selectedUnit = unitSelect ? unitSelect.value.trim().toLowerCase() : '';
+  const selectedStatus = statusSelect ? statusSelect.value.trim() : '';
+
+  const rows = document.querySelectorAll('.humas-mon-row');
+  let visibleCount = 0;
+
+  rows.forEach(r => {
+    const rSearch = r.getAttribute('data-search') || '';
+    const rUnit = (r.getAttribute('data-unit') || '').toLowerCase();
+    const rStatus = r.getAttribute('data-status') || '';
+
+    const matchSearch = !q || rSearch.includes(q);
+    const matchUnit = !selectedUnit || rUnit.includes(selectedUnit);
+    const matchStatus = !selectedStatus || rStatus === selectedStatus;
+
+    if (matchSearch && matchUnit && matchStatus) {
+      r.style.display = '';
+      visibleCount++;
+    } else {
+      r.style.display = 'none';
+    }
+  });
+
+  if (emptyEl) {
+    emptyEl.style.display = (visibleCount === 0 && rows.length > 0) ? 'block' : 'none';
+  }
+}
+
+window.renderHumasMonitoringNaskahSelesai = renderHumasMonitoringNaskahSelesai;
+window.initHumasMonitoringNaskahSelesai = initHumasMonitoringNaskahSelesai;
+window.renderHumasMonitoringTableBody = renderHumasMonitoringTableBody;
+window.filterHumasMonitoringTable = filterHumasMonitoringTable;
+
+
+renderAuthNav();
   clearLoginForm();
 
   const roleRoute = new URLSearchParams(window.location.search).get('role');
@@ -16795,6 +17160,8 @@ renderTable();
   if (typeof syncUsersFromSupabase === 'function') syncUsersFromSupabase();
   if (typeof syncDataFromSupabase === 'function') syncDataFromSupabase(false);
   if (typeof syncPrismoProposalsFromSupabase === 'function') syncPrismoProposalsFromSupabase();
+
+
 })();
 </script>
 </body>
