@@ -2847,9 +2847,6 @@ window.addEventListener('focus', () => {
             <button type="button" class="prism-subtab-btn" onclick="switchPortalSubtab('timeline', this)" id="subtab-btn-timeline" style="display:inline-flex;align-items:center;gap:7px;padding:8px 18px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;border:none;background:transparent;color:#475569;">
               <i class="fa-regular fa-calendar"></i> Jadwal Rilis
             </button>
-            <button type="button" class="prism-subtab-btn" onclick="switchPortalSubtab('records', this)" id="subtab-btn-records" style="display:inline-flex;align-items:center;gap:7px;padding:8px 18px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;border:none;background:transparent;color:#475569;">
-              <i class="fa-solid fa-table-list"></i> Tabel Monitoring Kegiatan
-            </button>
           </div>
         </div>
 
@@ -13748,6 +13745,7 @@ function switchSindisaPage(pageName, menuItem) {
    PORTAL SUBTABS & HELPERS (OVERVIEW / TIMELINE / RECORDS)
    ══════════════════════════════════════════════════════════════════ */
 function switchPortalSubtab(subtab, btn) {
+  if (subtab === 'records') subtab = 'timeline';
   document.querySelectorAll('.prism-subtab-btn').forEach(b => {
     b.classList.remove('active');
     b.style.background = 'transparent';
@@ -13770,19 +13768,12 @@ function switchPortalSubtab(subtab, btn) {
 
   if (pOverview) pOverview.style.display = (subtab === 'overview') ? 'block' : 'none';
   if (pTimeline) pTimeline.style.display = (subtab === 'timeline') ? 'block' : 'none';
-  if (pRecords) pRecords.style.display = (subtab === 'records') ? 'block' : 'none';
+  if (pRecords) pRecords.style.display = 'none';
 
   if (subtab === 'overview') {
     applyPortalFilters();
   } else if (subtab === 'timeline') {
     renderPortalRoadmap();
-  } else if (subtab === 'records') {
-    const pYear = document.getElementById('p-year');
-    const prYear = document.getElementById('portal-r-year');
-    if (prYear && !prYear.value && pYear && pYear.value) {
-      prYear.value = pYear.value;
-    }
-    renderPortalTable();
   }
 }
 
