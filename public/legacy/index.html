@@ -2779,10 +2779,6 @@ window.addEventListener('focus', () => {
           <i class="fa-solid fa-chart-line"></i>
           <span class="sindisa-menu-text">Monitoring Kegiatan</span>
         </li>
-        <li class="sindisa-menu-item" data-tab-id="kegiatan_terlambat" onclick="openTab('kegiatan_terlambat'); highlightMenuItem(this)">
-          <i class="fa-solid fa-triangle-exclamation"></i>
-          <span class="sindisa-menu-text">Kegiatan Terlambat</span>
-        </li>
         <li class="sindisa-menu-item" data-tab-id="pengumuman" onclick="openTab('pengumuman'); highlightMenuItem(this)">
           <i class="fa-solid fa-bullhorn"></i>
           <span class="sindisa-menu-text">Pengumuman</span>
@@ -7169,7 +7165,8 @@ function filterInisiatifTable(page = 1) {
 
   tbody.innerHTML = pageRows.map((item, idx) => {
     const rowNo = startIdx + idx + 1;
-    const canEdit = !isUnit || (item.unit && currentUser.unit && String(item.unit).toUpperCase().includes(String(currentUser.unit).toUpperCase()));
+    const isDeputiUser = currentUser && (currentUser.role === 'deputi' || currentUser.role === 'kepala_lan');
+    const canEdit = !isDeputiUser && (!isUnit || (item.unit && currentUser.unit && String(item.unit).toUpperCase().includes(String(currentUser.unit).toUpperCase())));
     const unitBadge = `<span class="badge" style="background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe;font-weight:700;">${planningEscape(item.unit || item.sourceSheet || '—')}</span>`;
     const jenisBadge = item.jenis ? `<span class="badge" style="background:#f8fafc;border:1px solid #e2e8f0;color:#334155;">${planningEscape(item.jenis)}</span>` : '—';
     const clusterText = [item.cluster1, item.cluster2].filter(Boolean).map(planningEscape).join(' · ') || '—';
@@ -7221,6 +7218,10 @@ function renderInisiatifPagination(totalPages, currentPage) {
 
 function openInisiatifEditor(id) {
   const user = getCurrentUser();
+  if (user && (user.role === 'deputi' || user.role === 'kepala_lan')) {
+    alert('Akses dibatasi: Role Deputi hanya memiliki akses melihat data (view-only) pada menu Inisiatif AK/Dosen.');
+    return;
+  }
   const editor = document.getElementById('inisiatif-editor');
   if (!editor) return;
   const isEdit = id != null;
@@ -7351,6 +7352,11 @@ function closeInisiatifEditor() {
 }
 
 async function deleteInisiatifRow(id) {
+  const user = getCurrentUser();
+  if (user && (user.role === 'deputi' || user.role === 'kepala_lan')) {
+    alert('Akses dibatasi: Role Deputi tidak memiliki izin menghapus data Inisiatif AK/Dosen.');
+    return;
+  }
   if (!confirm('Apakah Anda yakin ingin menghapus data inisiatif ini?')) return;
   const numId = Number(id);
   // Hapus dari memori & local
@@ -7372,6 +7378,10 @@ let scrapedScholarResult = null;
 
 function openImportScholarModal() {
   const user = getCurrentUser();
+  if (user && (user.role === 'deputi' || user.role === 'kepala_lan')) {
+    alert('Akses dibatasi: Role Deputi tidak memiliki izin impor Google Scholar.');
+    return;
+  }
   const modalEl = document.getElementById('inisiatif-scholar-modal');
   if (!modalEl) return;
   const isUnit = isUnitUser(user) && !!user.unit;
@@ -7843,14 +7853,20 @@ function renderPlanningUnitPage(kind, user) {
     <div class="card" style="margin-bottom:16px;">
       <div class="card-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
         <span class="card-title"><i class="fa-solid fa-lightbulb" style="color:#eab308;margin-right:6px;"></i> Inisiatif AK / Dosen</span>
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-          <button class="planning-button" type="button" onclick="openImportScholarModal()" style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:#059669;color:#fff;border-radius:6px;border:none;font-weight:700;font-size:12px;cursor:pointer;" title="Tarik publikasi dosen/peneliti dari Google Scholar">
-            <i class="fa-solid fa-graduation-cap"></i> Impor dari Google Scholar
-          </button>
-          <button class="planning-button" type="button" onclick="openInisiatifEditor()" style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:#1e40af;color:#fff;border-radius:6px;border:none;font-weight:700;font-size:12px;cursor:pointer;">
-            <i class="fa-solid fa-plus"></i> Tambah Inisiatif Baru
-          </button>
-        </div>
+        ${(user && (user.role === 'deputi' || user.role === 'kepala_lan')) ? `
+          <span class="badge" style="background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe;font-weight:700;font-size:11.5px;padding:6px 12px;border-radius:6px;">
+            <i class="fa-solid fa-eye" style="margin-right:4px;"></i> Mode Baca (Pimpinan)
+          </span>
+        ` : `
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <button class="planning-button" type="button" onclick="openImportScholarModal()" style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:#059669;color:#fff;border-radius:6px;border:none;font-weight:700;font-size:12px;cursor:pointer;" title="Tarik publikasi dosen/peneliti dari Google Scholar">
+              <i class="fa-solid fa-graduation-cap"></i> Impor dari Google Scholar
+            </button>
+            <button class="planning-button" type="button" onclick="openInisiatifEditor()" style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:#1e40af;color:#fff;border-radius:6px;border:none;font-weight:700;font-size:12px;cursor:pointer;">
+              <i class="fa-solid fa-plus"></i> Tambah Inisiatif Baru
+            </button>
+          </div>
+        `}
       </div>
       <div class="card-body">
         <p style="margin:0 0 12px;color:#64748b;font-size:12px;">
@@ -7908,7 +7924,7 @@ function renderPlanningUnitPage(kind, user) {
                 <th style="width:130px;">Cluster</th>
                 <th style="width:200px;">Link Publikasi</th>
                 <th style="width:140px;">Catatan</th>
-                <th style="width:110px;text-align:center;">Aksi</th>
+                <th style="width:110px;text-align:center;">${(user && (user.role === 'deputi' || user.role === 'kepala_lan')) ? 'Status Akses' : 'Aksi'}</th>
               </tr>
             </thead>
             <tbody id="inisiatif-rows"></tbody>
@@ -8539,6 +8555,17 @@ const LEADERSHIP_MENUS = [
   { id: "logout", icon: "fa-right-from-bracket", label: "Logout", action: "handleUserLogout()" }
 ];
 
+const DEPUTI_MENUS = [
+  { section: "MENU PIMPINAN" },
+  { id: "dashboard", icon: "fa-chart-pie", label: "Dashboard Pimpinan", action: "openTab('dashboard')" },
+  { id: "perlu_persetujuan", icon: "fa-clipboard-check", label: "Perlu Persetujuan", badge: true, action: "openTab('perlu_persetujuan')" },
+  { id: "monitoring_kegiatan", icon: "fa-chart-line", label: "Monitoring Kegiatan", action: "openTab('monitoring_kegiatan')" },
+  { id: "inisiatif_ak_dosen", icon: "fa-lightbulb", label: "Inisiatif AK/Dosen", action: "openTab('inisiatif_ak_dosen')" },
+  { id: "pengumuman", icon: "fa-bullhorn", label: "Pengumuman", badge: true, action: "openTab('pengumuman')" },
+  { id: "profil_akun", icon: "fa-user-shield", label: "Profil/Akun", action: "openTab('profil_akun')" },
+  { id: "logout", icon: "fa-right-from-bracket", label: "Logout", action: "handleUserLogout()" }
+];
+
 const ROLE_CONFIGS = {
   // 1. UNIT KERJA PELAKSANA (Pusjar SKMK, SKPP, DAPKK, SKMP, SKTAN, STIA JKT/MKS/BDG)
   default_unit: {
@@ -8594,11 +8621,11 @@ const ROLE_CONFIGS = {
     defaultTab: "dashboard"
   },
 
-  // 4. DEPUTI (Revisi #6, #8, #9, #10: Nama role "Deputi", menu & akses disamakan dengan Kepala LAN)
+  // 4. DEPUTI (Menu ringkas pimpinan tanpa kegiatan terlambat)
   deputi: {
     title: "Deputi",
     subtitle: "Deputi Kajian Kebijakan & Inovasi",
-    menus: LEADERSHIP_MENUS,
+    menus: DEPUTI_MENUS,
     defaultTab: "dashboard"
   },
 
