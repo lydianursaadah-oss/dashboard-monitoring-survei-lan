@@ -7630,7 +7630,7 @@ function filterInisiatifTable(page = 1) {
       <td style="font-weight:700;color:#475569;text-align:center;white-space:nowrap;">${displayYear}</td>
       <td style="font-size:11.5px;color:#475569;word-break:break-word;">${clusterText}</td>
       <td style="white-space:nowrap;width:180px;">${initiativeLinksHtml(item)}</td>
-      <td style="font-size:11px;color:#64748b;max-width:180px;word-break:break-word;">${planningEscape(item.catatan || '—')}</td>
+      ${!isDeputiUser ? `<td style="font-size:11px;color:#64748b;max-width:180px;word-break:break-word;">${planningEscape(item.catatan || '—')}</td>` : ''}
       ${!isDeputiUser ? `
         <td style="white-space:nowrap;">
           ${canEdit ? `
@@ -8370,7 +8370,7 @@ function renderPlanningUnitPage(kind, user) {
                 <th style="width:70px;text-align:center;white-space:nowrap;">Tahun</th>
                 <th style="width:140px;">Cluster</th>
                 <th style="width:180px;white-space:nowrap;">Link Publikasi</th>
-                <th style="min-width:140px;">Catatan</th>
+                ${!(user && (user.role === 'deputi' || user.role === 'kepala_lan')) ? '<th style="min-width:140px;">Catatan</th>' : ''}
                 ${!(user && (user.role === 'deputi' || user.role === 'kepala_lan')) ? '<th style="width:95px;text-align:center;white-space:nowrap;">Aksi</th>' : ''}
               </tr>
             </thead>
@@ -9556,7 +9556,6 @@ const ALL_SIPANTAU_MENUS = [
 ];
 
 const LEADERSHIP_MENUS = [
-  { section: "MENU PIMPINAN" },
   { id: "dashboard", icon: "fa-chart-pie", label: "Dashboard Pimpinan", action: "openTab('dashboard')" },
   { id: "perlu_persetujuan", icon: "fa-clipboard-check", label: "Perlu Persetujuan", badge: true, action: "openTab('perlu_persetujuan')" },
   { id: "monitoring_kegiatan", icon: "fa-chart-line", label: "Monitoring Kegiatan", action: "openTab('monitoring_kegiatan')" },
@@ -9567,7 +9566,6 @@ const LEADERSHIP_MENUS = [
 ];
 
 const DEPUTI_MENUS = [
-  { section: "MENU PIMPINAN" },
   { id: "dashboard", icon: "fa-chart-pie", label: "Dashboard Pimpinan", action: "openTab('dashboard')" },
   { id: "perlu_persetujuan", icon: "fa-clipboard-check", label: "Perlu Persetujuan", badge: true, action: "openTab('perlu_persetujuan')" },
   { id: "monitoring_kegiatan", icon: "fa-chart-line", label: "Monitoring Kegiatan", action: "openTab('monitoring_kegiatan')" },
@@ -16142,18 +16140,25 @@ function buildWorkflowTableRowsHtml(dataList) {
     `;
   }).join('');
 
+  const currentRole = String(getCurrentUser()?.role || '').toLowerCase();
+  const executiveMonitoring = currentWorkflowViewType === 'monitoring'
+    && (currentRole === 'deputi' || currentRole === 'kepala_lan');
+  const titleHeader = executiveMonitoring ? 'Judul kegiatan, cluster, &amp; PIC' : 'Judul Kegiatan, PIC &amp; Alasan Keterlambatan';
+  const statusHeader = executiveMonitoring ? 'Status' : 'Status &amp; Hari Terlambat';
+  const detailHeader = executiveMonitoring ? 'Detail' : 'Halaman Detail';
+
   return `
     <div style="overflow-x:auto;border:1px solid #e2e8f0;border-radius:10px;background:#fff;">
       <table style="width:100%;border-collapse:collapse;text-align:left;font-family:inherit;">
         <thead style="background:#f8fafc;border-bottom:1px solid #e2e8f0;">
           <tr>
             <th style="padding:10px 12px;font-size:11.5px;font-weight:700;color:#475569;width:40px;">No</th>
-            <th style="padding:10px 12px;font-size:11.5px;font-weight:700;color:#475569;">Judul Kegiatan, PIC &amp; Alasan Keterlambatan</th>
+            <th style="padding:10px 12px;font-size:11.5px;font-weight:700;color:#475569;">${titleHeader}</th>
             <th style="padding:10px 12px;font-size:11.5px;font-weight:700;color:#475569;">Unit Kerja</th>
             <th style="padding:10px 12px;font-size:11.5px;font-weight:700;color:#475569;">Target Jadwal Awal</th>
-            <th style="padding:10px 12px;font-size:11.5px;font-weight:700;color:#475569;">Status &amp; Hari Terlambat</th>
+            <th style="padding:10px 12px;font-size:11.5px;font-weight:700;color:#475569;">${statusHeader}</th>
             <th style="padding:10px 12px;font-size:11.5px;font-weight:700;color:#475569;">Tahapan Berjalan</th>
-            <th style="padding:10px 12px;font-size:11.5px;font-weight:700;color:#475569;text-align:right;">Halaman Detail</th>
+            <th style="padding:10px 12px;font-size:11.5px;font-weight:700;color:#475569;text-align:right;">${detailHeader}</th>
           </tr>
         </thead>
         <tbody>
