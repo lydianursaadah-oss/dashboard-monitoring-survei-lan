@@ -4309,41 +4309,17 @@ window.addEventListener('focus', () => {
       <div style="margin-top:10px;" id="prismo-pimpinan-view-docs"></div>
     </div>
 
-    <!-- Pilihan Keputusan Pimpinan (Revisi #8: Setujui, Tolak, Kembalikan untuk Revisi) -->
+    <!-- Pilihan Keputusan Pimpinan -->
     <div style="background:#fff;border:1.5px solid #cbd5e1;border-radius:12px;padding:16px;margin-bottom:18px;">
       <div style="font-size:12px;font-weight:800;color:#1e293b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px;">
         PILIH KEPUTUSAN REVIEW / ACC:
       </div>
       
-      <div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:10px;margin-bottom:14px;">
+      <div style="display:grid;grid-template-columns:minmax(220px, 310px);gap:10px;margin-bottom:14px;">
         <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1.5px solid #bbf7d0;background:#f0fdf4;border-radius:8px;cursor:pointer;">
           <input type="radio" name="prismo-keputusan-opt" value="disetujui" checked onchange="onPrismoKeputusanOptChange()" style="accent-color:#16a34a;" />
           <span style="font-size:12.5px;font-weight:700;color:#16a34a;"><i class="fa-solid fa-circle-check"></i> Setujui</span>
         </label>
-        <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1.5px solid #fed7aa;background:#fff7ed;border-radius:8px;cursor:pointer;">
-          <input type="radio" name="prismo-keputusan-opt" value="perlu_perbaikan" onchange="onPrismoKeputusanOptChange()" style="accent-color:#f97316;" />
-          <span style="font-size:12.5px;font-weight:700;color:#ea580c;"><i class="fa-solid fa-rotate-left"></i> Kembalikan untuk Revisi</span>
-        </label>
-        <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1.5px solid #fecaca;background:#fef2f2;border-radius:8px;cursor:pointer;">
-          <input type="radio" name="prismo-keputusan-opt" value="ditolak" onchange="onPrismoKeputusanOptChange()" style="accent-color:#ef4444;" />
-          <span style="font-size:12.5px;font-weight:700;color:#dc2626;"><i class="fa-solid fa-ban"></i> Tolak</span>
-        </label>
-      </div>
-
-      <!-- Field Wajib jika Kembalikan untuk Revisi -->
-      <div id="prismo-pimpinan-revisi-wrap" style="display:none;margin-bottom:12px;">
-        <label style="font-size:11.5px;font-weight:700;color:#ea580c;display:block;margin-bottom:5px;">
-          <i class="fa-solid fa-triangle-exclamation"></i> Arahan / Perbaikan yang Harus Dilakukan (Wajib diisi untuk Revisi) *
-        </label>
-        <textarea id="prismo-pimpinan-arahan-revisi" rows="2" placeholder="Sebutkan poin revisi substansi, instrumen, atau jadwal yang harus diperbaiki unit pengusul..." style="width:100%;padding:10px 12px;border-radius:8px;border:1.5px solid #fdba74;background:#fff7ed;font-size:12px;font-family:inherit;outline:none;resize:vertical;"></textarea>
-      </div>
-
-      <!-- Field Wajib jika Tolak -->
-      <div id="prismo-pimpinan-tolak-wrap" style="display:none;margin-bottom:12px;">
-        <label style="font-size:11.5px;font-weight:700;color:#dc2626;display:block;margin-bottom:5px;">
-          <i class="fa-solid fa-circle-xmark"></i> Alasan Penolakan (Wajib diisi jika Ditolak) *
-        </label>
-        <textarea id="prismo-pimpinan-alasan-tolak" rows="2" placeholder="Tuliskan alasan penolakan pengajuan kegiatan..." style="width:100%;padding:10px 12px;border-radius:8px;border:1.5px solid #fca5a5;background:#fef2f2;font-size:12px;font-family:inherit;outline:none;resize:vertical;"></textarea>
       </div>
 
       <div>
@@ -13243,29 +13219,6 @@ function renderPrismoKeputusanPimpinan(user, pimpinanRole) {
         ` : ''}
       </div>
     </div>
-
-    ${overdueDecisionList.length ? `
-      <div style="background:#fff5f5;border:1.5px solid #fca5a5;border-left:5px solid #dc2626;border-radius:10px;padding:12px 16px;margin-bottom:16px;">
-        <div style="font-size:12.5px;font-weight:800;color:#991b1b;margin-bottom:6px;">
-          <i class="fa-solid fa-bell"></i> Reminder Keputusan Pimpinan: ${overdueDecisionList.length} Pengajuan Melewati Batas Waktu Keputusan (&gt; 7 Hari)
-        </div>
-        <div style="display:flex;flex-direction:column;gap:6px;">
-          ${overdueDecisionList.map(odItem => `
-            <div style="display:flex;justify-content:space-between;align-items:center;background:#fff;padding:8px 12px;border-radius:8px;border:1px solid #fecaca;flex-wrap:wrap;gap:8px;">
-              <div>
-                <span class="badge badge-red" style="font-weight:800;"><i class="fa-solid fa-triangle-exclamation"></i> Terlambat +${getProposalDecisionOverdueDays(odItem)} Hari</span>
-                <strong style="font-size:12.5px;color:#1e293b;margin-left:6px;">${escapeHtml(odItem.judul)}</strong>
-                <span style="font-size:11.5px;color:#475569;"> · Unit: <strong>${escapeHtml(odItem.unit)}</strong> · PIC: ${escapeHtml(odItem.pic || '-')} · Target Awal: ${escapeHtml(odItem.target_selesai || odItem.jadwal || '-')} · Tahap: Verifikasi &amp; Persetujuan</span>
-              </div>
-              <div style="display:flex;gap:6px;">
-                <button onclick="openPrismoDetailModal('${odItem.id}')" style="padding:5px 10px;border-radius:6px;border:1px solid #cbd5e1;background:#f8fafc;font-size:11px;font-weight:700;cursor:pointer;">Detail</button>
-                 ${canReview(odItem) ? `<button onclick="openPrismoPimpinanModal('${odItem.id}')" style="padding:5px 12px;border-radius:6px;border:none;background:#dc2626;color:#fff;font-size:11px;font-weight:700;cursor:pointer;"><i class="fa-solid fa-stamp"></i> Review / ACC</button>` : ''}
-              </div>
-            </div>
-          `).join('')}
-        </div>
-      </div>
-    ` : ''}
 
     <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;background:#f8fafc;padding:10px 14px;border-radius:10px;border:1px solid #e2e8f0;">
       <select id="prismo-pimpinan-filter-jenis" onchange="filterPrismoPimpinanTable()" style="padding:7px 12px;border-radius:6px;border:1px solid #cbd5e1;font-size:12px;background:#fff;">
