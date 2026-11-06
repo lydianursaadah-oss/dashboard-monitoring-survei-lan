@@ -7862,7 +7862,7 @@ function openImportScholarModal() {
             <i class="fa-solid fa-circle-info" style="margin-right:4px;"></i> <strong>Panduan:</strong> Masukkan URL profil Google Scholar dosen/peneliti (misal: <code>https://scholar.google.co.id/citations?user=0h2jYOUAAAAJ&hl=id</code>). Sistem akan membaca nama profil, afiliasi, dan semua publikasi beserta tahun, jurnal, dan sitasi.
           </div>
 
-          <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:12px;margin-bottom:12px;">
+          <div style="display:grid;grid-template-columns:2fr 1fr;gap:12px;margin-bottom:12px;">
             <div>
               <label style="font-size:11px;font-weight:700;color:#334155;display:block;margin-bottom:4px;">URL Profil Google Scholar *</label>
               <input type="text" id="scholar-url-input" value="https://scholar.google.co.id/citations?user=0h2jYOUAAAAJ&hl=id" placeholder="https://scholar.google.co.id/citations?user=..." style="width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;">
@@ -7877,20 +7877,11 @@ function openImportScholarModal() {
                 </select>
               `}
             </div>
-            <div>
-              <label style="font-size:11px;font-weight:700;color:#334155;display:block;margin-bottom:4px;">Default Cluster Kebijakan</label>
-              <select id="scholar-target-cluster" style="width:100%;padding:8px 10px;border:1px solid #cbd5e1;border-radius:6px;background:#fff;font-size:12px;">
-                ${getActiveClusterNames().map(c => `<option value="${planningEscape(c)}" ${c.includes('Tata Kelola') ? 'selected' : ''}>${planningEscape(c)}</option>`).join('')}
-              </select>
-            </div>
           </div>
 
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
             <button type="button" id="btn-fetch-scholar" onclick="fetchScholarPreview()" class="planning-button" style="background:#059669;color:#fff;padding:8px 18px;font-weight:700;border:none;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-size:12.5px;">
               <i class="fa-solid fa-cloud-arrow-down"></i> 1. Tarik &amp; Tinjau Data
-            </button>
-            <button type="button" onclick="loadSampleScholar()" style="background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe;border-radius:6px;padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;" title="Muat 76 artikel Alih Aji Nugroho (STIA JKT)">
-              <i class="fa-solid fa-bolt" style="color:#eab308;"></i> Contoh Cepat: Alih Aji Nugroho (76 Publikasi)
             </button>
             <button type="button" onclick="togglePasteHtmlMode()" style="background:#f8fafc;color:#475569;border:1px solid #cbd5e1;border-radius:6px;padding:7px 12px;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;">
               <i class="fa-solid fa-code"></i> Mode Tempel HTML
