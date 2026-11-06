@@ -74,8 +74,8 @@ function parseScholarHtml(html: string): { name: string; affiliation: string; ar
     const authors = grays[0] ? grays[0][1].replace(/<[^>]+>/g, '').trim() : ''
     const venue = grays[1] ? grays[1][1].replace(/<[^>]+>/g, '').trim() : ''
 
-    const citesMatch = r.match(/<a class="gsc_a_ac[^"]*"[^>]*>([0-9]+)<\/a>/)
-    const citations = citesMatch ? parseInt(citesMatch[1], 10) : 0
+    const citesMatch = r.match(/<a\b(?=[^>]*\bclass=["'][^"']*\bgsc_a_ac\b[^"']*["'])[^>]*>\s*([\d,]+)\s*<\/a>/i)
+    const citations = citesMatch ? parseInt(citesMatch[1].replace(/,/g, ''), 10) : 0
 
     const yearMatch = r.match(/<span class="gsc_a_h gsc_a_hc gs_ibl">([0-9]{4})<\/span>/)
     const tahun = yearMatch ? parseInt(yearMatch[1], 10) : null
