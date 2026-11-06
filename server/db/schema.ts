@@ -81,6 +81,7 @@ export const inisiatifAkDosen = pgTable('inisiatif_ak_dosen', {
   jenis: text('jenis').default(''),
   jadwalPublikasi: text('jadwal_publikasi').default(''),
   tahun: integer('tahun'),
+  sitasi: integer('sitasi').notNull().default(0),
   cluster1: text('cluster_1').default(''),
   cluster2: text('cluster_2').default(''),
   jurnal: text('jurnal').default(''),

@@ -280,6 +280,7 @@ export default defineEventHandler(async (event) => {
         jenis: String(art.jenis || 'Jurnal/Penelitian Dosen').trim(),
         jadwalPublikasi: '',
         tahun: (tahun && !isNaN(tahun)) ? tahun : null,
+        sitasi: Math.max(0, Number.isInteger(Number(art.citations)) ? Number(art.citations) : 0),
         cluster1: String(art.cluster1 || cluster1).trim(),
         cluster2: String(art.cluster2 || cluster2).trim(),
         jurnal: jurnalLink,

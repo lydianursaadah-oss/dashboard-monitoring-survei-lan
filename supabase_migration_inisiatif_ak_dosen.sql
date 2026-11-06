@@ -23,3 +23,11 @@ create table if not exists public.inisiatif_ak_dosen (
   updated_at timestamptz not null default now(),
   constraint inisiatif_ak_dosen_source_sheet_no_key unique (source_sheet, no)
 );
+
+alter table public.inisiatif_ak_dosen
+  add column if not exists sitasi integer not null default 0;
+
+update public.inisiatif_ak_dosen
+set sitasi = substring(catatan from 'Dikutip:[[:space:]]*([0-9]+)[[:space:]]*kali')::integer
+where sitasi = 0
+  and catatan ~ 'Dikutip:[[:space:]]*[0-9]+[[:space:]]*kali';
