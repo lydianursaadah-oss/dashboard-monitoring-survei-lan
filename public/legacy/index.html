@@ -1505,6 +1505,17 @@ function handleUsernameInput(val) {
     .planning-table th { padding:10px 9px; text-align:left; color:#64748b; background:#f8fafc; white-space:nowrap; }
     .planning-table td { padding:11px 9px; border-top:1px solid #e2e8f0; color:#334155; vertical-align:top; }
     .planning-table td:first-child { font-weight:700; color:#1e293b; }
+    .inisiatif-filters { display:flex; align-items:center; gap:8px 10px; flex-wrap:wrap; background:#f8fafc; padding:10px 14px; border-radius:8px; border:1px solid #e2e8f0; }
+    .inisiatif-filter-field { display:inline-flex; align-items:center; gap:5px; color:#334155; font-size:12px; font-weight:700; white-space:nowrap; }
+    .inisiatif-filter-select { max-width:190px; padding:7px 10px; border:1px solid #cbd5e1; border-radius:6px; background:#fff; color:#1e293b; font-size:12px; }
+    .inisiatif-year-dropdown { position:relative; }
+    .inisiatif-year-toggle { min-width:128px; display:flex; align-items:center; justify-content:space-between; gap:12px; padding:7px 10px; border:1px solid #cbd5e1; border-radius:6px; background:#fff; color:#1e293b; font-size:12px; cursor:pointer; }
+    .inisiatif-year-checklist { position:absolute; z-index:20; top:calc(100% + 4px); left:0; display:none; min-width:160px; max-height:240px; overflow:auto; padding:7px; border:1px solid #cbd5e1; border-radius:7px; background:#fff; box-shadow:0 8px 20px rgba(15,23,42,.14); }
+    .inisiatif-year-dropdown.open .inisiatif-year-checklist { display:grid; gap:2px; }
+    .inisiatif-year-checklist label { display:flex; align-items:center; gap:7px; padding:6px 7px; border-radius:4px; color:#334155; font-size:12px; white-space:nowrap; cursor:pointer; }
+    .inisiatif-year-checklist label:hover { background:#f1f5f9; }
+    .inisiatif-table { min-width:1360px; }
+    .inisiatif-table th { white-space:normal; vertical-align:bottom; line-height:1.35; }
     .planning-count { color:#64748b; font-size:12px; }
     .planning-empty { padding:28px 10px; text-align:center; color:#94a3b8; font-size:12px; }
     .planning-delete { border:0; background:transparent; color:#dc2626; cursor:pointer; padding:5px 8px; }
@@ -7399,6 +7410,16 @@ function resolveInisiatifJenis(item) {
   return '—';
 }
 
+function getInisiatifJenisValue(item) {
+  return String(item?.jenis || item?.jenis_publikasi || item?.jenisPublikasi || '').trim();
+}
+
+function getInisiatifClusterValues(item) {
+  return [item?.cluster1 ?? item?.cluster_1, item?.cluster2 ?? item?.cluster_2]
+    .map(value => String(value || '').trim())
+    .filter(value => value && value !== '-' && value !== '—');
+}
+
 function getInitiativeLinksList(item) {
   if (!item) return [];
   const fields = [
@@ -7568,6 +7589,20 @@ async function renderInisiatifAkDosenRows() {
   }
 
   inisiatifAkDosenRows = fetchedItems || [];
+  const jenisSelect = document.getElementById('inisiatif-jenis-filter');
+  const clusterSelect = document.getElementById('inisiatif-cluster-filter');
+  if (jenisSelect) {
+    const selected = jenisSelect.value;
+    const values = [...new Set(inisiatifAkDosenRows.map(getInisiatifJenisValue).filter(value => value && value !== '-' && value !== '—'))].sort((a,b) => a.localeCompare(b, 'id'));
+    jenisSelect.innerHTML = '<option value="">Semua Jenis</option>' + values.map(value => `<option value="${planningEscape(value)}">${planningEscape(value)}</option>`).join('');
+    jenisSelect.value = values.includes(selected) ? selected : '';
+  }
+  if (clusterSelect) {
+    const selected = clusterSelect.value;
+    const values = [...new Set(inisiatifAkDosenRows.flatMap(getInisiatifClusterValues))].sort((a,b) => a.localeCompare(b, 'id'));
+    clusterSelect.innerHTML = '<option value="">Semua Cluster</option>' + values.map(value => `<option value="${planningEscape(value)}">${planningEscape(value)}</option>`).join('');
+    clusterSelect.value = values.includes(selected) ? selected : '';
+  }
   inisiatifCurrentPage = 1;
   filterInisiatifTable();
 }
@@ -7581,16 +7616,17 @@ function filterInisiatifTable(page = 1) {
   const isUnit = isUnitUser(currentUser);
 
   const searchVal = (document.getElementById('inisiatif-search-input')?.value || '').toLowerCase().trim();
-  const yearVal = (document.getElementById('inisiatif-year-filter')?.value || '').trim();
+  const selectedYears = Array.from(document.querySelectorAll('.inisiatif-year-check:checked:not(#inisiatif-year-all)')).map(input => input.value);
+  const jenisVal = normalizeInisiatifFilterValue(document.getElementById('inisiatif-jenis-filter')?.value);
+  const clusterVal = normalizeInisiatifFilterValue(document.getElementById('inisiatif-cluster-filter')?.value);
   const unitFilterEl = document.getElementById('inisiatif-unit-filter');
   const selectedUnit = unitFilterEl ? unitFilterEl.value : (isUnit ? (currentUser.unit || '') : '');
 
   inisiatifFilteredRows = inisiatifAkDosenRows.filter(item => {
     if (selectedUnit && !String(item.unit || item.sourceSheet || '').toUpperCase().includes(selectedUnit.toUpperCase())) return false;
-    if (yearVal) {
-      const yr = resolveInisiatifYear(item);
-      if (yr !== yearVal) return false;
-    }
+    if (selectedYears.length && !selectedYears.includes(resolveInisiatifYear(item))) return false;
+    if (jenisVal && normalizeInisiatifFilterValue(getInisiatifJenisValue(item)) !== jenisVal) return false;
+    if (clusterVal && !getInisiatifClusterValues(item).some(value => normalizeInisiatifFilterValue(value) === clusterVal)) return false;
     if (searchVal) {
       const yr = resolveInisiatifYear(item);
       const text = `${item.judul || ''} ${item.jenis || ''} ${yr !== '—' ? yr : ''} ${item.cluster1 || ''} ${item.cluster2 || ''} ${item.catatan || ''} ${item.unit || ''}`.toLowerCase();
@@ -7627,16 +7663,17 @@ function filterInisiatifTable(page = 1) {
     return `<tr>
       <td style="font-weight:700;color:#64748b;text-align:center;">${rowNo}</td>
       ${!isUnit ? `<td style="white-space:nowrap;">${unitBadge}</td>` : ''}
-      <td style="max-width:320px;word-break:break-word;">
+      <td style="width:300px;min-width:300px;white-space:normal;overflow-wrap:anywhere;">
         <div style="font-weight:700;color:#1e293b;line-height:1.4;">${planningEscape(item.judul)}</div>
       </td>
-      <td style="width:120px;min-width:0;white-space:normal;overflow-wrap:anywhere;">${jenisBadge}</td>
+      <td style="width:120px;min-width:120px;white-space:normal;overflow-wrap:anywhere;">${jenisBadge}</td>
       <td style="font-weight:700;color:#475569;text-align:center;white-space:nowrap;">${displayYear}</td>
-      <td style="font-size:11.5px;color:#475569;word-break:break-word;">${clusterText}</td>
-      <td style="white-space:nowrap;width:180px;">${initiativeLinksHtml(item)}</td>
-      ${!isDeputiUser ? `<td style="font-size:11px;color:#64748b;max-width:180px;word-break:break-word;">${planningEscape(item.catatan || '—')}</td>` : ''}
+      <td style="width:150px;min-width:150px;font-size:11.5px;color:#475569;white-space:normal;overflow-wrap:anywhere;">${clusterText}</td>
+      <td style="width:180px;min-width:180px;white-space:normal;">${initiativeLinksHtml(item)}</td>
+      ${!isDeputiUser ? `<td style="width:220px;min-width:220px;font-size:11px;color:#64748b;white-space:normal;overflow-wrap:anywhere;line-height:1.5;">${planningEscape(item.catatan || '—')}</td>` : ''}
       ${!isDeputiUser ? `
-        <td style="white-space:nowrap;">
+        <td style="width:110px;min-width:110px;text-align:center;white-space:normal;">
+          <div style="display:flex;justify-content:center;align-items:center;gap:5px;flex-wrap:wrap;">
           ${canEdit ? `
             <button class="planning-button" type="button" onclick="openInisiatifEditor(${Number(item.id)})" style="padding:4px 9px;font-size:11px;" title="Edit data ini">
               <i class="fa-solid fa-pen"></i> Edit
@@ -7645,6 +7682,7 @@ function filterInisiatifTable(page = 1) {
               <i class="fa-solid fa-trash"></i>
             </button>
           ` : '<span style="color:#94a3b8;font-size:11px;">Hanya baca</span>'}
+          </div>
         </td>
       ` : ''}
     </tr>`;
@@ -7652,6 +7690,34 @@ function filterInisiatifTable(page = 1) {
 
   renderInisiatifPagination(totalPages, inisiatifCurrentPage);
 }
+
+function normalizeInisiatifFilterValue(value) {
+  return String(value || '').normalize('NFKC').trim().replace(/\s+/g, ' ').toLocaleLowerCase('id-ID');
+}
+
+function toggleInisiatifYearDropdown(event) {
+  if (event) event.stopPropagation();
+  const dropdown = document.getElementById('inisiatif-year-dropdown');
+  if (!dropdown) return;
+  dropdown.classList.toggle('open');
+  const button = dropdown.querySelector('.inisiatif-year-toggle');
+  if (button) button.setAttribute('aria-expanded', dropdown.classList.contains('open') ? 'true' : 'false');
+}
+
+function updateInisiatifYearLabel() {
+  const label = document.getElementById('inisiatif-year-label');
+  if (!label) return;
+  const years = Array.from(document.querySelectorAll('.inisiatif-year-check:checked:not(#inisiatif-year-all)')).map(input => input.value);
+  label.textContent = years.length ? years.join(', ') : 'Semua Tahun';
+}
+
+document.addEventListener('click', event => {
+  const dropdown = document.getElementById('inisiatif-year-dropdown');
+  if (!dropdown || dropdown.contains(event.target)) return;
+  dropdown.classList.remove('open');
+  const button = dropdown.querySelector('.inisiatif-year-toggle');
+  if (button) button.setAttribute('aria-expanded', 'false');
+});
 
 function renderInisiatifPagination(totalPages, currentPage) {
   const container = document.getElementById('inisiatif-pagination');
@@ -8315,7 +8381,7 @@ function renderPlanningUnitPage(kind, user) {
         <p style="margin:0 0 12px;color:#64748b;font-size:12px;">
           Setiap unit dapat mengelola Judul, Jenis, Tahun, Cluster, Tautan Publikasi dan catatan
         </p>
-        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#f8fafc;padding:10px 14px;border-radius:8px;border:1px solid #e2e8f0;">
+        <div class="inisiatif-filters">
           ${isUnit ? `
             <span class="badge" style="background:#eff6ff;color:#1e40af;padding:7px 12px;border:1px solid #bfdbfe;font-weight:700;font-size:12px;">
               <i class="fa-solid fa-building" style="margin-right:4px;"></i> Unit: ${unitLabel}
@@ -8331,13 +8397,18 @@ function renderPlanningUnitPage(kind, user) {
             </div>
           `}
 
-          <div style="display:flex;align-items:center;gap:6px;">
-            <label for="inisiatif-year-filter" style="font-size:12px;font-weight:700;color:#334155;"><i class="fa-solid fa-calendar"></i> Tahun:</label>
-            <select id="inisiatif-year-filter" onchange="filterInisiatifTable(1)" style="padding:7px 10px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;background:#fff;">
-              <option value="">Semua Tahun</option>
-              ${[2026, 2025, 2024, 2023, 2022, 2021, 2020].map(y => `<option value="${y}">${y}</option>`).join('')}
-            </select>
+          <span class="inisiatif-filter-field"><i class="fa-solid fa-calendar"></i> Tahun:</span>
+          <div id="inisiatif-year-dropdown" class="inisiatif-year-dropdown">
+            <button type="button" class="inisiatif-year-toggle" aria-haspopup="true" aria-expanded="false" onclick="toggleInisiatifYearDropdown(event)"><span id="inisiatif-year-label">Semua Tahun</span><i class="fa-solid fa-chevron-down" style="font-size:10px;"></i></button>
+            <div id="inisiatif-year-checklist" class="inisiatif-year-checklist">
+              <label><input id="inisiatif-year-all" class="inisiatif-year-check" type="checkbox" checked onchange="document.querySelectorAll('.inisiatif-year-check:not(#inisiatif-year-all)').forEach(el=>el.checked=false);updateInisiatifYearLabel();filterInisiatifTable(1)"> Semua Tahun</label>
+              ${Array.from({length:7}, (_, index) => 2020 + index).map(y => `<label><input class="inisiatif-year-check" type="checkbox" value="${y}" onchange="document.getElementById('inisiatif-year-all').checked=!document.querySelectorAll('.inisiatif-year-check:checked:not(#inisiatif-year-all)').length;updateInisiatifYearLabel();filterInisiatifTable(1)"> ${y}</label>`).join('')}
+            </div>
           </div>
+          <label class="inisiatif-filter-field" for="inisiatif-jenis-filter">Jenis:</label>
+          <select id="inisiatif-jenis-filter" class="inisiatif-filter-select" onchange="filterInisiatifTable(1)"><option value="">Semua Jenis</option></select>
+          <label class="inisiatif-filter-field" for="inisiatif-cluster-filter">Cluster:</label>
+          <select id="inisiatif-cluster-filter" class="inisiatif-filter-select" onchange="filterInisiatifTable(1)"><option value="">Semua Cluster</option></select>
 
           <div style="flex:1;min-width:220px;">
             <input type="text" id="inisiatif-search-input" placeholder="🔍 Cari judul, jenis, cluster, atau catatan..." oninput="filterInisiatifTable(1)" style="width:100%;padding:7px 12px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;">
@@ -8356,18 +8427,18 @@ function renderPlanningUnitPage(kind, user) {
       </div>
       <div class="card-body">
         <div class="planning-table-wrap">
-          <table class="planning-table" style="width:100%;table-layout:fixed;">
+          <table class="planning-table inisiatif-table" style="width:100%;table-layout:fixed;">
             <thead>
               <tr>
                 <th style="width:45px;text-align:center;">No</th>
                 ${!isUnit ? '<th style="width:90px;white-space:nowrap;">Unit</th>' : ''}
-                <th style="width:320px;">Judul Kegiatan / Publikasi</th>
+                <th style="width:300px;">Judul Kegiatan / Publikasi</th>
                 <th style="width:120px;white-space:nowrap;">Jenis</th>
                 <th style="width:70px;text-align:center;white-space:nowrap;">Tahun</th>
-                <th style="width:140px;">Cluster</th>
+                <th style="width:150px;">Cluster</th>
                 <th style="width:180px;white-space:nowrap;">Link Publikasi</th>
-                ${!(user && (user.role === 'deputi' || user.role === 'kepala_lan')) ? '<th style="min-width:140px;">Catatan</th>' : ''}
-                ${!(user && (user.role === 'deputi' || user.role === 'kepala_lan')) ? '<th style="width:95px;text-align:center;white-space:nowrap;">Aksi</th>' : ''}
+                ${!(user && (user.role === 'deputi' || user.role === 'kepala_lan')) ? '<th style="width:220px;min-width:220px;white-space:normal;">Catatan</th>' : ''}
+                ${!(user && (user.role === 'deputi' || user.role === 'kepala_lan')) ? '<th style="width:110px;min-width:110px;text-align:center;white-space:normal;">Aksi</th>' : ''}
               </tr>
             </thead>
             <tbody id="inisiatif-rows"></tbody>
