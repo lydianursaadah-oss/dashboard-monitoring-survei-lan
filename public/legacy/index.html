@@ -8068,6 +8068,7 @@ async function saveScholarArticlesToDb() {
     alert('Belum ada data artikel yang ditarik.');
     return;
   }
+  const researcherName = scrapedScholarResult.name || 'Peneliti Google Scholar';
 
   const selectedIdxs = [...document.querySelectorAll('.scholar-row-cb:checked')].map(cb => Number(cb.dataset.index));
   if (!selectedIdxs.length) {
@@ -8094,7 +8095,7 @@ async function saveScholarArticlesToDb() {
         action: 'save',
         unit,
         cluster1,
-        researcherName: scrapedScholarResult.name,
+        researcherName,
         articles: selectedArticles
       })
     });
@@ -8112,7 +8113,7 @@ async function saveScholarArticlesToDb() {
     }
 
     closeImportScholarModal();
-    alert(`🎉 Sukses! Sebanyak ${data.count || selectedArticles.length} artikel dari Google Scholar (${scrapedScholarResult.name}) telah berhasil ditambahkan ke unit ${unit}!`);
+    alert(`🎉 Sukses! Sebanyak ${data.count || selectedArticles.length} artikel dari Google Scholar (${researcherName}) telah berhasil ditambahkan ke unit ${unit}!`);
   } catch (err) {
     console.error('Save scholar error:', err);
     alert('Terjadi kesalahan saat menyimpan artikel: ' + (err.message || 'Periksa koneksi database'));
