@@ -12,6 +12,28 @@ interface ScholarArticle {
   catatan?: string
 }
 
+function filterScholarArticles(articles: ScholarArticle[]): ScholarArticle[] {
+  return articles.filter(article => Number.isInteger(article.tahun) && article.tahun! >= 2020 && article.tahun! <= 2026)
+}
+
+function normalizePresetArticle(article: any): ScholarArticle {
+  const note = String(article.catatan || '')
+  const authorsFromNote = note.match(/Penulis:\s*(.*?)\.\s*Diterbitkan:/i)?.[1]?.trim() || ''
+  const venueFromNote = note.match(/Diterbitkan:\s*(.*?)\.\s*Dikutip:/i)?.[1]?.trim() || ''
+  const citationsFromNote = note.match(/Dikutip:\s*(\d+)\s*kali/i)?.[1]
+  const year = article.tahun == null || article.tahun === '' ? null : Number(article.tahun)
+
+  return {
+    judul: String(article.judul || '').trim(),
+    link: String(article.link || article.jurnal || '').trim(),
+    authors: String(article.authors || authorsFromNote).trim(),
+    venue: String(article.venue || venueFromNote.replace(/[,\s]+20\d{2}$/, '')).trim(),
+    tahun: year !== null && Number.isInteger(year) ? year : null,
+    citations: Number.isFinite(Number(article.citations)) ? Number(article.citations) : Number(citationsFromNote || 0),
+    catatan: note
+  }
+}
+
 function extractUserId(input: string): string | null {
   const trimmed = input.trim()
   if (!trimmed) return null
@@ -137,14 +159,15 @@ export default defineEventHandler(async (event) => {
     // 1. Direct HTML paste
     if (body.html && typeof body.html === 'string' && body.html.length > 50) {
       const parsed = parseScholarHtml(body.html)
-      if (parsed.articles.length > 0) {
+      const articles = filterScholarArticles(parsed.articles)
+      if (articles.length > 0) {
         return {
           ok: true,
           userId: 'custom_html',
           name: parsed.name,
           affiliation: parsed.affiliation,
-          total: parsed.articles.length,
-          articles: parsed.articles
+          total: articles.length,
+          articles
         }
       }
     }
@@ -156,35 +179,39 @@ export default defineEventHandler(async (event) => {
 
     const userId = extractUserId(rawUrl)
     
-    // 2. Cek Preset Profiles (seperti Alih Aji Nugroho)
-    if (userId && PRESET_SCHOLAR_PROFILES[userId]) {
-      const preset = PRESET_SCHOLAR_PROFILES[userId]
-      return {
-        ok: true,
-        userId,
-        name: preset.name,
-        affiliation: preset.affiliation,
-        total: preset.articles.length,
-        articles: preset.articles
-      }
-    }
-
-    // 3. Coba scrape langsung
+    // Coba ambil profil terbaru agar penulis, jurnal, dan sitasi berasal dari Google Scholar.
     if (userId) {
       try {
         const data = await scrapeScholarProfile(userId)
-        if (data.articles.length > 0) {
+        const articles = filterScholarArticles(data.articles)
+        if (articles.length > 0) {
           return {
             ok: true,
             userId,
             name: data.name,
             affiliation: data.affiliation,
-            total: data.articles.length,
-            articles: data.articles
+            total: articles.length,
+            articles
           }
         }
       } catch (err) {
         console.warn('[API Scholar] Direct scrape gagal (biasanya 403 cloud IP), mencoba OpenAlex fallback...', err)
+      }
+    }
+
+    // Fallback ke snapshot profil bila Google Scholar membatasi akses server.
+    if (userId && PRESET_SCHOLAR_PROFILES[userId]) {
+      const preset = PRESET_SCHOLAR_PROFILES[userId]
+      const articles = filterScholarArticles(preset.articles.map(normalizePresetArticle))
+      if (articles.length > 0) {
+        return {
+          ok: true,
+          userId,
+          name: preset.name,
+          affiliation: preset.affiliation,
+          total: articles.length,
+          articles
+        }
       }
     }
 
@@ -193,14 +220,15 @@ export default defineEventHandler(async (event) => {
     if (searchQuery) {
       try {
         const openAlexData = await searchOpenAlexFallback(searchQuery)
-        if (openAlexData.articles.length > 0) {
+        const articles = filterScholarArticles(openAlexData.articles)
+        if (articles.length > 0) {
           return {
             ok: true,
             userId: userId || 'openalex',
             name: openAlexData.name,
             affiliation: openAlexData.affiliation,
-            total: openAlexData.articles.length,
-            articles: openAlexData.articles,
+            total: articles.length,
+            articles,
             source: 'openalex'
           }
         }
@@ -225,13 +253,20 @@ export default defineEventHandler(async (event) => {
     if (!Array.isArray(articles) || articles.length === 0) {
       throw createError({ statusCode: 400, statusMessage: 'Pilih minimal satu artikel untuk disimpan.' })
     }
+    const inRangeArticles = articles.filter((article: any) => {
+      const year = Number(article?.tahun)
+      return Number.isInteger(year) && year >= 2020 && year <= 2026
+    })
+    if (inRangeArticles.length === 0) {
+      throw createError({ statusCode: 400, statusMessage: 'Hanya publikasi tahun 2020–2026 yang dapat disimpan.' })
+    }
 
     const researcherName = body.researcherName ? String(body.researcherName).trim() : ''
     const cluster1 = body.cluster1 ? String(body.cluster1).trim() : 'Tata Kelola & Manajemen ASN'
     const cluster2 = body.cluster2 ? String(body.cluster2).trim() : ''
     const sourceSheet = researcherName ? `Google Scholar (${researcherName})` : `Google Scholar - ${unit}`
 
-    const rowsToInsert = articles.map((art: any, index: number) => {
+    const rowsToInsert = inRangeArticles.map((art: any, index: number) => {
       const judul = String(art.judul || '').trim()
       const tahun = art.tahun != null && art.tahun !== '' ? Number(art.tahun) : null
       const jurnalLink = String(art.link || art.jurnal || '').trim()
