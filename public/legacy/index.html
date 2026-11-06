@@ -7514,7 +7514,7 @@ function initiativeLinksHtml(item) {
   const links = getInitiativeLinksList(item);
   if (!links.length) return '<span style="color:#94a3b8;">—</span>';
 
-  const maxVisible = 2;
+  const maxVisible = 1;
   const visible = links.slice(0, maxVisible);
   const remainingCount = links.length - maxVisible;
 
