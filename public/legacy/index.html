@@ -8733,19 +8733,13 @@ if(hd) hd.textContent = new Date().toLocaleDateString('id-ID',{weekday:'long',ye
 // Version check ensures stale 56-record caches are cleared
 (function(){
   try {
-    const DATA_VERSION = '2026.11.08.v51_clean_clusters';
+    const DATA_VERSION = '2026.11.08.v52_sync_prismo_proposals';
     const currentVer = localStorage.getItem('lan_data_version');
     if (currentVer !== DATA_VERSION) {
       localStorage.removeItem('lan_pub_data');
       localStorage.removeItem('prismo_proposal_activity_links_v1');
       localStorage.removeItem('prismo_inisiatif_ak_dosen_v2');
-      const cachedProps = localStorage.getItem('lan_prismo_proposals_v3');
-      if (cachedProps) {
-        try {
-          const filteredProps = JSON.parse(cachedProps).filter(p => String(p?.judul || '').trim().toLowerCase() !== 'testing kegiatan');
-          localStorage.setItem('lan_prismo_proposals_v3', JSON.stringify(filteredProps));
-        } catch (e) { localStorage.removeItem('lan_prismo_proposals_v3'); }
-      }
+      localStorage.removeItem('lan_prismo_proposals_v3');
       localStorage.setItem('lan_data_version', DATA_VERSION);
     }
     const stored = localStorage.getItem('lan_pub_data');
@@ -11518,200 +11512,30 @@ function openTab(tabName) {
    ══════════════════════════════════════════════════════════ */
 const DEFAULT_PRISMO_PROPOSALS = [
   {
-    id: "PRISMO-2026-001",
-    judul: "Survei Budaya Kerja ASN BerAKHLAK 2026",
-    unit: "STIA BDG",
-    jenis: "Survei",
-    jenis_persetujuan: "Pengajuan Kegiatan",
-    cluster: "Tata Kelola & Manajemen ASN",
-    latar_belakang: "Mengevaluasi internalisasi nilai-nilai dasar ASN BerAKHLAK pada instansi pemerintah daerah pasca restrukturisasi kelembagaan.",
-    tujuan: "Menghasilkan indeks budaya kerja dan rekomendasi perbaikan implementasi core values ASN.",
-    pic: "Dr. H. Ahmad Sudrajat, M.Si",
-    target_selesai: "2026-10-15",
-    jadwal: "Okt (2)",
-    tahun: 2026,
-    dokumen_proposal: "https://docs.google.com/document/d/1PRISMO2026001_TOR_BudayaKerjaASN/edit?usp=sharing",
-    tor_nama: "TOR & Proposal Survei Budaya Kerja ASN BerAKHLAK 2026",
-    tor_jenis: "TOR dan Proposal",
-    tor_keterangan: "Mencakup instrumen kuesioner, kerangka sampling, dan RAB pelaksanaan",
-    tor_status_akses: "Dapat diakses",
-    dokumen_jadwal: "https://drive.google.com/file/d/1PRISMO2026001_JadwalSurvei/view?usp=sharing",
-    status: "menunggu_kepala",
-    prioritas: "Tinggi",
-    diajukan_tgl: "2026-10-10",
-    diverifikasi_tgl: "2026-10-12",
-    disetujui_tgl: null,
-    checklist_admin: {
-      judul_jelas: true,
-      pic_tersedia: true,
-      jadwal_realistis: true,
-      dokumen_lengkap: true,
-      tidak_duplikat: true
-    },
-    catatan_admin: "Kelengkapan dokumen Google Docs telah diverifikasi dan siap diteruskan untuk persetujuan pimpinan.",
-    keputusan_kepala: null,
-    catatan_kepala: "",
-    catatan_revisi: "",
-    alasan_penolakan: "",
-    riwayat: [
-      { tgl: "2026-10-10 09:30", role: "Unit Kerja (STIA BDG)", aksi: "Mengajukan usulan survei baru beserta link Google Docs TOR/Proposal" },
-      { tgl: "2026-10-12 14:15", role: "Admin DSPK2AN", aksi: "Verifikasi kelayakan & meneruskan ke Pimpinan (Kepala LAN / Deputi)" }
-    ]
-  },
-  {
-    id: "PRISMO-2026-002",
-    judul: "Kajian Difusi Inovasi Pelayanan Publik di Daerah Tertinggal",
-    unit: "STIA MKS",
-    jenis: "Kajian",
-    jenis_persetujuan: "Publikasi Awal",
-    cluster: "Pelayanan Publik",
-    latar_belakang: "Banyak inovasi pelayanan publik yang mandek dan tidak berkelanjutan setelah kompetisi inovasi.",
-    tujuan: "Mengidentifikasi faktor pendorong dan penghambat replikasi inovasi di daerah 3T.",
-    pic: "Nurhikmah, S.Sos., M.AP",
-    target_selesai: "2026-10-30",
-    jadwal: "Okt (4)",
-    tahun: 2026,
-    dokumen_proposal: "https://drive.google.com/file/d/1PRISMO2026002_TOR_DifusiInovasi/view?usp=sharing",
-    tor_nama: "TOR Kajian Difusi Inovasi Pelayanan Publik Daerah 3T",
-    tor_jenis: "TOR",
-    tor_keterangan: "Draft TOR dan ringkasan rencana rilis awal",
-    tor_status_akses: "Dapat diakses",
-    dokumen_jadwal: "",
-    status: "menunggu_deputi",
-    prioritas: "Normal",
-    diajukan_tgl: "2026-10-20",
-    diverifikasi_tgl: "2026-10-22",
-    disetujui_tgl: null,
-    checklist_admin: {
-      judul_jelas: true,
-      pic_tersedia: true,
-      jadwal_realistis: true,
-      dokumen_lengkap: true,
-      tidak_duplikat: true
-    },
-    catatan_admin: "Substansi publikasi awal siap ditinjau oleh Pimpinan.",
-    keputusan_kepala: null,
-    catatan_kepala: "",
-    catatan_revisi: "",
-    alasan_penolakan: "",
-    riwayat: [
-      { tgl: "2026-10-20 11:00", role: "Unit Kerja (STIA MKS)", aksi: "Mengajukan usulan kegiatan baru" },
-      { tgl: "2026-10-22 10:15", role: "Admin DSPK2AN", aksi: "Meneruskan ke Pimpinan untuk persetujuan" }
-    ]
-  },
-  {
-    id: "PRISMO-2026-003",
-    judul: "Survei Kesiapan Digitalisasi Pelayanan Publik Desa",
-    unit: "SKPP",
-    jenis: "Survei",
-    jenis_persetujuan: "Pengajuan Kegiatan",
-    cluster: "Digitalisasi",
-    latar_belakang: "Kesenjangan infrastruktur digital di tingkat pemerintah desa masih tinggi.",
-    tujuan: "Memetakan indeks literasi dan kesiapan digital aparatur desa di Jawa Barat.",
-    pic: "Bambang Triyono, M.Sc",
-    target_selesai: "2026-12-10",
-    jadwal: "Des (2)",
-    tahun: 2026,
-    dokumen_proposal: "https://docs.google.com/document/d/1PRISMO2026003_Proposal_DigitalDesa/edit?usp=sharing",
-    tor_nama: "Proposal Survei Digitalisasi Pelayanan Publik Desa",
-    tor_jenis: "Proposal",
-    tor_keterangan: "Revisi jadwal lapangan menyesuaikan kalender Q4",
-    tor_status_akses: "Dapat diakses",
-    dokumen_jadwal: "",
-    status: "perlu_perbaikan",
-    prioritas: "Tinggi",
-    diajukan_tgl: "2026-10-25",
-    diverifikasi_tgl: "2026-10-26",
-    disetujui_tgl: null,
-    checklist_admin: {
-      judul_jelas: true,
-      pic_tersedia: true,
-      jadwal_realistis: false,
-      dokumen_lengkap: true,
-      tidak_duplikat: true
-    },
-    catatan_admin: "Mohon sesuaikan jadwal pengumpulan data lapangan dengan kalender libur akhir tahun.",
-    keputusan_kepala: "perlu_perbaikan",
-    catatan_kepala: "Perkuat metodologi sampling desa percontohan.",
-    catatan_revisi: "Mohon sesuaikan jadwal pengumpulan data lapangan dengan kalender libur akhir tahun dan perkuat metodologi sampling desa percontohan.",
-    alasan_penolakan: "",
-    riwayat: [
-      { tgl: "2026-10-25 10:15", role: "Unit Kerja (SKPP)", aksi: "Mengajukan usulan kegiatan" },
-      { tgl: "2026-10-26 15:40", role: "Deputi", aksi: "Mengembalikan pengajuan untuk revisi jadwal & metodologi" }
-    ]
-  },
-  {
-    id: "PRISMO-2026-004",
-    judul: "Survei Kepuasan Pemangku Kepentingan Diklat Kepemimpinan Nasional",
-    unit: "SKMK",
-    jenis: "Survei",
-    jenis_persetujuan: "Publikasi Akhir",
-    cluster: "Tata Kelola & Manajemen ASN",
-    latar_belakang: "Perlunya pengukuran dampak kurikulum baru terhadap kompetensi alumni PKN Tingkat I dan II.",
-    tujuan: "Mengetahui tingkat kepuasan user dan relevansi kompetensi kepemimpinan strategis.",
-    pic: "Dewi Lestari, S.Psi., M.M",
-    target_selesai: "2026-09-20",
-    jadwal: "Sep (3)",
-    tahun: 2026,
-    dokumen_proposal: "https://drive.google.com/file/d/1PRISMO2026004_TOR_KepuasanPKN/view?usp=sharing",
-    tor_nama: "TOR & Naskah Publikasi Akhir Evaluasi Alumni PKN",
-    tor_jenis: "TOR dan Proposal",
-    tor_keterangan: "Laporan lengkap dan policy brief siap publikasi",
-    tor_status_akses: "Dapat diakses",
-    dokumen_jadwal: "",
-    status: "disetujui",
-    prioritas: "Normal",
-    diajukan_tgl: "2026-08-10",
-    diverifikasi_tgl: "2026-08-12",
-    disetujui_tgl: "2026-08-15",
-    checklist_admin: {
-      judul_jelas: true,
-      pic_tersedia: true,
-      jadwal_realistis: true,
-      dokumen_lengkap: true,
-      tidak_duplikat: true
-    },
-    catatan_admin: "Dokumen lengkap dan metodologi sesuai standar.",
-    keputusan_kepala: "disetujui",
-    catatan_kepala: "Lanjutkan pelaksanaan dan publikasi sesuai rencana jadwal.",
-    catatan_revisi: "",
-    alasan_penolakan: "",
-    riwayat: [
-      { tgl: "2026-08-10 14:00", role: "Unit Kerja (SKMK)", aksi: "Mengajukan usulan survei" },
-      { tgl: "2026-08-12 10:30", role: "Admin DSPK2AN", aksi: "Verifikasi dokumen dan meneruskan ke Pimpinan" },
-      { tgl: "2026-08-15 16:00", role: "Kepala LAN RI", aksi: "Memberikan persetujuan pelaksanaan (ACC): Lanjutkan pelaksanaan dan publikasi sesuai rencana jadwal." }
-    ]
-  },
-  {
-    id: "PRISMO-2026-005",
-    judul: "Survei Kesiapan Kerja & Kompetensi Digital Lulusan Politeknik STIA LAN",
+    id: "PRISMO-2026-006",
+    judul: "Data Dummy: Survei Budaya Kerja",
     unit: "STIA JKT",
     jenis: "Survei",
     jenis_persetujuan: "Pengajuan Kegiatan",
-    cluster: "Tata Kelola & Manajemen ASN",
-    latar_belakang: "Mengevaluasi kesesuaian kurikulum vokasi administrasi negara dengan kebutuhan instansi pemerintah pusat.",
-    tujuan: "Menghasilkan rekomendasi penguatan kompetensi digital dan analitik bagi mahasiswa politeknik.",
-    pic: "Dr. Tri Atmojo Sejati, S.T., S.H., M.Si",
-    target_selesai: "2026-11-25",
-    jadwal: "Nov (4)",
+    cluster: "Program Prioritas Presiden",
+    latar_belakang: "testing",
+    tujuan: "testing",
+    pic: "Testing",
+    target_selesai: "2026-11-08",
+    jadwal: "Des (2)",
     tahun: 2026,
-    dokumen_proposal: "https://docs.google.com/document/d/1PRISMO2026005_TOR_STIAJKT/edit?usp=sharing",
-    tor_nama: "TOR Survei Kompetensi Lulusan Politeknik STIA LAN",
-    tor_jenis: "TOR",
-    tor_keterangan: "Tautan Google Docs aktif untuk tim verifikator",
-    tor_status_akses: "Dapat diakses",
-    dokumen_jadwal: "https://drive.google.com/file/d/1PRISMO2026005_Jadwal_STIAJKT/view?usp=sharing",
+    dokumen_proposal: null,
+    dokumen_jadwal: null,
     status: "diajukan",
-    prioritas: "Tinggi",
-    diajukan_tgl: "2026-10-30",
+    diajukan_tgl: "2026-11-08",
     diverifikasi_tgl: null,
     disetujui_tgl: null,
     checklist_admin: {
-      judul_jelas: true,
-      pic_tersedia: true,
-      jadwal_realistis: false,
-      dokumen_lengkap: true,
-      tidak_duplikat: true
+      judul_jelas: false,
+      pic_tersedia: false,
+      tidak_duplikat: false,
+      dokumen_lengkap: false,
+      jadwal_realistis: false
     },
     catatan_admin: "",
     keputusan_kepala: null,
@@ -11719,7 +11543,7 @@ const DEFAULT_PRISMO_PROPOSALS = [
     catatan_revisi: "",
     alasan_penolakan: "",
     riwayat: [
-      { tgl: "2026-10-30 08:30", role: "Unit Kerja (STIA JKT)", aksi: "Mengajukan usulan kegiatan survei baru" }
+      { tgl: "2026-11-08 07.47", role: "Admin STIA Jakarta", aksi: "Mengajukan usulan kegiatan survei baru" }
     ]
   }
 ];
@@ -11730,8 +11554,13 @@ function normalizeProposalRecord(p) {
   if (docUrl && docUrl.includes('lan.go.id/docs/')) {
     docUrl = `https://docs.google.com/document/d/1${(p.id || 'PRISMO').replace(/[^a-zA-Z0-9]/g, '')}_TOR_Proposal/edit?usp=sharing`;
   }
+  const cleanDate = d => (typeof d === 'string' && d.length >= 10 && /^\d{4}-\d{2}-\d{2}/.test(d)) ? d.slice(0, 10) : (d || null);
   return {
     ...p,
+    target_selesai: cleanDate(p.target_selesai),
+    diajukan_tgl: cleanDate(p.diajukan_tgl),
+    diverifikasi_tgl: cleanDate(p.diverifikasi_tgl),
+    disetujui_tgl: cleanDate(p.disetujui_tgl),
     jenis_persetujuan: p.jenis_persetujuan || 'Pengajuan Kegiatan',
     dokumen_proposal: docUrl,
     tor_nama: p.tor_nama || (`TOR / Proposal ${p.judul || p.id || ''}`).trim(),
@@ -11751,7 +11580,7 @@ function getPrismoProposals() {
     const raw = localStorage.getItem('lan_prismo_proposals_v3');
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) {
+      if (Array.isArray(parsed)) {
         return parsed.map(normalizeProposalRecord);
       }
     }
@@ -11932,7 +11761,7 @@ async function syncPrismoProposalsFromSupabase() {
     const res = await fetch('/api/prismo-proposals');
     if (res.ok) {
       const data = await res.json();
-      if (Array.isArray(data) && data.length > 0) {
+      if (Array.isArray(data)) {
         const normalized = data.map(row => normalizeProposalRecord(row));
         localStorage.setItem('lan_prismo_proposals_v3', JSON.stringify(normalized));
         const curr = getCurrentUser();
@@ -11947,9 +11776,6 @@ async function syncPrismoProposalsFromSupabase() {
         if (typeof updatePortalBadges === 'function') updatePortalBadges();
         console.log(`[PRISMO API] Sinkronisasi ${normalized.length} usulan dari server berhasil.`);
         return normalized;
-      } else if (Array.isArray(data) && data.length === 0) {
-        console.log('[PRISMO API] Tabel kosong, menginisialisasi data default...');
-        await pushPrismoProposalsToSupabase(DEFAULT_PRISMO_PROPOSALS);
       }
     }
   } catch(err) {

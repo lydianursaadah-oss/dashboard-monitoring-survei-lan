@@ -2,7 +2,7 @@ import { sql } from 'drizzle-orm'
 import { getDb } from '../../db'
 import { prismoProposals } from '../../db/schema'
 
-const dateOrNull = (value: unknown) => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : null
+const dateOrNull = (value: unknown) => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value) ? value.slice(0, 10) : null
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event)
@@ -25,7 +25,6 @@ export default defineEventHandler(async (event) => {
     dokumenProposal: proposal.dokumen_proposal || null,
     dokumenJadwal: proposal.dokumen_jadwal || null,
     status: proposal.status || 'diajukan',
-    prioritas: typeof proposal.prioritas === 'string' ? proposal.prioritas : (proposal.prioritas ? 'Tinggi' : 'Normal'),
     diajukanTgl: dateOrNull(proposal.diajukan_tgl) || new Date().toISOString().slice(0, 10),
     diverifikasiTgl: dateOrNull(proposal.diverifikasi_tgl),
     disetujuiTgl: dateOrNull(proposal.disetujui_tgl),
@@ -46,7 +45,7 @@ export default defineEventHandler(async (event) => {
         cluster: sql`excluded.cluster`, latarBelakang: sql`excluded.latar_belakang`,
         tujuan: sql`excluded.tujuan`, pic: sql`excluded.pic`, targetSelesai: sql`excluded.target_selesai`,
         jadwal: sql`excluded.jadwal`, tahun: sql`excluded.tahun`, dokumenProposal: sql`excluded.dokumen_proposal`,
-        dokumenJadwal: sql`excluded.dokumen_jadwal`, status: sql`excluded.status`, prioritas: sql`excluded.prioritas`,
+        dokumenJadwal: sql`excluded.dokumen_jadwal`, status: sql`excluded.status`,
         diajukanTgl: sql`excluded.diajukan_tgl`, diverifikasiTgl: sql`excluded.diverifikasi_tgl`,
         disetujuiTgl: sql`excluded.disetujui_tgl`, checklistAdmin: sql`excluded.checklist_admin`,
         catatanAdmin: sql`excluded.catatan_admin`, keputusanKepala: sql`excluded.keputusan_kepala`,

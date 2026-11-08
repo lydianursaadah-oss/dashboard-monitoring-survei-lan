@@ -58,7 +58,6 @@ export const prismoProposals = pgTable('prismo_proposals', {
   dokumenProposal: text('dokumen_proposal'),
   dokumenJadwal: text('dokumen_jadwal'),
   status: text('status').default('diajukan'),
-  prioritas: text('prioritas').default('Normal'),
   diajukanTgl: text('diajukan_tgl'),
   diverifikasiTgl: text('diverifikasi_tgl'),
   disetujuiTgl: text('disetujui_tgl'),
