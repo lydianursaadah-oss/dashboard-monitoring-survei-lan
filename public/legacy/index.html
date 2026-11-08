@@ -5892,6 +5892,36 @@ function matchesScheduleStatusFilter(d, statusFilter) {
   return st === statusFilter;
 }
 
+let _inisiatifSyncPromise = null;
+let _inisiatifSyncedFromApi = false;
+
+async function syncInisiatifForDashboard(force = false) {
+  if (_inisiatifSyncedFromApi && !force && Array.isArray(inisiatifAkDosenRows) && inisiatifAkDosenRows.length > 0) {
+    return inisiatifAkDosenRows;
+  }
+  if (_inisiatifSyncPromise) return _inisiatifSyncPromise;
+  _inisiatifSyncPromise = (async () => {
+    try {
+      const res = await fetch('/api/inisiatif-ak-dosen');
+      if (!res.ok) return null;
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        inisiatifAkDosenRows = data;
+        _inisiatifSyncedFromApi = true;
+        if (typeof saveStoredInisiatifLocal === 'function') saveStoredInisiatifLocal(data);
+        if (document.getElementById('inisiatif-rows') && typeof filterInisiatifTable === 'function') {
+          filterInisiatifTable(inisiatifCurrentPage || 1);
+        }
+        return data;
+      }
+    } catch (e) {} finally {
+      _inisiatifSyncPromise = null;
+    }
+    return null;
+  })();
+  return _inisiatifSyncPromise;
+}
+
 function renderScheduleStatusBadges(d) {
   const info = getPrismoScheduleInfo(d);
   let html = '';
@@ -7555,56 +7585,267 @@ function initiativeLinksHtml(item) {
 async function renderInisiatifAkDosenRows() {
   const tbody = document.getElementById('inisiatif-rows');
   if (!tbody) return;
-  const currentUser = getCurrentUser();
-  const count = document.getElementById('inisiatif-count');
-  const empty = document.getElementById('inisiatif-empty');
-  tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:24px;color:#64748b;"><i class="fa-solid fa-spinner fa-spin" style="margin-right:6px"></i> Memuat data Inisiatif AK/Dosen…</td></tr>';
 
-  // 1. Ambil unit target
-  const unitFilterEl = document.getElementById('inisiatif-unit-filter');
-  const selectedUnit = unitFilterEl ? unitFilterEl.value : (isUnitUser(currentUser) ? (currentUser.unit || '') : '');
-
-  // 2. Muat data dari API atau fallback ke INITIAL_INISIATIF_AK_DOSEN
-  let fetchedItems = null;
-  try {
-    const qUnit = selectedUnit ? `?unit=${encodeURIComponent(selectedUnit)}` : '';
-    const response = await fetch(`/api/inisiatif-ak-dosen${qUnit}`);
-    if (response.ok) {
-      const data = await response.json();
-      if (Array.isArray(data) && data.length > 0) fetchedItems = data;
-    }
-  } catch (error) {
-    console.warn('[PRISMO API] Menggunakan fallback data inisiatif lokal:', error);
-  }
-
-  // Jika API kosong/offline, gunakan data awal dari Google Sheet (700 data)
-  if (!fetchedItems) {
+  // 1. Tampilkan instan dari memori / localStorage / INITIAL_INISIATIF_AK_DOSEN tanpa menunggu jaringan
+  if (!Array.isArray(inisiatifAkDosenRows) || inisiatifAkDosenRows.length === 0) {
     const local = getStoredInisiatifLocal();
-    let all = local || (typeof window.INITIAL_INISIATIF_AK_DOSEN !== 'undefined' ? window.INITIAL_INISIATIF_AK_DOSEN : []);
-    if (selectedUnit) {
-      fetchedItems = all.filter(item => String(item.unit || item.sourceSheet).toUpperCase().includes(selectedUnit.toUpperCase()));
-    } else {
-      fetchedItems = all;
-    }
+    const initial = typeof window.INITIAL_INISIATIF_AK_DOSEN !== 'undefined' ? window.INITIAL_INISIATIF_AK_DOSEN : [];
+    inisiatifAkDosenRows = (Array.isArray(local) && local.length > 0) ? local : (Array.isArray(initial) ? [...initial] : []);
   }
 
-  inisiatifAkDosenRows = fetchedItems || [];
-  const jenisSelect = document.getElementById('inisiatif-jenis-filter');
-  const clusterSelect = document.getElementById('inisiatif-cluster-filter');
-  if (jenisSelect) {
-    const selected = jenisSelect.value;
-    const values = [...new Set(inisiatifAkDosenRows.map(getInisiatifJenisValue).filter(value => value && value !== '-' && value !== '—'))].sort((a,b) => a.localeCompare(b, 'id'));
-    jenisSelect.innerHTML = '<option value="">Semua Jenis</option>' + values.map(value => `<option value="${planningEscape(value)}">${planningEscape(value)}</option>`).join('');
-    jenisSelect.value = values.includes(selected) ? selected : '';
-  }
-  if (clusterSelect) {
-    const selected = clusterSelect.value;
-    const values = [...new Set(inisiatifAkDosenRows.flatMap(getInisiatifClusterValues))].sort((a,b) => a.localeCompare(b, 'id'));
-    clusterSelect.innerHTML = '<option value="">Semua Cluster</option>' + values.map(value => `<option value="${planningEscape(value)}">${planningEscape(value)}</option>`).join('');
-    clusterSelect.value = values.includes(selected) ? selected : '';
-  }
   inisiatifCurrentPage = 1;
-  filterInisiatifTable();
+  if (inisiatifAkDosenRows.length > 0) {
+    filterInisiatifTable(1);
+  } else {
+    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:24px;color:#64748b;"><i class="fa-solid fa-spinner fa-spin" style="margin-right:6px"></i> Memuat data Inisiatif AK/Dosen…</td></tr>';
+  }
+
+  // 2. Sinkronisasi dari API di background jika belum sinkron
+  if (!_inisiatifSyncedFromApi) {
+    void syncInisiatifForDashboard();
+  }
+}
+
+/* ── Filter multi-select (Tahun, Jenis, Cluster) Publikasi AK/Dosen ── */
+const INISIATIF_MULTI_FILTERS = {
+  year: {
+    label: 'Tahun', allLabel: 'Semua Tahun', icon: 'fa-calendar',
+    options: ['2020', '2021', '2022', '2023', '2024', '2025', '2026']
+  },
+  jenis: {
+    label: 'Jenis', allLabel: 'Semua Jenis', icon: 'fa-tags',
+    options: ['Artikel', 'Buku', 'Jurnal/Penelitian', 'Jurnal/Penelitian Dosen', 'Jurnal/Penelitian Kolaborasi', 'Laporan', 'PKM', 'Policy Brief', 'Policy Paper']
+  },
+  cluster: {
+    label: 'Cluster', allLabel: 'Semua Cluster', icon: 'fa-layer-group',
+    options: ['Digitalisasi', 'Pelayanan Publik', 'Prioritas Presiden', 'Tata Kelola & Manajemen ASN', 'Tata Kelola & Manajemen SDM']
+  }
+};
+const INISIATIF_MULTI_FILTER_MAX_LABELS = 3;
+// Kondisi awal: seluruh opsi terpilih (tanpa pembatasan)
+const inisiatifFilterState = Object.fromEntries(
+  Object.entries(INISIATIF_MULTI_FILTERS).map(([key, cfg]) => [key, new Set(cfg.options)])
+);
+let inisiatifOpenFilterKey = null;
+
+// Normalisasi teks kategori agar variasi penulisan di database tetap cocok
+// (huruf besar/kecil, spasi di sekitar "/", "dan" vs "&", spasi ganda).
+function normalizeInisiatifCategory(value) {
+  return String(value || '')
+    .toLowerCase()
+    .replace(/\s*\/\s*/g, '/')
+    .replace(/\s+dan\s+/g, ' & ')
+    .replace(/\s*&\s*/g, ' & ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+// Mengembalikan Set nilai ternormalisasi, atau null jika tidak ada pembatasan
+// (tidak ada yang dipilih atau seluruh opsi dipilih).
+function getInisiatifActiveFilter(key) {
+  const cfg = INISIATIF_MULTI_FILTERS[key];
+  const selected = inisiatifFilterState[key];
+  if (!cfg || !selected || selected.size === 0 || selected.size >= cfg.options.length) return null;
+  return new Set([...selected].map(normalizeInisiatifCategory));
+}
+
+// Jenis dapat berisi beberapa kategori, mis. "Policy Brief, Laporan"
+function getInisiatifJenisTokens(item) {
+  const raw = item?.jenis || item?.jenis_publikasi || item?.jenisPublikasi || '';
+  return String(raw).split(/[,;]/).map(normalizeInisiatifCategory).filter(Boolean);
+}
+
+function getInisiatifClusterTokens(item) {
+  return [item?.cluster1, item?.cluster_1, item?.cluster2, item?.cluster_2]
+    .map(normalizeInisiatifCategory)
+    .filter(Boolean);
+}
+
+function resolveInisiatifSitasi(item) {
+  const stored = Number(item?.sitasi);
+  if (Number.isFinite(stored) && stored > 0) return Math.floor(stored);
+  const fromNote = String(item?.catatan || '').match(/Dikutip:\s*(\d+)\s*kali/i);
+  if (fromNote) return Number(fromNote[1]);
+  return 0;
+}
+
+function getInisiatifFilterSummary(key) {
+  const cfg = INISIATIF_MULTI_FILTERS[key];
+  const selected = cfg.options.filter(opt => inisiatifFilterState[key].has(opt));
+  if (selected.length === 0 || selected.length === cfg.options.length) return cfg.allLabel;
+  if (selected.length > INISIATIF_MULTI_FILTER_MAX_LABELS) return `${selected.length} ${cfg.label} Dipilih`;
+  return selected.join(', ');
+}
+
+function renderInisiatifMultiFilter(key) {
+  const cfg = INISIATIF_MULTI_FILTERS[key];
+  if (!cfg) return '';
+  const summary = getInisiatifFilterSummary(key);
+  return `
+    <div class="inisiatif-ms" style="display:flex;align-items:center;gap:6px;">
+      <span style="font-size:12px;font-weight:700;color:#334155;white-space:nowrap;"><i class="fa-solid ${cfg.icon}"></i> ${cfg.label}:</span>
+      <button type="button" id="inisiatif-ms-trigger-${key}" class="inisiatif-ms-trigger" aria-haspopup="true" aria-expanded="false"
+        onclick="toggleInisiatifFilterPanel(event, '${key}')" title="${planningEscape(summary)}"
+        style="display:inline-flex;align-items:center;justify-content:space-between;gap:8px;min-width:150px;max-width:230px;padding:7px 10px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;background:#fff;color:#1e293b;font-family:inherit;cursor:pointer;">
+        <span id="inisiatif-ms-label-${key}" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${planningEscape(summary)}</span>
+        <i class="fa-solid fa-chevron-down" style="font-size:10px;color:#64748b;flex-shrink:0;"></i>
+      </button>
+    </div>`;
+}
+
+function buildInisiatifFilterPanelHtml(key) {
+  const cfg = INISIATIF_MULTI_FILTERS[key];
+  const rowStyle = 'display:flex;align-items:center;gap:9px;padding:7px 12px;cursor:pointer;font-size:12.5px;color:#1e293b;user-select:none;';
+  const checkboxStyle = 'width:15px;height:15px;accent-color:#2563eb;cursor:pointer;flex-shrink:0;margin:0;';
+  return `
+    <label class="inisiatif-ms-option" style="${rowStyle}font-weight:700;border-bottom:1px solid #e2e8f0;">
+      <input type="checkbox" data-ms-all="1" onchange="onInisiatifFilterCheck('${key}', null, this.checked)" style="${checkboxStyle}">
+      <span>${planningEscape(cfg.allLabel)}</span>
+    </label>
+    ${cfg.options.map((opt, idx) => `
+      <label class="inisiatif-ms-option" style="${rowStyle}">
+        <input type="checkbox" data-ms-index="${idx}" onchange="onInisiatifFilterCheck('${key}', ${idx}, this.checked)" style="${checkboxStyle}">
+        <span>${planningEscape(opt)}</span>
+      </label>`).join('')}`;
+}
+
+function syncInisiatifFilterUi(key) {
+  const cfg = INISIATIF_MULTI_FILTERS[key];
+  const selected = inisiatifFilterState[key];
+  const summary = getInisiatifFilterSummary(key);
+  const labelEl = document.getElementById(`inisiatif-ms-label-${key}`);
+  if (labelEl) labelEl.textContent = summary;
+  const trigger = document.getElementById(`inisiatif-ms-trigger-${key}`);
+  if (trigger) trigger.title = summary;
+
+  const panel = document.getElementById('inisiatif-ms-panel');
+  if (!panel || panel.dataset.key !== key) return;
+  const allSelected = cfg.options.every(opt => selected.has(opt));
+  const allBox = panel.querySelector('input[data-ms-all]');
+  if (allBox) {
+    allBox.checked = allSelected;
+    allBox.indeterminate = !allSelected && selected.size > 0;
+  }
+  panel.querySelectorAll('input[data-ms-index]').forEach(box => {
+    box.checked = selected.has(cfg.options[Number(box.dataset.msIndex)]);
+  });
+}
+
+function positionInisiatifFilterPanel() {
+  const panel = document.getElementById('inisiatif-ms-panel');
+  if (!panel) return;
+  const trigger = document.getElementById(`inisiatif-ms-trigger-${panel.dataset.key}`);
+  if (!trigger || !trigger.isConnected) { closeInisiatifFilterPanel(); return; }
+  const rect = trigger.getBoundingClientRect();
+  const margin = 8;
+  const width = Math.min(Math.max(rect.width, 240), window.innerWidth - margin * 2);
+  let left = rect.left;
+  if (left + width > window.innerWidth - margin) left = Math.max(margin, window.innerWidth - width - margin);
+  const spaceBelow = window.innerHeight - rect.bottom - margin;
+  const spaceAbove = rect.top - margin;
+  const openUp = spaceBelow < 200 && spaceAbove > spaceBelow;
+  const maxHeight = Math.max(140, Math.min(340, (openUp ? spaceAbove : spaceBelow) - 6));
+  panel.style.width = `${width}px`;
+  panel.style.left = `${left}px`;
+  panel.style.maxHeight = `${maxHeight}px`;
+  if (openUp) {
+    panel.style.top = '';
+    panel.style.bottom = `${window.innerHeight - rect.top + 4}px`;
+  } else {
+    panel.style.bottom = '';
+    panel.style.top = `${rect.bottom + 4}px`;
+  }
+}
+
+function closeInisiatifFilterPanel() {
+  const panel = document.getElementById('inisiatif-ms-panel');
+  if (panel) panel.remove();
+  if (inisiatifOpenFilterKey) {
+    const trigger = document.getElementById(`inisiatif-ms-trigger-${inisiatifOpenFilterKey}`);
+    if (trigger) {
+      trigger.setAttribute('aria-expanded', 'false');
+      trigger.style.borderColor = '#cbd5e1';
+      trigger.style.boxShadow = '';
+    }
+  }
+  inisiatifOpenFilterKey = null;
+}
+
+function toggleInisiatifFilterPanel(event, key) {
+  if (event) { event.preventDefault(); event.stopPropagation(); }
+  if (inisiatifOpenFilterKey === key) { closeInisiatifFilterPanel(); return; }
+  closeInisiatifFilterPanel();
+  const trigger = document.getElementById(`inisiatif-ms-trigger-${key}`);
+  if (!trigger || !INISIATIF_MULTI_FILTERS[key]) return;
+
+  // Panel ditempel ke body (position:fixed) agar tidak terpotong oleh container .card (overflow:hidden)
+  const panel = document.createElement('div');
+  panel.id = 'inisiatif-ms-panel';
+  panel.dataset.key = key;
+  panel.setAttribute('role', 'group');
+  panel.setAttribute('aria-label', `Filter ${INISIATIF_MULTI_FILTERS[key].label}`);
+  panel.style.cssText = 'position:fixed;z-index:999999;background:#fff;border:1px solid #cbd5e1;border-radius:8px;box-shadow:0 10px 25px -5px rgba(15,23,42,0.18),0 8px 10px -6px rgba(15,23,42,0.1);overflow-y:auto;padding:4px 0;font-family:inherit;';
+  panel.innerHTML = buildInisiatifFilterPanelHtml(key);
+  panel.addEventListener('click', e => e.stopPropagation());
+  document.body.appendChild(panel);
+
+  inisiatifOpenFilterKey = key;
+  trigger.setAttribute('aria-expanded', 'true');
+  trigger.style.borderColor = '#2563eb';
+  trigger.style.boxShadow = '0 0 0 3px rgba(37,99,235,0.15)';
+  syncInisiatifFilterUi(key);
+  positionInisiatifFilterPanel();
+}
+
+function onInisiatifFilterCheck(key, optionIndex, checked) {
+  const cfg = INISIATIF_MULTI_FILTERS[key];
+  if (!cfg) return;
+  const selected = inisiatifFilterState[key];
+  if (optionIndex === null || optionIndex === undefined) {
+    // Opsi "Semua ..." mencentang / melepas seluruh pilihan
+    selected.clear();
+    if (checked) cfg.options.forEach(opt => selected.add(opt));
+  } else {
+    const opt = cfg.options[Number(optionIndex)];
+    if (opt === undefined) return;
+    if (checked) selected.add(opt); else selected.delete(opt);
+  }
+  syncInisiatifFilterUi(key);
+  filterInisiatifTable(1);
+}
+
+function resetInisiatifFilters() {
+  closeInisiatifFilterPanel();
+  Object.entries(INISIATIF_MULTI_FILTERS).forEach(([key, cfg]) => {
+    inisiatifFilterState[key] = new Set(cfg.options);
+    syncInisiatifFilterUi(key);
+  });
+  const searchEl = document.getElementById('inisiatif-search-input');
+  if (searchEl) searchEl.value = '';
+  const unitFilterEl = document.getElementById('inisiatif-unit-filter');
+  if (unitFilterEl && unitFilterEl.tagName === 'SELECT' && unitFilterEl.value) {
+    unitFilterEl.value = '';
+  }
+  filterInisiatifTable(1);
+}
+
+if (!window._inisiatifMultiFilterListenerAdded) {
+  document.addEventListener('click', e => {
+    if (!inisiatifOpenFilterKey) return;
+    const panel = document.getElementById('inisiatif-ms-panel');
+    const trigger = document.getElementById(`inisiatif-ms-trigger-${inisiatifOpenFilterKey}`);
+    if ((panel && panel.contains(e.target)) || (trigger && trigger.contains(e.target))) return;
+    closeInisiatifFilterPanel();
+  });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && inisiatifOpenFilterKey) closeInisiatifFilterPanel(); });
+  window.addEventListener('resize', () => { if (inisiatifOpenFilterKey) positionInisiatifFilterPanel(); });
+  window.addEventListener('scroll', e => {
+    if (!inisiatifOpenFilterKey) return;
+    const panel = document.getElementById('inisiatif-ms-panel');
+    if (panel && panel.contains(e.target)) return;
+    positionInisiatifFilterPanel();
+  }, true);
+  window._inisiatifMultiFilterListenerAdded = true;
 }
 
 function filterInisiatifTable(page = 1) {
@@ -7616,17 +7857,18 @@ function filterInisiatifTable(page = 1) {
   const isUnit = isUnitUser(currentUser);
 
   const searchVal = (document.getElementById('inisiatif-search-input')?.value || '').toLowerCase().trim();
-  const selectedYears = Array.from(document.querySelectorAll('.inisiatif-year-check:checked:not(#inisiatif-year-all)')).map(input => input.value);
-  const jenisVal = normalizeInisiatifFilterValue(document.getElementById('inisiatif-jenis-filter')?.value);
-  const clusterVal = normalizeInisiatifFilterValue(document.getElementById('inisiatif-cluster-filter')?.value);
+  const yearSet = getInisiatifActiveFilter('year');
+  const jenisSet = getInisiatifActiveFilter('jenis');
+  const clusterSet = getInisiatifActiveFilter('cluster');
   const unitFilterEl = document.getElementById('inisiatif-unit-filter');
   const selectedUnit = unitFilterEl ? unitFilterEl.value : (isUnit ? (currentUser.unit || '') : '');
 
   inisiatifFilteredRows = inisiatifAkDosenRows.filter(item => {
     if (selectedUnit && !String(item.unit || item.sourceSheet || '').toUpperCase().includes(selectedUnit.toUpperCase())) return false;
-    if (selectedYears.length && !selectedYears.includes(resolveInisiatifYear(item))) return false;
-    if (jenisVal && normalizeInisiatifFilterValue(getInisiatifJenisValue(item)) !== jenisVal) return false;
-    if (clusterVal && !getInisiatifClusterValues(item).some(value => normalizeInisiatifFilterValue(value) === clusterVal)) return false;
+    // Logika OR di dalam satu kategori, AND antarkategori
+    if (yearSet && !yearSet.has(resolveInisiatifYear(item))) return false;
+    if (jenisSet && !getInisiatifJenisTokens(item).some(token => jenisSet.has(token))) return false;
+    if (clusterSet && !getInisiatifClusterTokens(item).some(token => clusterSet.has(token))) return false;
     if (searchVal) {
       const yr = resolveInisiatifYear(item);
       const text = `${item.judul || ''} ${item.jenis || ''} ${yr !== '—' ? yr : ''} ${item.cluster1 || ''} ${item.cluster2 || ''} ${item.catatan || ''} ${item.unit || ''}`.toLowerCase();
@@ -7670,7 +7912,7 @@ function filterInisiatifTable(page = 1) {
       <td style="font-weight:700;color:#475569;text-align:center;white-space:nowrap;">${displayYear}</td>
       <td style="width:150px;min-width:150px;font-size:11.5px;color:#475569;white-space:normal;overflow-wrap:anywhere;">${clusterText}</td>
       <td style="width:180px;min-width:180px;white-space:normal;">${initiativeLinksHtml(item)}</td>
-      ${!isDeputiUser ? `<td style="width:220px;min-width:220px;font-size:11px;color:#64748b;white-space:normal;overflow-wrap:anywhere;line-height:1.5;">${planningEscape(item.catatan || '—')}</td>` : ''}
+      ${!isDeputiUser ? `<td style="text-align:center;white-space:nowrap;"><span title="Jumlah sitasi publikasi" style="display:inline-block;min-width:32px;padding:2px 8px;border-radius:12px;background:#eff6ff;border:1px solid #bfdbfe;color:#1e40af;font-weight:800;font-size:12px;">${resolveInisiatifSitasi(item)}</span></td>` : ''}
       ${!isDeputiUser ? `
         <td style="width:110px;min-width:110px;text-align:center;white-space:normal;">
           <div style="display:flex;justify-content:center;align-items:center;gap:5px;flex-wrap:wrap;">
@@ -7722,7 +7964,12 @@ document.addEventListener('click', event => {
 function renderInisiatifPagination(totalPages, currentPage) {
   const container = document.getElementById('inisiatif-pagination');
   if (!container) return;
-  if (totalPages <= 1) { container.innerHTML = ''; return; }
+  if (totalPages <= 1) {
+    container.innerHTML = inisiatifFilteredRows.length
+      ? `<div>Menampilkan <strong>${inisiatifFilteredRows.length}</strong> publikasi</div>`
+      : '';
+    return;
+  }
 
   container.innerHTML = `
     <div>Menampilkan halaman <strong>${currentPage}</strong> dari <strong>${totalPages}</strong> (${inisiatifFilteredRows.length} total)</div>
@@ -8192,6 +8439,9 @@ window.openInisiatifEditor = openInisiatifEditor;
 window.closeInisiatifEditor = closeInisiatifEditor;
 window.deleteInisiatifRow = deleteInisiatifRow;
 window.filterInisiatifTable = filterInisiatifTable;
+window.toggleInisiatifFilterPanel = toggleInisiatifFilterPanel;
+window.onInisiatifFilterCheck = onInisiatifFilterCheck;
+window.resetInisiatifFilters = resetInisiatifFilters;
 window.renderInisiatifAkDosenRows = renderInisiatifAkDosenRows;
 window.openImportScholarModal = openImportScholarModal;
 window.closeImportScholarModal = closeImportScholarModal;
@@ -8390,29 +8640,24 @@ function renderPlanningUnitPage(kind, user) {
           ` : `
             <div style="display:flex;align-items:center;gap:6px;">
               <label for="inisiatif-unit-filter" style="font-size:12px;font-weight:700;color:#334155;"><i class="fa-solid fa-building"></i> Filter Unit:</label>
-              <select id="inisiatif-unit-filter" onchange="renderInisiatifAkDosenRows()" style="padding:7px 10px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;background:#fff;font-weight:700;color:#1e40af;">
+              <select id="inisiatif-unit-filter" onchange="filterInisiatifTable(1)" style="padding:7px 10px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;background:#fff;font-weight:700;color:#1e40af;">
                 <option value="">Semua Unit Kerja</option>
                 ${allUnitList.map(u => `<option value="${u}">${u}</option>`).join('')}
               </select>
             </div>
           `}
 
-          <span class="inisiatif-filter-field"><i class="fa-solid fa-calendar"></i> Tahun:</span>
-          <div id="inisiatif-year-dropdown" class="inisiatif-year-dropdown">
-            <button type="button" class="inisiatif-year-toggle" aria-haspopup="true" aria-expanded="false" onclick="toggleInisiatifYearDropdown(event)"><span id="inisiatif-year-label">Semua Tahun</span><i class="fa-solid fa-chevron-down" style="font-size:10px;"></i></button>
-            <div id="inisiatif-year-checklist" class="inisiatif-year-checklist">
-              <label><input id="inisiatif-year-all" class="inisiatif-year-check" type="checkbox" checked onchange="document.querySelectorAll('.inisiatif-year-check:not(#inisiatif-year-all)').forEach(el=>el.checked=false);updateInisiatifYearLabel();filterInisiatifTable(1)"> Semua Tahun</label>
-              ${Array.from({length:7}, (_, index) => 2020 + index).map(y => `<label><input class="inisiatif-year-check" type="checkbox" value="${y}" onchange="document.getElementById('inisiatif-year-all').checked=!document.querySelectorAll('.inisiatif-year-check:checked:not(#inisiatif-year-all)').length;updateInisiatifYearLabel();filterInisiatifTable(1)"> ${y}</label>`).join('')}
-            </div>
-          </div>
-          <label class="inisiatif-filter-field" for="inisiatif-jenis-filter">Jenis:</label>
-          <select id="inisiatif-jenis-filter" class="inisiatif-filter-select" onchange="filterInisiatifTable(1)"><option value="">Semua Jenis</option></select>
-          <label class="inisiatif-filter-field" for="inisiatif-cluster-filter">Cluster:</label>
-          <select id="inisiatif-cluster-filter" class="inisiatif-filter-select" onchange="filterInisiatifTable(1)"><option value="">Semua Cluster</option></select>
+          ${renderInisiatifMultiFilter('year')}
+          ${renderInisiatifMultiFilter('jenis')}
+          ${renderInisiatifMultiFilter('cluster')}
 
           <div style="flex:1;min-width:220px;">
             <input type="text" id="inisiatif-search-input" placeholder="🔍 Cari judul, jenis, cluster, atau catatan..." oninput="filterInisiatifTable(1)" style="width:100%;padding:7px 12px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;">
           </div>
+
+          <button type="button" class="filter-reset" onclick="resetInisiatifFilters()" title="Kembalikan seluruh filter ke kondisi awal" style="display:inline-flex;align-items:center;gap:6px;padding:7px 12px;font-size:12px;font-weight:700;border-radius:6px;cursor:pointer;">
+            <i class="fa-solid fa-rotate-left"></i> Reset Filter
+          </button>
         </div>
       </div>
     </div>
@@ -8437,8 +8682,8 @@ function renderPlanningUnitPage(kind, user) {
                 <th style="width:70px;text-align:center;white-space:nowrap;">Tahun</th>
                 <th style="width:150px;">Cluster</th>
                 <th style="width:180px;white-space:nowrap;">Link Publikasi</th>
-                ${!(user && (user.role === 'deputi' || user.role === 'kepala_lan')) ? '<th style="width:220px;min-width:220px;white-space:normal;">Catatan</th>' : ''}
-                ${!(user && (user.role === 'deputi' || user.role === 'kepala_lan')) ? '<th style="width:110px;min-width:110px;text-align:center;white-space:normal;">Aksi</th>' : ''}
+                ${!(user && (user.role === 'deputi' || user.role === 'kepala_lan')) ? '<th style="width:80px;text-align:center;white-space:nowrap;">Sitasi</th>' : ''}
+                ${!(user && (user.role === 'deputi' || user.role === 'kepala_lan')) ? '<th style="width:95px;text-align:center;white-space:nowrap;">Aksi</th>' : ''}
               </tr>
             </thead>
             <tbody id="inisiatif-rows"></tbody>
@@ -8488,10 +8733,19 @@ if(hd) hd.textContent = new Date().toLocaleDateString('id-ID',{weekday:'long',ye
 // Version check ensures stale 56-record caches are cleared
 (function(){
   try {
-    const DATA_VERSION = '2026.10.29.v50_sched2025';
+    const DATA_VERSION = '2026.11.08.v51_clean_clusters';
     const currentVer = localStorage.getItem('lan_data_version');
     if (currentVer !== DATA_VERSION) {
       localStorage.removeItem('lan_pub_data');
+      localStorage.removeItem('prismo_proposal_activity_links_v1');
+      localStorage.removeItem('prismo_inisiatif_ak_dosen_v2');
+      const cachedProps = localStorage.getItem('lan_prismo_proposals_v3');
+      if (cachedProps) {
+        try {
+          const filteredProps = JSON.parse(cachedProps).filter(p => String(p?.judul || '').trim().toLowerCase() !== 'testing kegiatan');
+          localStorage.setItem('lan_prismo_proposals_v3', JSON.stringify(filteredProps));
+        } catch (e) { localStorage.removeItem('lan_prismo_proposals_v3'); }
+      }
       localStorage.setItem('lan_data_version', DATA_VERSION);
     }
     const stored = localStorage.getItem('lan_pub_data');
@@ -17461,6 +17715,7 @@ renderTable();
     openDeputiPortal(savedTab || 'dashboard');
     if (typeof syncUsersFromSupabase === 'function') syncUsersFromSupabase();
     if (typeof syncDataFromSupabase === 'function') syncDataFromSupabase(false);
+    if (typeof syncInisiatifForDashboard === 'function') syncInisiatifForDashboard();
     if (typeof syncPrismoProposalsFromSupabase === 'function') syncPrismoProposalsFromSupabase();
     if (typeof syncPrismoAnnouncementsFromSupabase === 'function') syncPrismoAnnouncementsFromSupabase();
     return;
@@ -17853,6 +18108,7 @@ renderAuthNav();
   // Sync user accounts & data from Supabase di background
   if (typeof syncUsersFromSupabase === 'function') syncUsersFromSupabase();
   if (typeof syncDataFromSupabase === 'function') syncDataFromSupabase(false);
+  if (typeof syncInisiatifForDashboard === 'function') syncInisiatifForDashboard();
   if (typeof syncPrismoProposalsFromSupabase === 'function') syncPrismoProposalsFromSupabase();
 
 
