@@ -2289,10 +2289,6 @@ window.addEventListener('focus', () => {
       <div class="filter-divider"></div>
       <select id="f-status" onchange="applyFilters()">
         <option value="">Semua kegiatan</option>
-        <option value="overdue">⚠️ Terlambat</option>
-        <option value="mendekati_deadline">⏰ Mendekati deadline (≤14 hari)</option>
-        <option value="berisiko">🔥 Berisiko</option>
-        <option value="selesai_tepat_waktu">✅ Selesai tepat waktu</option>
         <option value="selesai">✓ Semua Selesai</option>
         <option value="belum">⏱ Belum Selesai</option>
         <optgroup label="Tahapan (Belum Selesai)">
@@ -2576,10 +2572,6 @@ window.addEventListener('focus', () => {
       <select id="r-cluster" onchange="renderTable()"><option value="">Semua Cluster</option></select>
       <select id="r-status" onchange="renderTable()">
         <option value="">Semua kegiatan</option>
-        <option value="overdue">⚠️ Terlambat</option>
-        <option value="mendekati_deadline">⏰ Mendekati deadline (≤14 hari)</option>
-        <option value="berisiko">🔥 Berisiko</option>
-        <option value="selesai_tepat_waktu">✅ Selesai tepat waktu</option>
         <option value="selesai">✓ Semua Selesai</option>
         <option value="belum">⏱ Belum Selesai</option>
         <optgroup label="Tahapan (Belum Selesai)">
@@ -2885,12 +2877,16 @@ window.addEventListener('focus', () => {
           <div class="filter-divider"></div>
           <select id="p-status" onchange="applyPortalFilters()">
             <option value="">Semua kegiatan</option>
-            <option value="overdue">⚠️ Terlambat</option>
-            <option value="mendekati_deadline">⏰ Mendekati deadline (≤14 hari)</option>
-            <option value="berisiko">🔥 Berisiko</option>
-            <option value="selesai_tepat_waktu">✅ Selesai tepat waktu</option>
             <option value="selesai">✓ Semua Selesai</option>
             <option value="belum">⏱ Belum Selesai</option>
+            <optgroup label="Tahapan (Belum Selesai)">
+              <option value="tahap:Persiapan">Tahap 1: Persiapan</option>
+              <option value="tahap:Penyusunan instrumen">Tahap 2: Penyusunan Instrumen</option>
+              <option value="tahap:Pengumpulan data">Tahap 3: Pengumpulan Data</option>
+              <option value="tahap:Pengolahan data">Tahap 4: Pengolahan Data</option>
+              <option value="tahap:Penyusunan laporan">Tahap 5: Penyusunan Laporan</option>
+              <option value="tahap:Publikasi">Tahap 6: Publikasi</option>
+            </optgroup>
           </select>
           <button class="filter-reset" onclick="resetPortalFilters()"><i class="fa-solid fa-rotate-left"></i> Reset Filter</button>
         </div>
@@ -3056,12 +3052,16 @@ window.addEventListener('focus', () => {
               <div class="filter-divider"></div>
               <select id="portal-r-status" onchange="renderPortalTable()">
                 <option value="">Semua kegiatan</option>
-                <option value="overdue">Terlambat</option>
-                <option value="approaching">Mendekati deadline</option>
-                <option value="berisiko">Berisiko</option>
-                <option value="selesai_tepat_waktu">Selesai tepat waktu</option>
-                <option value="selesai">Selesai (Semua)</option>
-                <option value="belum">Belum Selesai (Proses)</option>
+                <option value="selesai">✓ Semua Selesai</option>
+                <option value="belum">⏱ Belum Selesai</option>
+                <optgroup label="Tahapan (Belum Selesai)">
+                  <option value="tahap:Persiapan">Tahap 1: Persiapan</option>
+                  <option value="tahap:Penyusunan instrumen">Tahap 2: Penyusunan Instrumen</option>
+                  <option value="tahap:Pengumpulan data">Tahap 3: Pengumpulan Data</option>
+                  <option value="tahap:Pengolahan data">Tahap 4: Pengolahan Data</option>
+                  <option value="tahap:Penyusunan laporan">Tahap 5: Penyusunan Laporan</option>
+                  <option value="tahap:Publikasi">Tahap 6: Publikasi</option>
+                </optgroup>
               </select>
               <button class="filter-reset" onclick="resetPortalTableFilters()"><i class="fa-solid fa-rotate-left"></i> Reset</button>
               <button class="filter-reset" onclick="exportPrismoOverdueReportCSV()" style="background:#fef2f2;color:#dc2626;border-color:#fecaca;" title="Ekspor Laporan Kegiatan Terlambat (CSV)"><i class="fa-solid fa-file-csv"></i> Ekspor Terlambat</button>
