@@ -13561,7 +13561,6 @@ function renderPrismoKeputusanPimpinan(user, pimpinanRole) {
             <th style="padding:10px 12px;font-size:11px;font-weight:700;color:#64748b;">Judul Kegiatan</th>
             <th style="padding:10px 12px;font-size:11px;font-weight:700;color:#64748b;width:100px;">Unit Kerja</th>
             <th style="padding:10px 12px;font-size:11px;font-weight:700;color:#64748b;width:120px;">Tanggal Pengajuan</th>
-            <th style="padding:10px 12px;font-size:11px;font-weight:700;color:#64748b;width:90px;">Prioritas</th>
             <th style="padding:10px 12px;font-size:11px;font-weight:700;color:#64748b;width:160px;">Status</th>
             <th style="padding:10px 12px;font-size:11px;font-weight:700;color:#64748b;text-align:right;width:180px;">${reviewActionHeader}</th>
           </tr>
@@ -13584,11 +13583,6 @@ function renderPrismoKeputusanPimpinan(user, pimpinanRole) {
                 </td>
                 <td style="padding:11px 12px;"><span class="badge" style="background:#eff6ff;color:#1e40af;font-weight:700;">${escapeHtml(item.unit)}</span></td>
                 <td style="padding:11px 12px;font-size:12px;color:#475569;">${escapeHtml(item.diajukan_tgl || '-')}</td>
-                <td style="padding:11px 12px;">
-                  <span class="badge" style="background:${item.prioritas === 'Tinggi' ? '#fee2e2' : '#f1f5f9'};color:${item.prioritas === 'Tinggi' ? '#dc2626' : '#475569'};font-weight:700;">
-                    <i class="fa-solid ${item.prioritas === 'Tinggi' ? 'fa-bolt' : 'fa-minus'}"></i> ${escapeHtml(item.prioritas || 'Normal')}
-                  </span>
-                </td>
                 <td style="padding:11px 12px;">
                   <span class="badge" style="background:${badge.bg};color:${badge.color};border:1px solid ${badge.border};font-weight:700;"><i class="fa-solid ${badge.icon}"></i> ${badge.text}</span>
                 </td>
